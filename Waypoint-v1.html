@@ -811,8 +811,8 @@ body.nowm .wm{display:none}
       </button>
       <button class="btn sm" id="tourOpen">Quick tour</button>
       <div class="me">
-        <span class="tiny muted conn">Data server · connected</span>
-        <span class="dot" style="background:var(--ok)"></span>
+        <span class="tiny muted conn" id="connState"></span>
+        <span class="dot" id="connDot" style="background:var(--ok)"></span>
         <div class="av" id="meAv">–</div>
         <span id="meName"></span>
       </div>
@@ -1932,6 +1932,10 @@ function enterApp(asGuest){
      frame and off for every click that followed. */
   routeSilent = false;
   render();
+  /* From here the page is open for as long as somebody leaves it open, and a
+     page that is only being read never asks the server anything. So ask on a
+     clock, or a server that dies while somebody reads is never noticed. */
+  if (!guest) startBeat();
 }
 
 function screenToday(){
@@ -6623,8 +6627,14 @@ const SYNC_LISTS = ['customers','interactions','meetings','steps','team','audit'
    silently not synced is worse than one that is missing. */
 const SYNC_MAPS = ['opps'];
 /* `changed` and `cfgSig` are what let a save stay silent — see syncSave. */
+/* `down` is set only when a note was written BECAUSE the server stopped
+   answering, so the heartbeat knows which notes it may withdraw when the
+   connection returns — a refusal was about the record, not the wire. */
 const SY = { rev: 0, live: false, sending: false, retry: false, timer: null, sent: {}, note: '',
-             changed: false, cfgSig: '', refused: false };
+             changed: false, cfgSig: '', refused: false, down: false, beat: null,
+             /* `armed` is set the first time the server answers for a real
+                session. Until then there is nobody to save for. */
+             armed: false };
 
 /* Removals travel under their own envelope, because silence is no longer a
    delete. The server puts back every row a save does not mention — that is what
@@ -6806,6 +6816,7 @@ async function syncLoad(){
     adopt(b.state);
     SY.rev = b.rev || 0;
     SY.live = true;
+    SY.armed = true;
     return 'live';
   } catch { return 'offline'; }
 }
@@ -6813,7 +6824,23 @@ async function syncLoad(){
 /* Every mutation in this app ends in render(), so scheduling from render()
    catches all of them without touching a single handler. */
 function scheduleSync(){
-  if (!SY.live) return;
+  /* No session yet, nothing owed. The sign-in screen renders too, and a
+     complaint raised there would still be sitting in `SY.note` when the real
+     session started — the person would sign in to a page already accusing
+     itself of losing work it never had. A guest is the same case: reading
+     somebody else's book, writing nothing. */
+  if (guest || !SY.armed) return;
+  if (!SY.live){
+    /* There is nowhere to send this, and the edit still looks saved because it
+       is on the screen. Going quietly would let somebody work for an hour on a
+       copy that exists only in this tab, so the first edit attempted while the
+       server is away is the moment the page has to stop being calm. Not before:
+       "Not saved" with nothing to save is an alarm about nothing. */
+    SY.down = true;
+    if (!SY.note) SY.note = 'Offline — changes are held here until the server answers.';
+    paintSync();
+    return;
+  }
   /* A new edit is a new attempt. The refusal that stopped the loop was about
      the LAST payload, and the person has since changed something — so the
      reason to hold back no longer applies. Kept in step with the `retry` flag,
@@ -6914,6 +6941,7 @@ async function syncSave(){
       }
     }
   } catch {
+    SY.down = true;
     SY.note = 'Offline — changes are held here until the server answers.';
   } finally {
     SY.sending = false;
@@ -6938,6 +6966,91 @@ async function syncSave(){
 function paintSync(){
   const el = document.getElementById('syncNote');
   if (el) el.innerHTML = syncBanner();
+  paintConn();
+}
+
+/* The header's one line about whether the work on screen survives.
+   It used to be static HTML reading "Data server · connected", which meant it
+   said connected while the server was unreachable — and it said it to somebody
+   who had not signed in at all, which is a claim about a session that does not
+   exist. A line like this is either the truth or it is worse than nothing:
+   the person decides whether to keep typing by what it says.
+   So it is drawn from the same state the banner reads, and it never guesses:
+   `SY.note` is a failure somebody is owed, `SY.sending` is an answer in
+   flight, `SY.live` is the last time the server actually answered, and a
+   guest has no session to report on, so the line is not shown at all. */
+function connTone(){
+  if (SY.note)   return { text: 'Not saved',  tone: 'risk',
+                          why: SY.note };
+  if (SY.sending) return { text: 'Saving…',   tone: 'blue',
+                          why: 'This change is on its way to the data server.' };
+  if (!SY.live)  return { text: 'Offline — this device only', tone: 'warn',
+                          why: 'The data server is not answering. Anything done now stays on this device until it does.' };
+  return { text: 'Saved', tone: 'ok',
+           why: 'Everything on this screen is on the data server.' };
+}
+
+function paintConn(){
+  const el = document.getElementById('connState'), dot = document.getElementById('connDot');
+  if (!el) return;
+  /* No session, nothing to report. A guest is looking at somebody else's book
+     and cannot write to it, so a promise about saving is a promise about
+     nothing. */
+  if (guest){ el.textContent = ''; if (dot) dot.style.display = 'none'; return; }
+  if (dot) dot.style.display = '';
+  const s = connTone();
+  el.textContent = s.text;
+  el.title = s.why;
+  if (dot) dot.style.background = `var(--${s.tone})`;
+}
+
+/* A quiet page has no reason to ask the server anything. That is the whole
+   trap: `syncSave` returns early when nothing changed, so a server that dies
+   while somebody is reading stays dead and unnoticed for as long as the page
+   is open — and the header keeps saying "connected" over work that is only in
+   memory. So ask, on a clock, whether the session is still there.
+   `/api/session` is the cheapest question that has a real answer, and it also
+   catches the other way of losing the book: a session that expired.
+   Coming BACK is the half that matters. Going offline is a fact; coming back
+   has to re-send whatever was done while it was away, or the person is left
+   looking at "Saved" with an hour of work still on their own machine. */
+async function beat(){
+  if (guest || SY.sending) return;         /* a save in flight is already asking */
+  try {
+    /* `/api/health`, not `/api/session`: this question is "is the server still
+       there", and asking a question that needs a session invites an answer
+       about the session instead — a probe that comes back 401 would report the
+       person as signed out on the strength of a cookie this request never
+       carried. Losing the session is already caught where it costs something,
+       by the save that gets refused. */
+    const r = await fetch('/api/health', { credentials: 'same-origin' });
+    if (!r.ok){
+      /* The server is gone. That is a fact about the connection, not yet about
+         anybody's work — nothing has been lost, so nothing is reported as
+         unsaved. The moment an edit is attempted with nowhere to send it,
+         `scheduleSync` says so. */
+      SY.live = false;
+      SY.down = true;
+    } else {
+      const wasDown = !SY.live;
+      SY.live = true;
+      /* Only a note that was set BECAUSE the server was unreachable can be
+         withdrawn now. One that says the server refused a row is still true
+         after the connection comes back — the refusal was about the record,
+         not the wire. */
+      if (SY.down){ SY.down = false; SY.note = ''; }
+      if (wasDown) scheduleSync();
+    }
+  } catch {
+    SY.live = false;
+    SY.down = true;
+  }
+  paintSync();
+}
+
+function startBeat(){
+  clearInterval(SY.beat);
+  SY.beat = setInterval(beat, 30000);
 }
 
 /* Sign in against the real directory. The form collects an email; the server
@@ -7926,6 +8039,10 @@ function render(){
     const a = onTab.getBoundingClientRect(), b = strip.getBoundingClientRect();
     if (a.left < b.left || a.right > b.right) onTab.scrollIntoView({ block:'nearest', inline:'center' });
   }
+  /* The header is outside `#page`, so nothing above has touched it. Redrawing
+     it here means every screen agrees with the line that says whether the work
+     survives — including the first one, before any save has been attempted. */
+  paintConn();
   window.scrollTo(0,0);
 }
 
@@ -10457,6 +10574,11 @@ document.addEventListener('click', async (e) => {
          somebody else's customer still in the bar, and a reload after signing
          in would take them straight there. */
       guest = false; sessionRole = ''; asRole = 'admin';
+      /* Nobody is signed in, so stop asking whether they are. A heartbeat that
+         kept running would write "Signed out" into a state nobody is looking
+         at, and then carry it into the next sign-in. */
+      clearInterval(SY.beat); SY.beat = null;
+      SY.live = false; SY.note = ''; SY.down = false; SY.armed = false;
       view = { s: 'login', id: null, tab: 'brief', cview: 'board' };
       /* `viewToHash` already answers '' for the sign-in screen, so the mirror
          clears the URL in the ordinary way — `render()` calls `syncRoute()`
@@ -10830,7 +10952,18 @@ window.addEventListener('hashchange', () => {
   /* Ask the server once whether a model is really reachable, so no screen has
      to guess. A failure here is not an error state — it is the honest answer. */
   await refreshAi();
-  if (authed){ await syncLoad(); enterApp(); fetchAiTasks(); }
+  if (authed){
+    /* The answer used to be thrown away, and the boot went on into the app
+       with `SY.live` still false and a header that said "connected" anyway.
+       Two different failures come back here and they are not the same thing:
+       a refused session has a person's name on it, while a server that never
+       answered only means the book on screen is not the shared one yet. */
+    const st = await syncLoad();
+    if (st === 'signin'){ SY.note = 'Signed out — the last change was not saved.'; }
+    else if (st !== 'live'){ SY.down = true; }   /* nothing is lost yet — say offline, not unsaved */
+    enterApp();
+    fetchAiTasks();
+  }
   else render();
 })();
 </script>
