@@ -1872,9 +1872,11 @@ function screenToday(){
     const d = stepDays(s);
     return `<div class="row" style="padding:11px var(--s4);border-bottom:1px solid var(--line)">
       <span class="dot" style="background:${late ? 'var(--risk)' : d != null ? 'var(--warn)' : 'var(--ink-0)'}"></span>
+      <span class="tag ${s.from === 'customer' ? 't-blue' : 't-grey'}" style="flex:0 0 auto"
+        title="${s.from === 'customer' ? 'In their court — we are waiting on them' : 'In our court — we owe this'}">${s.from === 'customer' ? 'them' : 'us'}</span>
       <div style="min-width:0;flex:1">
         <div style="font-size:13px;font-weight:500">${esc(s.t)}</div>
-        <div class="tiny muted">${esc(c.name)} · ${esc(stepExec(s))}${stepTrack(s) && stepTrack(s) !== stepExec(s) ? ' · tracked by ' + esc(stepTrack(s)) : ''}</div>
+        <div class="tiny muted">${esc(c.name)} · ${esc(stepExec(s) || 'nobody named')}${stepTrack(s) && stepTrack(s) !== stepExec(s) ? ' · tracked by ' + esc(stepTrack(s)) : ''}</div>
       </div>
       <span class="tag ${late ? 't-risk' : 't-grey'}">${esc(d == null ? 'no date' : stepWhen(s))}${late ? ' overdue' : ''}</span>
     </div>`;
@@ -2088,7 +2090,7 @@ function screenCalendar(){
         <span class="dot" style="background:var(--risk)"></span>
         <div style="min-width:0;flex:1">
           <div style="font-size:13px;font-weight:500">${esc(s.t)}</div>
-          <div class="tiny muted">${esc((cust(s.c) || {}).name || '')} · ${esc(stepExec(s))}</div>
+          <div class="tiny muted">${esc((cust(s.c) || {}).name || '')} · ${esc(stepExec(s) || 'nobody named')}</div>
         </div>
         <span class="tag t-risk">due ${esc(fmtDay(s.due))}</span>
       </button>`).join('')}
@@ -2114,7 +2116,7 @@ function screenCalendar(){
         <span class="dot" style="background:var(--ink-0)"></span>
         <div style="min-width:0;flex:1">
           <div style="font-size:13px;font-weight:500">${esc(s.t)}</div>
-          <div class="tiny muted">${esc((cust(s.c) || {}).name || '')} · ${esc(stepExec(s))}</div>
+          <div class="tiny muted">${esc((cust(s.c) || {}).name || '')} · ${esc(stepExec(s) || 'nobody named')}</div>
         </div>
         <span class="tag t-grey">no date</span>
       </button>`).join('')}
@@ -3869,9 +3871,16 @@ function lastMeetCard(c){
    so twice is noise. When they differ (a Product SA executing, the Primary SA
    tracking, which is Scenario 3) it is the single most useful thing on the
    card, so it gets its own line. */
+/* §6: every action carries two people — who does it, and who is answerable
+   for it happening. One name is the common case (the same person does both),
+   and it used to render as a bare name with no role at all, so the row could
+   not say which of the two jobs that name was doing. It says so now:
+   "does and tracks", or each one named. */
 function stepRoleLine(s){
   const e = stepExec(s), t = stepTrack(s);
-  if (!e || !t || e === t) return '';
+  if (!e && !t) return '';
+  if (!e) return `<div class="tiny muted">tracked by ${esc(t)}</div>`;
+  if (!t || e === t) return `<div class="tiny muted">executed and tracked by ${esc(e)}</div>`;
   return `<div class="tiny muted">executed by ${esc(e)} · tracked by ${esc(t)}</div>`;
 }
 
@@ -3899,7 +3908,7 @@ function actionsCard(c){
           style="flex:0 0 auto">${s.from === 'customer' ? 'them' : 'us'}</span>
         <div style="min-width:0;flex:1">
           <div style="font-size:13px;font-weight:500">${esc(s.t)}</div>
-          <div class="tiny muted">${esc(stepExec(s))}${s.due ? ' · ' + esc(s.due) : ''}</div>
+          <div class="tiny muted">${s.due ? esc(s.due) : 'no date set'}</div>
           ${stepRoleLine(s)}
         </div>
         <span class="tag ${late ? 't-risk' : 't-grey'}">${esc(stepWhen(s))}${late ? ' overdue' : ''}</span>
