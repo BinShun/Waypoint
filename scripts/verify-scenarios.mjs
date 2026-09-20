@@ -243,6 +243,18 @@ await bd.click(bd.$('[data-act="newcust"]'), 600);
 await bd.set(bd.$('#ncQ'), 'Sunrise Retail Group');
 await bd.click(bd.$('#ncSkip'), 1200);
 let sun = await savedRow(() => (disk().customers || []).find(x => x.name === 'Sunrise Retail Group'));
+if (!sun) {
+  /* A save that has not reached the disk is either slow, refused by the
+     server, or never sent — and the suite used to report all three as
+     "0 customers on disk", which reads as "the product forgot to write"
+     and sends the reader looking in the wrong place. Name the difference:
+     the record on screen proves the click worked, a "Not saved" banner
+     proves the PUT did not, and a page error names the exception. */
+  console.log('   [diag] sheet: ncQ=' + !!bd.$('#ncQ') + ' ncSkip=' + !!bd.$('#ncSkip')
+    + ' | on screen: ' + bd.$$('#page [data-open]').length + ' customer card(s)'
+    + ' | banner: ' + (/Not saved/i.test(bd.text()) ? 'Not saved' : 'none')
+    + ' | page errors: ' + (pageErrors.slice(0, 2).join(' | ') || 'none'));
+}
 check('the new customer is on the server', !!sun, (disk().customers || []).length + ' customers on disk');
 check('BD sees it immediately', /Sunrise Retail Group/.test(bd.text()));
 check('the creator owns it', sun && sun.owner === 'Ahmad Faiz', sun ? sun.owner : '');
