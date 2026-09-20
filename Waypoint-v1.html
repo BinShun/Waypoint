@@ -4262,6 +4262,12 @@ function tabOpps(c, ops){
     { l:'Moving',    why:'weighted value first — value × probability',        list: ranked.filter(o => stalled.indexOf(o) < 0) }
   ].filter(g => g.list.length);
 
+  /* The AI cluster is drawn once per opportunity, so the sentence about why
+     there is no cluster is said once per card, above the groups — not once
+     under every deal, which would read as five identical complaints. */
+  const aiOn = !!(aiState && aiState.configured && aiState.reachable);
+  const aiOff = aiOn ? '' : aiOffNote();
+
   return `<div class="card" style="padding:0;margin-bottom:var(--s5)">
     <div class="strip">
       <span class="sstat"><span class="n">${ops.length}</span><span class="l">${ops.length === 1 ? 'opportunity' : 'opportunities'}</span></span>
@@ -4272,6 +4278,7 @@ function tabOpps(c, ops){
       <div class="spacer"></div>
     </div>
   </div>
+  ${aiOff}
   ${groups.map(g => `
     <div class="grp-h">${g.l}<span class="n">${g.list.length}</span><span class="why">${g.why}</span></div>
     <div class="grid g2" style="margin-bottom:var(--s5)">
@@ -4305,7 +4312,7 @@ function tabOpps(c, ops){
             </span>`;
           }).join('')}
         </div>` : ''}
-        ${aiState && aiState.configured && aiState.reachable ? `<div class="ai-cluster">`
+        ${aiOn ? `<div class="ai-cluster">`
           + taskAskBox('analyzeOpp-' + esc(o.id), 'Analyze',
             'The facts from your records, then the model\'s reading of them.',
             { action: 'analyze-opp', targetId: o.id,
@@ -4679,6 +4686,10 @@ let auditShowAll = false;    /* the customer audit caps at twenty rows until ask
    a collapsed month still shows its count, so a card can never go missing. */
 let openMonths = new Set([todayISO().slice(0, 7)]);
 
+/* "Read minutes" is a button on every meeting card, so when no model can be
+   asked the screen loses every trace of the feature and says nothing at all.
+   That state belongs to the screen, not to the twelve cards that went quiet —
+   one line above the list covers all of them. */
 function screenInteractions(){
   return `
   <div class="phead">
@@ -4702,6 +4713,7 @@ function screenInteractions(){
     <div class="spacer"></div>
     <span class="tiny muted">Searching opens every month that has a match.</span>
   </div>
+  ${aiOffNote()}
   <div id="mList"></div>`;
 }
 
@@ -7947,6 +7959,28 @@ function aiNote(){
     ${aiState.reason ? esc(aiState.reason) : ''}</div>`;
 }
 
+/* "Configured" is not "working", and the screen distinguishes them — but
+   only the first of the two was ever said out loud. An endpoint that is
+   saved and not answering made every AI entry on every screen vanish with
+   no word at all, which is the one moment a person most needs a sentence:
+   this worked yesterday, and nothing on the page says what changed.
+   Five places used to decide this for themselves and four of them decided
+   silence. One helper, so every entry closes in the same voice. */
+function aiOffNote(){
+  if (!aiState) return '';              /* the boot question has not come back yet */
+  if (!aiState.configured) return aiNote();
+  if (aiState.reachable) return '';
+  /* The server's reason is a sentence when it knows why ("The endpoint did not
+     answer in time") and a Node error when it does not ("fetch failed"). Only
+     the first kind belongs on a screen somebody has to read. */
+  const why = /^The endpoint/i.test(String(aiState.reason || ''))
+    ? aiState.reason : 'The last probe did not reach it.';
+  return `<div class="note" style="margin-top:var(--s4)">
+    <strong>The endpoint is connected but is not answering.</strong> ${esc(why)}
+    Nothing here is being asked of it — every reading on this screen is a rule
+    until the endpoint answers again.</div>`;
+}
+
 /* Saving the endpoint really saves it — server-side, and then really asks the
    endpoint whether it answers. "Saved" and "working" are different claims and
    this reports them separately. */
@@ -8686,7 +8720,7 @@ async function askModel(prompt, system){
 /* The box is only offered when a model is both set and answering. Otherwise
    the screen shows why — it does not quietly drop the subject. */
 function modelAskBox(mountId, label){
-  if (!(aiState && aiState.configured && aiState.reachable)) return aiNote();
+  if (!(aiState && aiState.configured && aiState.reachable)) return aiOffNote();
   return `<div class="card" style="background:var(--violet-50);border-color:var(--violet-line)" id="${mountId}">
     <div class="row">${mascot('box', 'm-box')}<span class="ai-mark model">AI</span><div class="spacer"></div>
       <span class="tiny muted">${esc(aiState.model)}</span></div>
@@ -8899,7 +8933,7 @@ function taskBoxStateHtml(st){
 }
 
 function taskAskBox(mountId, label, hint, ask = {}, variants = []){
-  if (!(aiState && aiState.configured && aiState.reachable)) return aiNote();
+  if (!(aiState && aiState.configured && aiState.reachable)) return aiOffNote();
   const st = aiTasks.get(mountId);
   const body = taskBoxStateHtml(st && st.state !== 'idle' ? st : null);
   return `<div class="card" style="background:var(--violet-50);border-color:var(--violet-line)" id="${mountId}">
@@ -9488,7 +9522,7 @@ function openDiff(id){
            <div class="spacer"></div>
            <button class="btn sm" id="dfStageGo">Suggest a stage</button>
          </div>`
-      : (aiNote() || '');
+      : aiOffNote();
     const b = document.getElementById('dfStageGo');
     if (b) b.onclick = async () => {
       host.innerHTML = `<div class="row" style="margin:0 var(--s4) var(--s3)"><span class="ai-mark model">AI</span>

@@ -252,7 +252,7 @@ if (!sun) {
      proves the PUT did not, and a page error names the exception. */
   console.log('   [diag] sheet: ncQ=' + !!bd.$('#ncQ') + ' ncSkip=' + !!bd.$('#ncSkip')
     + ' | on screen: ' + bd.$$('#page [data-open]').length + ' customer card(s)'
-    + ' | banner: ' + (/Not saved/i.test(bd.text()) ? 'Not saved' : 'none')
+    + ' | banner: ' + ((bd.text().match(/Not saved[^.]*\./) || ['none'])[0].slice(0, 160))
     + ' | page errors: ' + (pageErrors.slice(0, 2).join(' | ') || 'none'));
 }
 check('the new customer is on the server', !!sun, (disk().customers || []).length + ' customers on disk');
