@@ -267,6 +267,18 @@ tr.lnk:hover td{background:var(--blue-25)}
   letter-spacing:.06em;text-transform:uppercase;padding:1px 6px;border-radius:3px}
 .ai-mark.rule{background:var(--blue-50);color:var(--blue)}
 .ai-mark.model{background:var(--violet-50);color:var(--violet)}
+/* One AI surface per opportunity, not two floating cards. The two ask boxes
+   keep their own ids and buttons — the tests pin both — they just stop
+   looking like two separate billboards. */
+.ai-cluster{background:var(--violet-50);border:1px solid var(--violet-line);
+  border-radius:var(--r-ctl);margin:var(--s3) 0;overflow:hidden}
+.ai-cluster .card{background:transparent;border:none;border-radius:0;
+  box-shadow:none;margin:0;padding:9px 12px}
+.ai-cluster .card + .card{border-top:1px dashed var(--violet-line)}
+.ai-cluster .card + .card > .row:first-child .tiny.muted{display:none}
+.ai-cluster .card > .row:first-child .tiny.muted,
+.ai-cluster .card > .row .tiny.muted:first-child{
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .pchip{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line-2);
   background:var(--surface);border-radius:var(--r-card);padding:10px var(--s3);margin-bottom:var(--s2)}
 .pchip .x{margin-left:auto;border:none;background:none;color:var(--ink-0);font-size:15px;line-height:1;padding:0 2px}
@@ -2191,7 +2203,7 @@ function screenCustomers(){
 
     <div class="card" style="padding:0;margin-bottom:var(--s5)">
       <div class="strip">
-        <span class="sstat"><span class="n">${rows.length}</span><span class="l">customers</span></span>
+        <span class="sstat"><span class="n">${rows.length}</span><span class="l">${rows.length === 1 ? 'customer' : 'customers'}</span></span>
         <span class="sstat"><span class="n">${money(open)}</span><span class="l">open value</span></span>
         <span class="sstat"><span class="n">${money(weighted)}</span><span class="l">weighted</span></span>
         <span class="sstat"><span class="n">${atRisk}</span><span class="l">at risk</span></span>
@@ -2220,14 +2232,14 @@ function screenCustomers(){
           ${healthTag(c.health, why)}
           <span class="mono" style="flex:0 0 96px;text-align:right;font-size:12.5px" title="${ops.length ? esc(money(val)) : ''}">${ops.length ? money(val) : '—'}</span>
         </div>
-        <div class="row" style="margin-top:9px;gap:6px;flex-wrap:wrap">
-          <span class="tiny muted" title="§10: the health word is never shown without its reason">Health · ${esc(why)}</span>
-          <span class="tag t-grey">${lm ? 'Met ' + fmtDay(lm.d) + ' — ' + esc(lm.t) : 'No meeting logged'}</span>
-          ${ns ? `<span class="tag ${stepOverdue(ns) && ns.from === 'us' ? 't-risk' : 't-blue'}">Next · ${esc(ns.t)}${stepOverdue(ns) ? ' · ' + stepWhen(ns) + ' overdue' : ' · ' + stepWhen(ns)}</span>` : ''}
+        <div class="row" style="margin-top:9px;gap:6px;flex-wrap:wrap;align-items:center">
+          ${ns ? `<span class="tag ${stepOverdue(ns) && ns.from === 'us' ? 't-risk' : 't-blue'}" style="font-weight:600">Next · ${esc(ns.t)}${stepOverdue(ns) ? ' · ' + stepWhen(ns) + ' overdue' : ' · ' + stepWhen(ns)}</span>` : ''}
           ${to ? `<span class="tag t-grey">${money(to.v)} · ${esc(to.stage)}</span>` : ''}
+          <span class="tag t-grey">${lm ? 'Met ' + fmtDay(lm.d) + ' — ' + esc(lm.t) : 'No meeting logged'}</span>
           ${openThreats(c.id).length
             ? `<span class="tag t-risk" title="A competitor or a regulator moved, and nobody has opened the source yet.">${openThreats(c.id).length} to check</span>` : ''}
         </div>
+        <div class="tiny muted" style="margin-top:6px" title="§10: the health word is never shown without its reason">Health · ${esc(why)}</div>
         <div class="row opt" style="margin-top:6px;gap:8px;flex-wrap:wrap">
           <span class="tiny muted">Who matters:</span>
           ${c.contacts.slice(0, 3).map(p => `<span class="tiny">${esc(p.n.split(' ').slice(-1)[0])} <span class="muted">${esc(p.s)}</span></span>`).join('<span class="tiny muted">·</span>')}
@@ -2257,7 +2269,7 @@ function screenCustomers(){
         ${rows.map(({c,ops,val}) => `<tr class="lnk" data-open="${c.id}">
           <td><div class="row" style="gap:9px">${logo(c, 20)}<strong>${esc(c.name)}</strong></div></td><td>${esc(c.industry)}</td>
           <td>${stanceTag(c.stance)}</td><td>${healthTag(c.health, healthWhy(c))}
-            <div class="tiny muted" style="margin-top:3px;max-width:280px">${esc(healthWhy(c))}</div></td>
+            <div class="tiny muted" title="§10: the health word is never shown without its reason" style="margin-top:3px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(healthWhy(c))}</div></td>
           <td class="mono">${c.contacts.length}</td><td class="mono">${ops.length}</td>
           <td class="mono">${ops.length ? money(val) : '—'}</td>
           <td>${esc(c.owner)}</td><td class="mono">${c.timeline.length ? esc(c.timeline[0].d) : '—'}</td>
@@ -2287,7 +2299,7 @@ function screenCustomers(){
 
   <div class="card" style="padding:0;margin-bottom:var(--s5)">
     <div class="strip">
-      <span class="sstat"><span class="n">${rows.length}</span><span class="l">customers</span></span>
+      <span class="sstat"><span class="n">${rows.length}</span><span class="l">${rows.length === 1 ? 'customer' : 'customers'}</span></span>
       <span class="sstat"><span class="n">${money(open)}</span><span class="l">open value</span></span>
       <span class="sstat"><span class="n">${money(weighted)}</span><span class="l">weighted</span></span>
       <span class="sstat"><span class="n">${atRisk}</span><span class="l">at risk</span></span>
@@ -2313,7 +2325,7 @@ function screenCustomers(){
           </div>
           ${stanceTag(c.stance)}
         </div>
-        <div class="tiny" style="height:34px;overflow:hidden;color:var(--ink-2)">
+        <div class="tiny" style="display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:var(--ink-2)">
           ${ns ? `<b style="font-weight:600">Next ·</b> ${esc(ns.t)}${late ? ' <span style="color:var(--risk)">' + stepWhen(ns) + ' overdue</span>' : ' · ' + stepWhen(ns)}`
                : (lm ? `<b style="font-weight:600">Met</b> ${fmtDay(lm.d)} · ${esc(lm.t)}`
                /* A record without a brief is normal — the field is optional and
@@ -4204,7 +4216,7 @@ function tabOpps(c, ops){
 
   return `<div class="card" style="padding:0;margin-bottom:var(--s5)">
     <div class="strip">
-      <span class="sstat"><span class="n">${ops.length}</span><span class="l">opportunities</span></span>
+      <span class="sstat"><span class="n">${ops.length}</span><span class="l">${ops.length === 1 ? 'opportunity' : 'opportunities'}</span></span>
       <span class="sstat"><span class="n">${money(total)}</span><span class="l">on the table</span></span>
       <span class="sstat"><span class="n">${money(weighted)}</span><span class="l">weighted</span></span>
       <span class="sstat"><span class="n">${stalled.length}</span><span class="l">stalled</span></span>
@@ -4245,17 +4257,19 @@ function tabOpps(c, ops){
             </span>`;
           }).join('')}
         </div>` : ''}
-        ${aiState && aiState.configured && aiState.reachable ? taskAskBox('analyzeOpp-' + esc(o.id), 'Analyze',
-          'The facts from your records, then the model\'s reading of them.',
-          { action: 'analyze-opp', targetId: o.id,
-            question: 'What are the current risks and what should I do next?' },
-          [{ label: 'What should I do next?', question: 'What should I do next on this opportunity?' },
-           { label: 'Find risks', question: 'Find the risks on this opportunity.' },
-           { label: 'Find missing information', question: 'What information is missing on this opportunity?' }]) : ''}
-        ${aiState && aiState.configured && aiState.reachable ? taskAskBox('suggestProducts-' + esc(o.id), 'Suggest Products',
-          '§13: picked only from the Product Reference — nothing is attached and no SA is contacted.',
-          { action: 'suggest-products', targetId: o.id,
-            question: 'Which products from the Reference fit this opportunity?' }) : ''}
+        ${aiState && aiState.configured && aiState.reachable ? `<div class="ai-cluster">`
+          + taskAskBox('analyzeOpp-' + esc(o.id), 'Analyze',
+            'The facts from your records, then the model\'s reading of them.',
+            { action: 'analyze-opp', targetId: o.id,
+              question: 'What are the current risks and what should I do next?' },
+            [{ label: 'What should I do next?', question: 'What should I do next on this opportunity?' },
+             { label: 'Find risks', question: 'Find the risks on this opportunity.' },
+             { label: 'Find missing information', question: 'What information is missing on this opportunity?' }])
+          + taskAskBox('suggestProducts-' + esc(o.id), 'Suggest Products',
+            '§13: picked only from the Product Reference — nothing is attached and no SA is contacted.',
+            { action: 'suggest-products', targetId: o.id,
+              question: 'Which products from the Reference fit this opportunity?' })
+          + `</div>` : ''}
         ${canEditKind(rmKey.opp(c, o)) ? (() => {
           const pool = (D.products || []).filter(p => !(o.items || []).includes(p.id));
           return pool.length ? `<div class="row" style="gap:6px;margin-bottom:var(--s3)">
