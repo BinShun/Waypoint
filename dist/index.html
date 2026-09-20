@@ -2709,14 +2709,26 @@ function drawMom(){
     document.getElementById('momGo').onclick = () => runMom(momState.mid);
     return;
   }
-  const chip = (arr, cls, label) => arr.length ? `
+  /* `word` is the chip on each row and `label` is the heading above them.
+     They used to be one argument, and the chip was `label.split(' ')[0]` —
+     which is right for "Requirements" and wrong for "Customer concerns":
+     every concern in the reading was tagged "Customer", so the chip named
+     the block's first word instead of the thing in the row. */
+  const chip = (arr, cls, label, word) => arr.length ? `
     <div style="margin-top:var(--s3)">
       <div class="tiny" style="font-weight:600;margin-bottom:4px">${label}</div>
       ${arr.map(x => `<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line)">
-        <span class="tag ${cls}" style="flex:0 0 auto">${esc(label.split(' ')[0])}</span>
+        <span class="tag ${cls}" style="flex:0 0 auto">${esc(word)}</span>
         <span style="font-size:13px;flex:1">${esc(x)}</span>
       </div>`).join('')}
     </div>` : '';
+  /* The model's own vocabulary for a next step — "proposal", "follow-up" —
+     is the right word in the wrong case next to "Concern" and "Commitment".
+     The value is kept; only the way it reads is changed. */
+  const kindWord = (k) => ({
+    opportunity:'Opportunity', 'follow-up':'Follow-up', task:'Task', meeting:'Meeting',
+    proposal:'Proposal', sa:'SA', product:'Product', validate:'Validate', prepare:'Prepare'
+  }[String(k || '').toLowerCase()] || String(k || 'step').replace(/^./, (ch) => ch.toUpperCase()));
   /* §14's example, as the panel's own opening line: what the reading found,
      counted, and the reminder that nothing moves until the reader says so. */
   const nAct = (out.steps || []).length, nPain = (out.pains || []).length, nOpp = (out.opps || []).length;
@@ -2737,10 +2749,10 @@ function drawMom(){
       <div class="tiny" style="font-weight:600;margin-bottom:4px">Outcome</div>
       <p style="font-size:13.5px;margin:0">${esc(out.outcome || '-')}</p>
     </div>` : ''}
-    ${chip(out.concerns, 't-warn', 'Customer concerns')}
-    ${chip(out.requirements, 't-grey', 'Requirements')}
-    ${chip(out.decisions, 't-blue', 'Decisions')}
-    ${chip(out.commitments, 't-ok', 'Commitments')}
+    ${chip(out.concerns, 't-warn', 'Customer concerns', 'Concern')}
+    ${chip(out.requirements, 't-grey', 'Requirements', 'Requirement')}
+    ${chip(out.decisions, 't-blue', 'Decisions', 'Decision')}
+    ${chip(out.commitments, 't-ok', 'Commitments', 'Commitment')}
     <div style="margin-top:var(--s4)">
       <div class="tiny" style="font-weight:600;margin-bottom:4px">Suggested next steps - tick the ones to create</div>
       ${(out.steps || []).length ? out.steps.map((st, i) => {
@@ -2750,7 +2762,7 @@ function drawMom(){
         <div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);align-items:flex-start">
           <input type="checkbox" data-mchk="${i}"${momState.picked.includes(i) ? ' checked' : ''}${made ? ' disabled' : ''}
             style="flex:0 0 auto;margin-top:3px" />
-          <span class="tag t-grey" style="flex:0 0 auto">${esc(st.kind)}</span>
+          <span class="tag t-grey" style="flex:0 0 auto">${esc(kindWord(st.kind))}</span>
           <span class="pr-main">
             <span class="pr-n" style="font-weight:500${made ? ';color:var(--ink-3)' : ''}">${esc(st.t)}${made ? ' · created' : ''}</span>
             <span class="pr-t">${st.from === 'customer' ? 'in their court' : 'our move'}${st.due ? ' · due ' + esc(st.due) : ''}${st.exec ? ' · on ' + esc(st.exec) : ''}${rel ? ' · ties to ' + esc(rel.t) : ''}</span>
@@ -2785,6 +2797,10 @@ function drawMom(){
     ${(out.opps || []).length ? `
     <div style="margin-top:var(--s4)">
       <div class="tiny" style="font-weight:600;margin-bottom:4px">Potential opportunities - what the minutes hint at</div>
+      <!-- One caveat for the whole block, not one per card: it is true of every
+           hint in the reading, and saying it three times in a row is the kind
+           of repetition that teaches a reader to skip it. -->
+      <div class="tiny muted" style="margin-bottom:6px">Source: these minutes - the customer has not confirmed this demand.</div>
       ${out.opps.map((o, oi) => {
         /* §10: the user can create it or dismiss it — both are the reader's
            call, never the model's. A dismissed hint is dropped from the panel
@@ -2795,7 +2811,6 @@ function drawMom(){
         <div class="card" style="padding:var(--s3);margin-bottom:var(--s2)">
           <div style="font-weight:500;font-size:13.5px">${esc(o.t)}</div>
           <div class="tiny muted" style="margin-top:4px">Why this may be an opportunity: ${esc(o.why)}</div>
-          <div class="tiny muted" style="margin-top:2px">Source: these minutes - the customer has not confirmed this demand.</div>
           <div class="row" style="margin-top:8px;gap:8px;align-items:center">
             ${made
               ? '<span class="tiny" style="font-weight:600">created</span><span class="tiny muted">it is in the pipeline now - amounts and dates are set on the opportunity itself.</span>'
