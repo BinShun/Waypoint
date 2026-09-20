@@ -70,6 +70,13 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
 
 /* ----------------------------------------------------------------- shell */
 #app{display:grid;grid-template-columns:var(--rail) 1fr;min-height:100vh}
+/* A grid item is `min-width:auto` by default, so the main column is exactly as
+   wide as the widest thing inside it refuses to get narrower than — one
+   unbreakable row anywhere on the page and the whole workspace scrolls
+   sideways on a phone. Zero lets the column be the width it is GIVEN; what
+   cannot fit inside it then has to be dealt with on its own terms (wrap,
+   scroll, or ellipsis) instead of quietly widening the world. */
+main{min-width:0}
 .rail{background:var(--rail-bg);border-right:1px solid var(--rail-line);
   padding:var(--s5) var(--s3);position:sticky;top:0;height:100vh;overflow-y:auto;
   /* flex column so the theme switch in .rail-foot can pin to the bottom
@@ -583,6 +590,20 @@ body.onlogin #app{display:none}
   body.picked .plist{display:none}
   .pr-m.opt{display:none}
   .strip{gap:var(--s3)}
+  /* A row that will not fit on a phone should FOLD, not widen the workspace.
+     Four buttons in a footer, three actions above a record — they wrap. */
+  .row{flex-wrap:wrap}
+  /* Six tabs do not fit in 390px. They scroll: one strip, swipeable, with the
+     underline still saying which one you are on. Scrolling beats wrapping
+     here — a tab bar that folds onto two lines stops reading as a tab bar. */
+  .tabs{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{flex:0 0 auto}
+  /* A product row carries a whole sentence in its meta slot ("Nobody named
+     yet — the team will avoid self-serving claims"). nowrap on a 350px
+     sentence is what made the products screen 523px wide on a 390px phone. */
+  .pr{flex-wrap:wrap}
+  .pr-m{white-space:normal}
 }
 
 /* =================================================== scale — long lists ===
@@ -5068,7 +5089,7 @@ function roleMatrix(){
       title="Change what ${esc(r.l)} may do — logged on the audit trail.">${capLabel(row, on)}</button>`;
   };
   return `
-  <div class="card" style="padding:0;margin-bottom:var(--s5)" data-tour="matrix">
+  <div class="card" style="padding:0;margin-bottom:var(--s5);overflow-x:auto" data-tour="matrix">
     <table class="mx">
       <tr><th>What</th>${ROLE_DEFS.map(r => `<th>${r.l}</th>`).join('')}</tr>
       ${CAP_ROWS.map(row => `<tr><td>${esc(row.l)}${row.locked ? ' <span class="tiny muted">(always Admin)</span>' : ''}</td>
@@ -5622,7 +5643,7 @@ function drawImport(){
 
 function teamRosterCard(){
   return `
-  <div class="card" style="padding:0;margin-bottom:var(--s5)">
+  <div class="card" style="padding:0;margin-bottom:var(--s5);overflow-x:auto">
     <table>
       <tr><th>Person</th><th>Role</th><th>Function</th><th>On</th><th>Last in</th><th></th></tr>
       ${D.team.map(t => `<tr>
@@ -7895,6 +7916,16 @@ function render(){
      to be decided again — the DOM does not remember it. After the restore, so
      a restored stage of "Lost" shows the field it makes required. */
   lostField();
+  /* Six tabs scroll sideways on a phone, and the one you are on can be the one
+     you cannot see — arriving at a customer from a link that names the
+     Opportunities tab and having no idea you are on it is worse than the
+     alternative. Only when it is genuinely out of view: centring a tab that is
+     already visible would slide the strip out from under somebody's finger. */
+  const onTab = p.querySelector('.tab.on'), strip = onTab && onTab.parentElement;
+  if (strip && onTab.scrollIntoView && strip.scrollWidth > strip.clientWidth + 2){
+    const a = onTab.getBoundingClientRect(), b = strip.getBoundingClientRect();
+    if (a.left < b.left || a.right > b.right) onTab.scrollIntoView({ block:'nearest', inline:'center' });
+  }
   window.scrollTo(0,0);
 }
 
