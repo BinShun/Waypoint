@@ -348,9 +348,13 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 .mini.on{background:var(--ok);border-color:var(--ok);color:#fff}
 
 /* stage columns */
-.board{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3);align-items:start}
-@media(max-width:1080px){.board{grid-template-columns:repeat(2,1fr)}}
-.col{background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-card);padding:var(--s3)}
+.board{display:flex;gap:var(--s3);align-items:flex-start;flex-wrap:wrap}
+/* A stage with nothing in it still gets named — you need to see where a card
+   will land — but it stops renting the same width as a live column. The class
+   is `.col-none`, NOT `.empty`: that name is the page-level empty state
+   (centred, heavily padded) and it hijacks any column that borrows it. */
+.col{flex:1 1 230px;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-card);padding:var(--s3)}
+.col-none{flex:0 1 150px;min-width:130px}
 .col-h{display:flex;align-items:baseline;gap:7px;margin-bottom:var(--s3);padding:0 2px}
 .col-h .n{font-size:13px;font-weight:600}
 .col-h .c{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
@@ -4489,9 +4493,9 @@ function screenOpportunities(){
     <div class="card" style="padding:0;overflow-x:auto">
       <table>
         <thead><tr>
-          <th>Opportunity</th><th>Customer</th><th>Stage</th><th>Owner</th>
-          <th style="text-align:right">Value</th><th style="text-align:right">Prob</th>
-          <th style="text-align:right">Weighted</th><th>Close</th><th>In stage</th><th></th>
+          <th>Opportunity</th><th>Customer</th><th>Stage</th><th style="white-space:nowrap">Owner</th>
+          <th style="text-align:right;white-space:nowrap">Value</th><th style="text-align:right;white-space:nowrap">Prob</th>
+          <th style="text-align:right;white-space:nowrap">Weighted</th><th style="white-space:nowrap">Close</th><th style="white-space:nowrap">In stage</th><th></th>
         </tr></thead>
         <tbody>${sorted.map(o => {
           const c = cust(o.c);
@@ -4502,12 +4506,12 @@ function screenOpportunities(){
             <td><strong>${esc(o.t)}</strong></td>
             <td>${esc(c.name)}</td>
             <td>${onPath ? `<span class="tag ${stageCls(o.stage)}">${esc(o.stage)}</span>` : `<span class="tag t-grey">${esc(o.stage)}</span>`}</td>
-            <td>${o.owner ? esc(o.owner) : '<span class="muted">unowned</span>'}</td>
-            <td class="mono" style="text-align:right">${money(o.v)}</td>
-            <td class="tiny muted" style="text-align:right">${o.p}%</td>
-            <td class="mono" style="text-align:right">${money(Math.round(o.v * o.p / 100))}</td>
-            <td class="tiny">${o.close ? esc(o.close) + (toClose != null && toClose < 0 ? ` <span class="tag t-warn">overdue</span>` : '') : '<span class="muted">—</span>'}</td>
-            <td class="tiny muted" title="${esc(oppWhy(o))} — §13: the deal's own evidence">${oppAge(o)}d</td>
+            <td>${o.owner ? `<span style="white-space:nowrap">${esc(o.owner)}</span>` : '<span class="muted">unowned</span>'}</td>
+            <td class="mono" style="text-align:right;white-space:nowrap">${money(o.v)}</td>
+            <td class="tiny muted" style="text-align:right;white-space:nowrap">${o.p}%</td>
+            <td class="mono" style="text-align:right;white-space:nowrap">${money(Math.round(o.v * o.p / 100))}</td>
+            <td class="tiny" style="white-space:nowrap">${o.close ? esc(o.close) + (toClose != null && toClose < 0 ? ` <span class="tag t-warn">overdue</span>` : '') : '<span class="muted">—</span>'}</td>
+            <td class="tiny muted" style="white-space:nowrap" title="${esc(oppWhy(o))} — §13: the deal's own evidence">${oppAge(o)}d</td>
             <td style="white-space:nowrap">
               ${canEditKind(k) ? `<button class="btn sm" data-act="ed" data-ed="${k}">Edit</button>` : ''}
               ${rmBar(k, o.t)}
@@ -4523,7 +4527,7 @@ function screenOpportunities(){
   const cols = D.stages.map((s, i) => {
     const list = Object.values(D.opps).filter(o => o.stage === s && inScope(o.c)).sort((a,b) => oppAge(b) - oppAge(a));
     const tot = list.reduce((a,o) => a + o.v, 0);
-    return `<div class="col">
+    return `<div class="col${list.length ? '' : ' col-none'}">
       <div class="col-h"><span class="col-pill ${stageCls(s)}"></span><span class="n">${s}</span><span class="c">${list.length}</span>
         <span class="col-t">${list.length ? cm(tot) : ''}</span></div>
       ${list.map(o => {
@@ -4538,7 +4542,6 @@ function screenOpportunities(){
               <div class="m">${esc(c.name)}</div>
             </div>
           </div>
-          <div class="rail-dots">${D.stages.map((s,j) => `<i class="${j <= i ? 'on ' + stageCls(s) : ''}" title="${esc(s)}"></i>`).join('')}</div>
           ${o.owner ? `<div class="opp-own"><span class="av">${esc(initials(o.owner))}</span>${esc(o.owner)}</div>` : ''}
           <div class="f">
             <span class="mono amt">${money(o.v)}</span>
