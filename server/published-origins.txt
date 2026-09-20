@@ -1,0 +1,26 @@
+# Hostnames this application is published as.
+#
+# Why this file exists: behind a public reverse proxy the browser still sends an
+# `Origin` header, and the rule that allows "the app's own public hostname"
+# needs to know that name. It normally comes from `X-Forwarded-Host`, falling
+# back to `Host`. Some proxies forward neither — `Host` is then the sandbox's
+# internal address — so the comparison can never match, the front end is
+# rejected as a stranger, and every save answers 403 while the UI reports
+# "Data server offline". Listing the public name here is what makes the rule
+# work when the proxy does not tell us.
+#
+# This is not a relaxation. The hostname a browser must present to be allowed
+# is still checked; this file only supplies the name we answer to.
+#
+# One hostname per line. A "#" starts a comment. Blank lines are ignored.
+# The environment alternative is WB_ORIGINS (comma separated), which is the
+# right place for names you do not want committed.
+
+account-workbench.app-tencent.workbuddy.host
+
+waypoint.app-tencent.workbuddy.host
+
+# Generated at publish time, so it cannot be listed in advance. If your next
+# publish hands out a different label, add it here — or set WB_ORIGIN_SUFFIX to
+# the zone and stop chasing labels.
+a08191a58a43509b7.app-tencent.workbuddy.host

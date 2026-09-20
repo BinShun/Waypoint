@@ -1,0 +1,13 @@
+node_modules/
+.DS_Store
+
+# Live credential for the model endpoint (AI_API_KEY). Never commit it.
+.env
+
+# The workspace itself: customer notes, and the password hashes.
+# NEVER un-ignore this for a normal deploy: the published sandbox keeps its own
+# data/ and uploading ours would overwrite whatever people have typed in there.
+data/
+
+# Private key for the self-signed https certificate. Never share or commit it.
+certs/
