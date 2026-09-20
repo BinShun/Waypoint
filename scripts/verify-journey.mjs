@@ -321,13 +321,16 @@ await bd.click(bd.byText('#page [data-tab]', 'Opportunities'), 700);
 check('the Opportunities tab offers a way to add one',
   !!bd.$('[data-act="addtoggle"][data-add="opportunities"]'));
 await bd.click(bd.$('[data-act="addtoggle"][data-add="opportunities"]'), 500);
-await bd.set(bd.$('#ad1'), 'Retail data platform');
+await bd.set(bd.$('#ad1'), 'Warehouse robotics rollout');
 await bd.set(bd.$('#ad2'), '900000');
 await bd.click(bd.$('[data-act="addsave"]'), 300);
-const opp = await lands(() => Object.values(disk().opps || {}).find(o => /Retail data platform/.test(o.t || '')));
+/* A name the demo seed does not carry: `find` must land on the row this
+   test just wrote, not on the seed's own 'Retail data platform
+   modernisation' deal, whose substring used to shadow it. */
+const opp = await lands(() => Object.values(disk().opps || {}).find(o => /Warehouse robotics rollout/.test(o.t || '')));
 check('the opportunity is saved', !!opp, opp ? opp.t + ' · ' + opp.v : 'not on disk');
 check('it belongs to the customer', !!opp && opp.c === c.id);
-check('and is on screen', /Retail data platform/.test(bd.text()));
+check('and is on screen', /Warehouse robotics rollout/.test(bd.text()));
 
 /* 7. A follow-up action, promised in the meeting. */
 await bd.click(bd.$('[data-go="today"]'), 800);
@@ -350,7 +353,7 @@ if (saveBtn) {
 
 /* 8. Leave, come back, refresh — the three ways a record gets lost. */
 await bd.click(bd.$('[data-go="opportunities"]'), 800);
-check('the opportunity shows on the Opportunities screen', /Retail data platform/.test(bd.text()));
+check('the opportunity shows on the Opportunities screen', /Warehouse robotics rollout/.test(bd.text()));
 await bd.click(bd.$('[data-go="people"]'), 800);
 check('the person shows on the People screen', /Mei Ling Tan/.test(bd.text()));
 
@@ -455,7 +458,7 @@ if (saCard) {
   check('SA does not get to change the money', !sa.$('[data-act="addtoggle"][data-add="opportunities"]'),
     'BD owns money, SA owns machines');
   check('SA sees the opportunity but is offered no Edit on it',
-    /Retail data platform/.test(sa.text()) && !sa.$('[data-act="ed"]'),
+    /Warehouse robotics rollout/.test(sa.text()) && !sa.$('[data-act="ed"]'),
     'reads across, does not write across');
 }
 

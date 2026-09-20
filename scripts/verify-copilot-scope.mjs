@@ -204,6 +204,15 @@ const TOMORROW = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
   skeleton.audit = [];
   skeleton.files = [];
   skeleton.watch = [];
+  /* The fixture's own stage ladder. The skeleton is copied from the live
+     book, and a book seeded with a different ladder (the demo seed ships
+     six stages without 'Evaluating') silently reclassifies o_lapsed as
+     not-open — three rules and two focus-list checks fail on a world the
+     suite never wrote. A fixture must carry its own worldview: pin the
+     four-stage ladder these rows were authored against. */
+  skeleton.config = Object.assign({}, skeleton.config, {
+    stages: ['Interested', 'Evaluating', 'POC / Quoted', 'Submitted'],
+  });
   writeFileSync(join(dir, 'workbench.json'), JSON.stringify(skeleton));
 }
 
