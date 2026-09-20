@@ -1677,6 +1677,45 @@ document.addEventListener('dragstart', (e) => {
   if (e.target && String(e.target.tagName) === 'IMG') e.preventDefault();
 });
 
+/* --------------------------------------------- whose book you are looking at
+   "1 of 12 customers" is one sentence serving two different situations: a
+   Manager reading the whole book, and a colleague standing on one account.
+   Both are true, and one of them is useless, because this clause is the only
+   thing on the screen that says which of the two you are in. A colleague who
+   is shown three accounts and told nothing concludes the other nine do not
+   exist — and then reports it in a meeting.
+   Scope is always computed from the signed-in person (`myIds`), so "you" is
+   the honest word even when an Admin is wearing somebody else's rights. */
+function scopeLine(){
+  if (guest) return '';              /* looking around is not a scope */
+  const n = visibleCustomers().length, all = D.customers.length;
+  if (can('allCustomers')) return all === 1 ? 'the only customer in the book'
+                                            : `all ${all} customers in the book`;
+  if (!n) return `none of the ${all} — you are not on an account yet`;
+  return `the ${n} of ${all} customer${all === 1 ? '' : 's'} you are on`;
+}
+
+/* The customer list's headline. Same problem as the banner, one screen down:
+   a Manager and a colleague got the same sentence about different records. */
+function custHeadline(n){
+  if (!n) return guest || can('allCustomers') ? 'No customers in the workspace yet'
+                                              : 'No customers — you are not on an account yet';
+  if (guest || can('allCustomers')) return n === 1 ? '1 customer, owned by somebody'
+                                                   : n + ' customers, every one somebody owns';
+  return n === 1 ? '1 customer — the one you are on' : n + ' customers — the ones you are on';
+}
+
+/* An empty list that tells you to clear the search is lying when the list is
+   empty for a different reason. There is no search to clear; there is a
+   roster somebody else holds. Say that instead of sending the reader to a
+   control that cannot help. */
+function emptyScopeNote(){
+  if (!D.customers.length) return 'There are no customers in the workspace yet.';
+  return `There is nothing here to filter — you are not on any account yet.
+    An administrator puts you on one from <b>Admin&nbsp;·&nbsp;People</b>: open your
+    name and tick the customers you work on.`;
+}
+
 function roleBanner(){
   if (guest) return `<div class="rban" data-tour="guestban">
     <span class="tag t-grey">Looking around</span>
@@ -1699,7 +1738,7 @@ function roleBanner(){
     <span class="tag t-violet">${isAdminSession() ? 'Viewing as ' : ''}${esc(ROLE[asRole])}</span>
     <span class="tiny">${esc(def.d)}</span>
     <div class="spacer"></div>
-    <span class="tiny muted">${visibleCustomers().length} of ${D.customers.length} customer${D.customers.length === 1 ? '' : 's'} ·
+    <span class="tiny muted">${scopeLine()} ·
       ${asRole === 'manager' ? 'read-only' : writes ? writes + ' write rights' : 'no write rights'}</span>
     ${switcher}
   </div>`;
@@ -2312,7 +2351,7 @@ function screenCustomers(){
   return `
   <div class="phead">
     <div><h1>Customers</h1><p class="sub">${rows.length === vis.length
-      ? (vis.length === 1 ? '1 customer, owned by somebody' : vis.length + ' customers, every one somebody owns')
+      ? custHeadline(vis.length)
       : (rows.length + ' of ' + vis.length + (vis.length === 1 ? ' customer shown' : ' customers match'))}</p></div>
     <div class="spacer"></div>
     <div class="seg">
@@ -2379,7 +2418,9 @@ function screenCustomers(){
   </div>`
     : `<div class="card"><div class="empty">
          <div style="display:flex;justify-content:center;margin-bottom:var(--s3)">${ART.empty}</div>
-         No customer matches that.<br />Clear the search, or widen the industry and stance.
+         ${vis.length
+           ? 'No customer matches that.<br />Clear the search, or widen the industry and stance.'
+           : emptyScopeNote()}
        </div></div>`}`;
 }
 
@@ -5142,7 +5183,7 @@ function viewAsCard(){
   <div class="card" data-tour="viewas" style="margin-bottom:var(--s5)">
     <div class="row">
       <div><div style="font-size:13.5px;font-weight:600">See the product as</div>
-        <div class="tiny muted">Not a mock-up. Switching changes the rows, the counts and the buttons, everywhere.</div></div>
+        <div class="tiny muted">Not a mock-up. Switching changes what you may do, everywhere — the buttons, the fields, the totals. The accounts stay yours: a lens is a set of rights, not a different person.</div></div>
       <div class="spacer"></div>
       <div class="seg">
         ${ROLE_DEFS.map(r => `<button data-as="${r.k}" class="${asRole === r.k ? 'on' : ''}">${r.l}</button>`).join('')}
@@ -5159,7 +5200,7 @@ function viewAsCard(){
     <div class="hr"></div>
     <div class="row">
       <span class="tag t-violet">You are looking through ${esc(ROLE[asRole])}’s eyes</span>
-      <span class="tiny muted">${visibleCustomers().length} of ${D.customers.length} customer${D.customers.length === 1 ? '' : 's'} · Admin is hidden from the rail while you are in this view.</span>
+      <span class="tiny muted">${scopeLine()} · Admin is hidden from the rail while you are in this view.</span>
       <div class="spacer"></div>
       <button class="btn sm" data-act="asadmin">Back to Admin</button>
     </div>` : ''}
