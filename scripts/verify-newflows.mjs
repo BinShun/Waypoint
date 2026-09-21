@@ -812,16 +812,18 @@ if (editBtn) {
 /* WHAT THIS BLOCK USED TO CLAIM, AND WHY IT WAS WRONG
    It asserted `no demo customer exists` — on a fixture copied from
    `data/workbench.json`. That assertion could only ever be true of a book with
-   no demo data, and the fixture is now seeded WITH one (§29 of the brief asks
-   for exactly one demo customer, labelled, and `npm run seed:demo` is how it
-   gets there). The two intentions were quietly in conflict, and the reason it
-   went unnoticed is the previous paragraph's story: for a while this suite was
+   no demo data, and the fixture of the day was seeded with one (§29 of the
+   brief asked for exactly one demo customer, and the seeder of the day wrote
+   it). The two intentions were quietly in conflict, and the reason it went
+   unnoticed is the previous paragraph's story: for a while this suite was
    not talking to its own server at all.
 
-   The hazard the old assertion was really guarding against is real and is kept
-   in full: a sample customer once shipped INSIDE the HTML, survived an empty
-   server state, and wrote itself into a real workspace on the first save. So
-   the durable claims are made instead, and they hold whatever the fixture is:
+   The seeder has since been narrowed to accounts + catalogue only — the
+   demo book now lives client-side, in the guest posture — but the hazard the
+   old assertion was really guarding against is real and is kept in full:
+   a sample customer once shipped INSIDE the HTML, survived an empty server
+   state, and wrote itself into a real workspace on the first save. So the
+   durable claims are made instead, and they hold whatever the fixture is:
      - nothing appears that nobody entered (a fixed count, not a zero count);
      - every demo row present says so, and stays countable;
      - a demo customer is ordinary data — openable, and not privileged. */

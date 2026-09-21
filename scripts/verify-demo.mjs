@@ -2,14 +2,15 @@
  *
  * WHY THIS EXISTS
  * ---------------
- * The workspace people are shown at a demo is seeded by scripts/seed-demo.mjs:
- * one customer, two deals, a roster, and figures a real pipeline would be proud
- * of. Every one of those numbers looks exactly like a real number on screen,
- * and the screen used to say nothing about which book you were reading. A
- * guest got a banner; the moment you signed in — which is the moment the
- * product starts looking credible — the distinction disappeared. Somebody
- * quotes RM450k in a meeting and nobody in the room can tell whether it came
- * from a customer or from a script.
+ * The book people are shown at a demo has to be distinguishable from a book
+ * somebody works in. The seeder (scripts/seed-demo.mjs) now writes NO
+ * business data at all — the four-company demo book lives client-side in the
+ * guest posture — so the only producer of the `demo` mark is an operator
+ * marking a workspace on disk by hand. Every one of those numbers still looks
+ * exactly like a real number on screen, and the screen used to say nothing
+ * about which book you were reading. Somebody quotes RM450k in a meeting and
+ * nobody in the room can tell whether it came from a customer or from a
+ * fixture.
  *
  * So the workspace carries a mark, the server owns it, and the rail says it:
  * `SAMPLE DATA`, in neutral grey. Neutral on purpose — sample data is not a
@@ -22,7 +23,7 @@
  * it exists to protect. And a client that sent `demo: true` of its own would
  * be marking somebody else's real book as a sample.
  *
- * Two workspaces, two servers: the seeded one, and a copy with the mark
+ * Two workspaces, two servers: one marked on disk, and a copy with the mark
  * removed, which stands in for a real book somebody is working in.
  *
  * Run from customer-workbench/:  npm run verify:demo
@@ -56,8 +57,7 @@ const dirA = mkdtempSync(join(tmpdir(), 'wp-demo-'));
 const dirB = mkdtempSync(join(tmpdir(), 'wp-demo-real-'));
 
 /* Seeded into a throwaway directory rather than copied out of data/: the
-   claim under test is what the seeding tool writes, and a fixture somebody
-   may have edited by hand is not that. */
+   claim under test starts from what the seeding tool writes. */
 {
   const r = spawnSync(process.execPath, [join(ROOT, 'scripts', 'seed-demo.mjs')], {
     cwd: ROOT, env: { ...process.env, WB_DATA_DIR: dirA }, encoding: 'utf8',
@@ -67,10 +67,17 @@ const dirB = mkdtempSync(join(tmpdir(), 'wp-demo-real-'));
     process.exit(1);
   }
 }
+/* The mark is written ON DISK by hand — the only producer now that the
+   seeder writes no business data. This stands in for an operator marking a
+   workspace; what is under test is the server's keeping of the mark, not
+   the writing of it. */
 {
   const book = JSON.parse(readFileSync(join(dirA, 'workbench.json'), 'utf8'));
-  delete book.demo;   /* a real workspace: nothing was seeded into it */
-  writeFileSync(join(dirB, 'workbench.json'), JSON.stringify(book));
+  book.demo = true;   /* the mark, as an operator writes it */
+  writeFileSync(join(dirA, 'workbench.json'), JSON.stringify(book));
+  const real = JSON.parse(readFileSync(join(dirA, 'workbench.json'), 'utf8'));
+  delete real.demo;   /* a real workspace: nothing was seeded into it */
+  writeFileSync(join(dirB, 'workbench.json'), JSON.stringify(real));
   writeFileSync(join(dirB, 'workbench.rev.json'), JSON.stringify({ rev: 1, savedAt: new Date().toISOString() }));
 }
 
@@ -140,9 +147,9 @@ await apiB('/api/login', {
 /* ======================================================================= */
 console.log('\n— the mark belongs to the book, and the server keeps it —');
 
-check('the seeder marks the book it writes', diskA().demo === true,
+check('the book marked on disk is the sample book', diskA().demo === true,
   'demo=' + JSON.stringify(diskA().demo));
-check('a workspace nobody seeded carries no mark', !('demo' in diskB()));
+check('a workspace nobody marked carries no mark', !('demo' in diskB()));
 
 const readA = await apiA('/api/data');
 check('the read says which book this is', readA.body?.demo === true,

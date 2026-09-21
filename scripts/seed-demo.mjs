@@ -1,20 +1,22 @@
 /**
- * Seed a workspace with the accounts and ONE demo customer.
+ * Seed a workspace with accounts and the catalogue — nothing else.
  *
  * WHY THIS EXISTS
  * ---------------
- * The product must be testable from a clean slate, and §29 of the brief asks
- * for exactly one demo customer that walks the whole business chain:
+ * A public deployment needs the roster (four roles), their credentials and
+ * the sellable catalogue (§27) before anybody signs in — and it must not ship
+ * a single row of business data. Sample business data lives in exactly two
+ * places, both client-side: the guest posture ("look around without signing
+ * in") reads `demoBook()` inside Waypoint-v1.html, and the walkthroughs run
+ * on whatever book the person is looking at — the guest book included.
+ * A signed-in view that carried sample customers would be a book somebody
+ * cannot trust, which is why this script has no mode that writes one.
  *
- *   Customer → Opportunity → Next Step → MOM → new Next Step → new Opportunity
- *            → Timeline
- *
- * The previous attempt at demo data was a sample customer baked into the HTML.
- * It survived an empty server state and wrote itself into real workspaces on
- * the first save (see the fence at `demo data` in Waypoint-v1.html). That is
- * why this script exists as a SEPARATE file that writes a SEPARATE workspace:
- * the shipped page carries no sample data at all, and this script never
- * touches `data/` unless you point it there on purpose.
+ * The previous full mode (one "SAMPLE - Nusantara Retail Group" customer with
+ * two deals, steps and a MOM) was removed once the four-company DEMO guest
+ * book (Maybank / Telekom Malaysia / Sunway / Astro) shipped: two sample
+ * books is one too many, and the seeded one kept reaching deployments it was
+ * never meant for. Its story survives in git history.
  *
  * USAGE
  *   node scripts/seed-demo.mjs                       # seeds <root>/data
@@ -25,7 +27,7 @@
  * `--force` is given: silently replacing a book somebody is working in is the
  * one thing a seeding tool must never do quietly.
  */
-import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, rmSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync } from 'node:fs';
 import { randomBytes, pbkdf2Sync } from 'node:crypto';
 import { resolve, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -47,14 +49,6 @@ const ITERATIONS = 150_000;
 const PASSWORD = process.env.SEED_PASS || 'Waypoint#2026';
 
 const now = new Date().toISOString();
-const today = new Date().toISOString().slice(0, 10);
-const day = (n) => {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
-};
-const month = today.slice(0, 7);
-const id = (p, n) => `${p}${Date.now()}${String(n).padStart(3, '0')}`;
 
 function hash(password) {
   const salt = randomBytes(SALT_LEN);
@@ -87,9 +81,6 @@ const PEOPLE = [
   { id: 'u_manager', name: 'Tan Wei Ming',  role: 'manager', title: 'Head of Cloud Business' },
   { id: 'u_bd',      name: 'Jason Lim',     role: 'bd',      title: 'Account Manager' },
   { id: 'u_sa',      name: 'Priya Nair',    role: 'sa',      title: 'Solution Architect' },
-  /* Not an account — a supporting person. §3: Non-Core Members have no
-     WorkBuddy account and no customer permission. David Tan exists only as a
-     name inside the demo record, which is the whole point of the pattern. */
 ];
 
 const users = PEOPLE.map((p) => ({
@@ -107,212 +98,6 @@ for (const p of PEOPLE) {
   credentials[p.id] = { userId: p.id, ...hash(PASSWORD), createdAt: now, updatedAt: now };
 }
 
-/* ------------------------------------------------------------ the customer
-   ONE customer. §29 is explicit: one demo customer, clearly labelled, and it
-   must not look like a production account. The name says SAMPLE because the
-   product has to be able to say so everywhere it appears. */
-const CID = id('c', 1);
-const OPP1 = id('o', 1);
-const OPP2 = id('o', 2);
-const M1 = id('m', 1);
-const S1 = id('s', 1);
-const S2 = id('s', 2);
-const S3 = id('s', 3);
-
-const customer = {
-  id: CID,
-  name: 'SAMPLE - Nusantara Retail Group',
-  industry: 'Retail',
-  hq: 'Kuala Lumpur',
-  size: '~4,000 staff',
-  stance: 'Undecided',
-  health: 'Watch',
-  /* Both owners are set, because §2 says exactly 1 Primary BD and exactly 1
-     Primary SA. These two fields are what scopes the whole book for each of
-     them, and what a Next Step's Tracker must be drawn from. */
-  owner: 'Jason Lim',
-  sa: 'Priya Nair',
-  since: month,
-  site: 'nusantara-retail.example',
-  logo: '',
-  people: '',
-  brief:
-    'A Malaysian retail group running its own e-commerce and loyalty platforms. '
-    + 'Three of their systems are due for a refresh inside the next two quarters, '
-    + 'and their board has asked for an AI roadmap by year end.',
-  pains: [
-    'Peak-season load breaks their order platform every December',
-    'No central view of customer data across 240 stores',
-    'Warehouse forecasting is still a spreadsheet',
-  ],
-  /* Contacts are the customer's OWN people — not our BD/SA. §2 is precise
-     about this: the Customer Department Owner is the customer's person. */
-  contacts: [
-    { id: id('p', 1), n: 'Farah Idris', t: 'Head of Digital', band: 'Decision maker',
-      s: 'Undecided', e: 'farah.idris@nusantara-retail.example', ph: '+60 3-1234 5678', o: 'Jason Lim' },
-    { id: id('p', 2), n: 'Ahmad Zaki', t: 'IT Director', band: 'Influencer',
-      s: 'With us', e: 'ahmad.zaki@nusantara-retail.example', ph: '+60 3-1234 5679', o: 'Priya Nair' },
-    { id: id('p', 3), n: 'Lim Siew Chin', t: 'CFO', band: 'Blocker',
-      s: 'Against us', e: 'sc.lim@nusantara-retail.example', ph: '+60 3-1234 5680', o: 'Jason Lim' },
-  ],
-  /* §4 Existing Environment — the customer's OWN estate, not our solution.
-     The row shape is `{ n, v, stance }` — the same keys the Add form writes
-     (saveAdd's system branch) and tabRun renders (it groups by a.stance and
-     prints a.v). Born as `{ n, runs, pos }`, which rendered as nothing. */
-  apps: [
-    { n: 'Order platform (on-prem)', v: 'Legacy Java on bare metal', stance: 'Replace' },
-    { n: 'Loyalty system', v: 'Vendor-hosted', stance: 'Integrate' },
-    { n: 'Data warehouse', v: 'On-prem SQL Server', stance: 'Both' },
-  ],
-  opps: [OPP1, OPP2],
-  timeline: [],
-  /* §3 Non-Core Members: names with no account behind them. A Product SA who
-     executes a step but is not on the account team. */
-  support: ['David Tan (Product SA, Database)'],
-  team: ['Priya Nair'],
-  demo: true,
-  unverified: false,
-  links: [],
-  sources: [],
-};
-
-/* ---------------------------------------------------- the two opportunities
-   §12: the field set the brief asks the Opportunity page to show. */
-const opps = {
-  [OPP1]: {
-    id: OPP1, c: CID, t: 'Retail data platform modernisation',
-    stage: 'Interested', v: 1800000, p: 20,
-    stageAt: day(-12),
-    owner: 'Jason Lim',
-    comp: 'Incumbent local SI',
-    close: day(150),
-    cust: 'Farah Idris',
-    desc: 'Consolidate the order, loyalty and warehouse data onto one managed platform.',
-    soln: 'TencentDB + data lake, phased over two quarters',
-    /* §13 rule-based health signals, stated with their reason. */
-    blockers: 'CFO has not released the budget line yet',
-    updatedAt: now,
-  },
-  [OPP2]: {
-    id: OPP2, c: CID, t: 'AI roadmap advisory engagement',
-    stage: 'Qualified', v: 420000, p: 40,
-    stageAt: day(-3),
-    owner: 'Priya Nair',
-    comp: '-',
-    close: day(90),
-    cust: 'Ahmad Zaki',
-    desc: 'Short advisory engagement to produce the AI roadmap their board asked for.',
-    soln: 'Solution workshop + reference architecture',
-    blockers: '',
-    updatedAt: now,
-  },
-};
-
-/* --------------------------------------------------------- three Next Steps
-   §5 is the heart of this phase: a Next Step has TWO people.
-     exec  — who does the work. May be anyone, including a Non-Core Member.
-     track — who follows up. MUST be this customer's Primary BD or Primary SA.
-   The three rows below demonstrate all three shapes:
-     S1  executed and completed by a Non-Core Member (Product SA David Tan),
-         tracked by the Primary SA. This is Scenario 3 and §6 in one record.
-     S2  our move, executed by the Primary BD.
-     S3  waiting on the customer. */
-const steps = [
-  {
-    id: S1, c: CID, o: OPP1,
-    t: 'Size the data platform migration and send the architecture note',
-    exec: 'David Tan (Product SA, Database)',
-    track: 'Priya Nair',
-    due: day(-2),
-    from: 'us', p: 'p1',
-    /* §6: a completed action keeps its completion date, who completed it, and
-       its original execution owner. Nothing about it disappears. */
-    done: day(-2),
-    doneBy: 'David Tan (Product SA, Database)',
-    doneNote: 'Architecture note sent; 3 phases, 14 weeks.',
-    createdAt: day(-14),
-    updatedAt: now,
-  },
-  {
-    id: S2, c: CID, o: OPP1,
-    t: 'Get the budget line confirmed with the CFO',
-    exec: 'Jason Lim',
-    track: 'Jason Lim',
-    due: day(3),
-    from: 'us', p: 'p1',
-    done: '', doneBy: '', doneNote: '',
-    createdAt: day(-10),
-    updatedAt: now,
-  },
-  {
-    id: S3, c: CID, o: null,
-    t: 'Send the AI roadmap scope document',
-    exec: 'the customer',
-    track: 'Priya Nair',
-    due: day(7),
-    from: 'customer', p: 'p1',
-    done: '', doneBy: '', doneNote: '',
-    createdAt: day(-3),
-    updatedAt: now,
-  },
-];
-
-/* ---------------------------------------------------- the one MOM (interaction)
-   §15/§16: a MOM connects to Customer, Opportunity, People, Next Steps and
-   the Timeline. The AI-extracted content lives here as REVIEWED, ACCEPTED
-   text — which is the only form that may ever become a business record (§8).
-   §17: the same table carries the lighter interaction types. */
-const interactions = [
-  {
-    id: M1, c: CID, o: OPP1,
-    t: 'Data platform scoping workshop',
-    d: day(-14), w: 'Two weeks ago', loc: 'Their KL office',
-    att: 'Farah Idris, Ahmad Zaki, 2 engineers',
-    ours: 'Jason Lim, Priya Nair',
-    sum:
-      'Walked through their current order, loyalty and warehouse estate. They confirmed '
-      + 'peak-season load as the main pain and accepted our phased approach in principle. '
-      + 'Finance is the gate: the CFO wants a single number before she releases anything.',
-    out: 'Accepted the phased approach; waiting on the CFO for the budget line.',
-    k: 'Meeting',
-    /* §8: AI output that a human accepted. Marked, so nobody mistakes it for
-       something a person typed. */
-    ai: {
-      summaryBy: 'model', acceptedBy: 'Priya Nair', acceptedAt: day(-14),
-      concerns: ['Peak-season load on the order platform', 'No central customer view'],
-      decisions: ['Phased delivery accepted in principle', 'Architecture note to be reviewed internally'],
-      commitments: ['We send the architecture note', 'They return it with comments'],
-      risks: ['CFO has not released the budget'],
-    },
-    createdAt: day(-14),
-    updatedAt: now,
-  },
-];
-
-/* -------------------------------------------------------------- timeline
-   §18: the business history. Every entry names the thing it came from, so a
-   reader can always get back to the record. */
-const timeline = [
-  { d: day(-20), k: 'customer', t: 'Customer created', x: 'Added by Jason Lim' },
-  { d: day(-16), k: 'opp', t: 'Opportunity created: Retail data platform modernisation', x: 'RM 1,800,000 · Interested' },
-  { d: day(-14), k: 'interaction', t: 'Data platform scoping workshop', x: 'Accepted the phased approach; waiting on the CFO for the budget line.' },
-  { d: day(-14), k: 'step', t: 'Action: Size the data platform migration and send the architecture note', x: 'David Tan (Product SA, Database) · tracked by Priya Nair' },
-  { d: day(-12), k: 'opp', t: 'Opportunity created: AI roadmap advisory engagement', x: 'RM 420,000 · Qualified' },
-  { d: day(-3), k: 'step', t: 'Action: Send the AI roadmap scope document', x: 'Waiting on the customer · tracked by Priya Nair' },
-  { d: day(-2), k: 'done', t: 'Done: Size the data platform migration and send the architecture note', x: 'Completed by David Tan (Product SA, Database)' },
-];
-customer.timeline = timeline;
-
-/* The audit trail is what §24's version history reads from. */
-const audit = timeline.map((t, i) => ({
-  id: id('a', i),
-  tm: t.d, d: t.d, k: 'data', role: 'bd',
-  rec: t.t + ' - ' + customer.name,
-  what: t.t, who: 'Jason Lim',
-  from: '-', to: t.x,
-  updatedAt: now,
-}));
-
 /* -------------------------------------------------------- the catalogue
    The sellable list. Source: the Tencent Cloud International Singapore &
    Johor product inventory (attachment `tencentcloud_intl_singapore_
@@ -324,7 +109,6 @@ const audit = timeline.map((t, i) => ({
    Each entry is [name, category, abbreviation, one-liner]. The same content
    ships inside Waypoint-v1.html as the brand-new-workspace default (the
    `products:` array near the top of that file) — keep the two in step. */
-const DB_SA = { n: 'David Tan', r: 'Product SA, Database', hq: 'KL', how: 'WeCom' };
 const CATALOGUE = [
   /* — Compute (9) — */
   ['Cloud Virtual Machine', 'Compute', 'CVM', 'Elastic cloud servers - the baseline everything else sits on.'],
@@ -413,7 +197,7 @@ const CATALOGUE = [
   ['Real-time Communication', 'Media & RTC', 'TRTC', 'Real-time audio and video in the app.'],
   ['Cloud Streaming Services', 'Media & RTC', 'CSS', 'Live streaming from ingest to playback.'],
   ['Video on Demand', 'Media & RTC', 'VOD', 'Store, transcode and deliver recorded video.'],
-  ['Mobile Live Video Broadcasting', 'Media & RTC', 'MLVB', 'Push-and-pull streaming SDKs for mobile apps.'],
+  ['Mobile Live Video Broadcasting', 'Media & RTC', 'MLVB', 'Push-and-pull streaming SDKs for mobile.'],
   ['User Generated Short Video SDK', 'Media & RTC', 'UGSV', 'Short-video capture and playback in the app.'],
   ['Tencent Effect SDK', 'Media & RTC', 'X-Magic', 'Beauty filters and effects for live video.'],
   ['Media Processing Service', 'Media & RTC', 'MPS', 'Transcode, watermark and moderate video at scale.'],
@@ -491,49 +275,33 @@ const CATALOGUE = [
   ['Fusion Analytics', 'IoT & Industry', 'FA', 'Marketing analytics on the unified data.'],
 ];
 const products = CATALOGUE.map(([n, cat, ab, one], i) => ({ id: 'p' + (i + 1), n, cat, ab, one, by: [] }));
-/* §27's question is "what does it do, and who do I ask" — the demo answers
-   it on three database products with the demo customer's non-core Product
-   SA: the same David Tan who executes the first Next Step. */
-for (const n of ['TencentDB for MySQL', 'Cloud Native Database TDSQL-C', 'Data Transfer Service']){
-  const p = products.find(x => x.n === n);
-  if (p) p.by = [{ ...DB_SA }];
-}
 
 const state = {
   schemaVersion: 1,
   setupComplete: true,
-  /* A book-wide "this is sample data" mark, and the reason it lives here
-     rather than in the client: the seeded workspace's figures read exactly
-     like a real pipeline, so which book you are looking at has to be a fact
-     about the FILE, told by the server on every read and kept by it on every
-     save. A client-side flag would be dropped by the first whole-state save
-     — the badge would vanish mid-demo, which is the moment it matters.
-     The customer carries `demo: true` too, but that is a different claim:
-     it marks one ROW as a sample inside whatever book it sits in. */
-  demo: true,
-  customers: [customer],
-  interactions,
-  steps,
-  opps,
-  audit,
+  /* No `demo` key at all: this book makes no claim either way, and a workspace
+     is marked by hand only (an operator editing the file) — the server keeps
+     whatever mark the disk carries and refuses what a client asserts. The
+     sample book itself is client-side: `demoBook()` in Waypoint-v1.html,
+     loaded only by the guest posture. */
+  customers: [],
+  interactions: [],
+  steps: [],
+  opps: {},
+  audit: [],
   files: [],
   watch: [],
-  /* `products` is the sellable catalogue defined above — the 149 services
-     from the Singapore & Johor inventory, three of them backed by name. */
   products,
   users,
   credentials,
   /* `team` is the roster the screens read for names and roles. `c` names the
-     customer a person is ON — only the two owners are on the demo customer,
-     because Admin and Manager reach everything through their role rather than
-     through membership. The admin row carries the customer id too: the
-     baseline workspace did, the client resolves the signed-in person against
-     these rows, and a roster that omits it makes an admin look like a
-     stranger inside their own workspace. */
+     customer a person is ON — null for everybody: there are no customers, and
+     Admin and Manager reach everything through their role rather than through
+     membership anyway. */
   team: PEOPLE.map((p) => ({
     id: p.id,
     n: p.name, n2: p.name, role: p.role, r: p.title,
-    c: (p.role === 'bd' || p.role === 'sa' || p.role === 'admin') ? CID : null,
+    c: null,
     f: '', last: '', st: 'active',
     updatedAt: now,
   })),
@@ -551,26 +319,6 @@ const state = {
 };
 
 /* ------------------------------------------------------------------ write */
-
-/* `--accounts-only` writes the book a real deployment starts from: the
-   roster, the credentials, the catalogue — and NO business data. The demo
-   companies live in the client's guest posture (demoBook() in
-   Waypoint-v1.html), which is the only place they are ever shown; a
-   signed-in view that carried sample customers would be a book somebody
-   cannot trust. This mode exists so a public deployment can be seeded
-   without ever putting a sample row where a real one belongs. */
-const ACCOUNTS_ONLY = process.argv.includes('--accounts-only');
-if (ACCOUNTS_ONLY){
-  state.demo = false;
-  state.customers = [];
-  state.interactions = [];
-  state.steps = [];
-  state.opps = {};
-  state.audit = [];
-  state.files = [];
-  state.watch = [];
-  state.team = state.team.map((t) => ({ ...t, c: null }));
-}
 
 if (existsSync(DATA_FILE) && !FORCE) {
   let existing = null;
@@ -590,18 +338,11 @@ writeFileSync(tmp, JSON.stringify(state, null, 0), 'utf8');
 renameSync(tmp, DATA_FILE);
 writeFileSync(REV_FILE, JSON.stringify({ rev: 1, savedAt: now }, null, 0), 'utf8');
 
-console.log('\nSeeded a demo workspace.\n');
+console.log('\nSeeded a clean workspace.\n');
 console.log(`  workspace : ${DATA_DIR}`);
-if (ACCOUNTS_ONLY){
-  console.log('  mode      : accounts only — no business data, no demo flag.');
-  console.log('  demo data : lives in the guest view (client-side demoBook), never here.');
-} else {
-  console.log(`  customer  : ${customer.name}  (flagged demo)`);
-  console.log(`  people    : 1 Primary BD (${customer.owner}) + 1 Primary SA (${customer.sa})`);
-  console.log(`  non-core  : ${customer.support.join(', ')}  (no account, no permission)`);
-  console.log(`  chain     : customer → 2 opportunities → 3 next steps → 1 MOM → timeline`);
-  console.log('               one step is already completed by the non-core member.');
-}
+console.log('  contents  : accounts + catalogue only — no business data, no demo mark.');
+console.log('  demo data : lives in the guest view and the walkthroughs (client-side');
+console.log('              demoBook in Waypoint-v1.html), never in a seeded book.');
 console.log(`  catalogue : ${products.length} sellable services in ${new Set(products.map(p => p.cat)).size} categories`);
 console.log('\n  sign in with either of:');
 for (const p of PEOPLE) console.log(`    ${p.name.padEnd(16)} ${p.role.padEnd(8)} ${PASSWORD}`);
