@@ -518,5 +518,35 @@ const embeddedFaces = (html.match(/data:font\/woff2;base64,/g) || []).length;
 check('every family the tokens name has an embedded face', embeddedFaces >= 4,
   `${embeddedFaces} embedded woff2 face(s)`);
 
+/* --------------------------------------- 8. a card's density is named, not inline ---
+   K2: the Customers card set its padding in a style attribute, so the one
+   number that decides how dense a list reads was invisible to the
+   stylesheet and different from its neighbours by memory alone. The step
+   rows in "What needs you" hid theirs the same way, so they were collected
+   into the same net rather than given an exemption.
+   K3: an empty Insights card used to be a full-size card with a hairline
+   through the middle of nothing — sixty percent blank, standing exactly as
+   tall as the card beside it that had something to say. */
+const cardRowDef = /\.card--row\{[^}]*\}/.exec(html)?.[0] || '';
+const stepRowDef = /\.step-row\{[^}]*\}/.exec(html)?.[0] || '';
+check('list-card density is a class, not a style attribute',
+  !/style="[^"]*padding:13px/.test(html)
+    && /padding:13px var\(--s4\)/.test(cardRowDef)
+    && /class="card card--row/.test(html)
+    && /padding:13px var\(--s5\)/.test(stepRowDef)
+    && /class="row step-row/.test(html),
+  stepRowDef ? cardRowDef.slice(0, 46) + ' · ' + stepRowDef.slice(0, 42) : '.card--row / .step-row are not defined');
+const pchipPad = /\.pchip\{[^}]*padding:([^;]+);/.exec(html)?.[1] || '';
+const oppPad = /\.opp\{[^}]*padding:([^;]+);/.exec(html)?.[1] || '';
+check('the row cards share one density band (12–13px)', /^1[23]px/.test(pchipPad) && /^1[23]px/.test(oppPad),
+  `.pchip ${pchipPad} · .opp ${oppPad}`);
+const noneBody = /const none = \(tag, cls, what\) =>([\s\S]*?\n\s*`)/.exec(src)?.[1] || '';
+check('the empty insight is two lines, not a full card with a line through it',
+  noneBody.includes('card--recessed') && !/class="hr"/.test(noneBody) && !noneBody.includes('Nothing here'),
+  noneBody ? 'compact and recessed' : 'the none() helper was not found');
+check('a quiet insight may stand shorter than a loud one',
+  /grid g3" style="[^"]*align-items:start/.test(html),
+  'the six-card grid starts its rows at the top');
+
 console.log(`\n${ran} checks run.${bad ? '  *** FAILURES ***' : '  all passed'}`);
 process.exit(bad ? 1 : 0);

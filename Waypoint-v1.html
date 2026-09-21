@@ -318,7 +318,7 @@ tr.lnk:hover td{background:var(--blue-25)}
 .ai-cluster .card > .row .tiny.muted:first-child{
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .pchip{display:flex;align-items:flex-start;gap:10px;border:1px solid var(--line-2);
-  background:var(--surface);border-radius:var(--r-card);padding:10px var(--s3);margin-bottom:var(--s2)}
+  background:var(--surface);border-radius:var(--r-card);padding:12px var(--s3);margin-bottom:var(--s2)}
 .pchip .x{margin-left:auto;border:none;background:none;color:var(--ink-0);font-size:15px;line-height:1;padding:0 2px}
 .pchip .x:hover{color:var(--ink)}
 .pchip .t{font-size:13px;font-weight:500}
@@ -400,7 +400,7 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 /* empty stage column: header + one quiet line, nothing taller */
 .col-empty{padding:0 2px;font-size:11.5px;color:var(--ink-3)}
 .opp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
-  padding:11px var(--s3);margin-bottom:var(--s2);box-shadow:var(--e1)}
+  padding:12px var(--s3);margin-bottom:var(--s2);box-shadow:var(--e1)}
 .opp:hover{border-color:var(--line-2)}
 .opp .t{font-size:13px;font-weight:600;letter-spacing:-.005em}
 .opp .m{font-size:11.5px;color:var(--ink-3);margin-top:2px}
@@ -748,6 +748,17 @@ body.nowm .wm{display:none}
    ------------------------------------------------------------------------ */
 .card--attention{background:var(--warn-50);border-color:var(--warn-100)}
 .card--recessed{background:var(--surface-3);border-color:transparent}
+/* A row card: the same surface as `.card`, at list density. The Customers
+   board used to set this padding inline, so the one number that decides how
+   dense a list reads was invisible to the stylesheet and agreed with its
+   neighbours (.pchip, .opp) by memory alone. */
+.card--row{padding:13px var(--s4)}
+/* One step per row inside "What needs you". 13px while it is owed — the same
+   density band as a row card — and a shade thinner, dimmed, once it is done.
+   Both used to live in style attributes on the template, so the density of
+   the list could not be read from the stylesheet at all. */
+.step-row{padding:13px var(--s5);border-bottom:1px solid var(--line);align-items:flex-start}
+.step-row--done{padding:11px var(--s5);opacity:.72}
 .btn--danger{background:var(--surface);border-color:var(--risk-100);color:var(--risk-600)}
 .btn--danger:hover{background:var(--risk-50)}
 /* The brief's left column is the only place the model's words sit next to a
@@ -2371,7 +2382,7 @@ function screenCustomers(){
       const { lm, ns, to } = custContext(c);
       const why = healthWhy(c);
       return `
-      <div class="card lnk" data-open="${c.id}" style="padding:13px var(--s4);margin-bottom:var(--s3)">
+      <div class="card card--row lnk" data-open="${c.id}" style="margin-bottom:var(--s3)">
         <div class="row" style="align-items:flex-start">
           ${logo(c, 22)}
           <div style="flex:1;min-width:0">
@@ -4065,7 +4076,7 @@ function actionsCard(c){
     </div>
     ${open.length ? open.map(s => {
       const late = stepOverdue(s);
-      return `<div class="row" style="padding:13px var(--s5);border-bottom:1px solid var(--line);align-items:flex-start">
+      return `<div class="row step-row">
         <span class="tag ${s.from === 'customer' ? 't-blue' : 't-grey'}" title="${s.from === 'customer' ? 'In their court — we are waiting on them' : 'In our court — we owe this'}"
           style="flex:0 0 auto">${s.from === 'customer' ? 'them' : 'us'}</span>
         <div style="min-width:0;flex:1">
@@ -4099,7 +4110,7 @@ function doneBlock(c, done){
   <button class="btn sm" data-act="donefold" style="margin:var(--s3) var(--s5)"
     >${open ? 'Hide' : 'Show'} ${done.length} completed</button>
   ${open ? done.slice().sort((a, b) => String(b.done).localeCompare(String(a.done))).map(s => `
-    <div class="row" style="padding:11px var(--s5);border-bottom:1px solid var(--line);align-items:flex-start;opacity:.72">
+    <div class="row step-row step-row--done">
       <span class="tag t-ok" style="flex:0 0 auto">done</span>
       <div style="min-width:0;flex:1">
         <div style="font-size:13px">${esc(s.t)}</div>
@@ -5033,8 +5044,17 @@ function screenInsights(){
      people stop trusting. */
   /* A zero is not a red flag, it is an absence. Colouring five empty cards
      red or amber makes a quiet week look like an emergency. */
-  const none = (tag, cls, what) =>
-    card(tag, 't-grey', 0, 'Nothing here', '', what, `<span class="tiny muted">Nothing to act on.</span>`, 'card--recessed');
+  /* An empty card is still an answer, but it is not a full card. A quiet
+     week is two lines; the height it does not take is the height that tells
+     you which neighbours had something to say. It used to render the whole
+     card skeleton — title, hairline through sixty percent of nothing, a
+     closing line — and stand exactly as tall as the card beside it, which
+     read as a mistake rather than as calm. */
+  const none = (tag, cls, what) => `
+    <div class="card card--recessed card--row" style="margin-bottom:0">
+      <div class="row"><span class="tag t-grey">${tag}</span><div class="spacer"></div><span class="mono tiny">0</span></div>
+      <div class="tiny muted" style="margin-top:8px">${what}</div>
+    </div>`;
 
   const top = stalled[0];
   const s2  = silent[0];
@@ -5097,7 +5117,7 @@ function screenInsights(){
       is why the number never changes between two people looking at it.</div>
   </div>
 
-  <div class="grid g3" style="margin-top:var(--s5)">
+  <div class="grid g3" style="margin-top:var(--s5);align-items:start">
     ${stalledCard}${silentCard}${singleCard}${coverCard}${rivalCard}${waitCard}
   </div>`;
 }
