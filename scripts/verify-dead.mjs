@@ -567,5 +567,37 @@ check('the tour menu opens upward from the corner float',
   /let top = Math\.round\(r\.top\s*-\s*h/.test(anchorSrc),
   anchorSrc ? 'the menu is anchored above the float' : 'anchorTourMenu was not found');
 
+/* --------------------------------------- 10. colour is a class, not an attribute ---
+   X3: thirteen places wrote a colour straight into a style attribute — a dot
+   painted risk, a card edged warn, a number turning red when it is overdue.
+   Each one is a decision the stylesheet cannot see, and each one has to be
+   found by reading templates.
+   1.4: the ramp was defined and then bypassed — the primary button carried
+   five raw hex literals for colours that already have names. The two
+   semantic tokens nothing ever read are gone rather than kept as decoration. */
+const inlineColour = [...html.matchAll(/style="[^"]*?\b(?:color|background)\s*:[^"]*?var\(--(?:risk|ok|warn|violet|blue)[^"]*"/g)]
+  .map(m => m[0].slice(0, 72));
+check('a colour never travels in a style attribute', inlineColour.length === 0,
+  inlineColour.length ? `${inlineColour.length} left, e.g. ${inlineColour[0]}` : 'every colour is a class');
+const brandDef = /\.card--brand\{[^}]*\}/.exec(html)?.[0] || '';
+const brandUsed = (html.match(/class="card card--brand/g) || []).length;
+check('the brand card is a component, not two violet style attributes',
+  brandDef.includes('var(--violet-50)') && brandUsed >= 2,
+  brandUsed ? `${brandUsed} brand cards, one definition` : '.card--brand is defined but nothing uses it');
+const priDef = /\.btn\.pri\{[^}]*\}/.exec(html)?.[0] || '';
+const priHover = /\.btn\.pri:hover\{[^}]*\}/.exec(html)?.[0] || '';
+/* White is not a colour on the ramp — it is the absence of one, on a surface
+   that is already brand blue. Every other literal has a name. */
+const priColour = (priDef + priHover).replace(/color:\s*#fff\b/g, '');
+check('the primary button is wired to the ramp, not to hex literals',
+  !/#[0-9a-fA-F]{3,8}/.test(priColour)
+    && /var\(--blue-(?:600|700|800)\)/.test(priDef)
+    && /var\(--blue-(?:500|600)\)/.test(priHover),
+  /#/.test(priColour) ? 'raw hex is still carrying the brand blue' : 'brand blue comes from --blue-*');
+check('a token nothing reads is not a token',
+  !/--ok-600\s*:/.test(html) && !/--warn-600\s*:/.test(html)
+    && /var\(--violet-600\)/.test(html),
+  'violet-600 is read; ok-600 and warn-600 were kept for nobody and are gone');
+
 console.log(`\n${ran} checks run.${bad ? '  *** FAILURES ***' : '  all passed'}`);
 process.exit(bad ? 1 : 0);

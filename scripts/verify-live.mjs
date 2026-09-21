@@ -453,6 +453,16 @@ check('the menu is anchored by the float, in pixels',
   !!tmenu && /^-?\d+px$/.test(tmenu.style.top || '') && /^-?\d+px$/.test(tmenu.style.left || ''),
   tmenu ? `top ${tmenu.style.top} · left ${tmenu.style.left}` : 'no inline anchor');
 
+/* The connection dot used to be painted with an inline colour written by
+   hand — `dot.style.background = 'var(--risk)'` — so "which dots can be
+   alarmed" was invisible to the stylesheet. It is a class now. */
+window.eval("paintConn()");
+const cdot = doc.getElementById('connDot');
+check('the connection dot is painted by a class, not by an inline colour',
+  !!cdot && /^dot dot--(ok|warn|risk|blue)$/.test(cdot.className || '')
+    && !/background/.test(cdot.getAttribute('style') || ''),
+  cdot ? `class="${cdot.className}"` : 'the dot was not found');
+
 /* ------------------------------------------------------------------ done */
 
 dom.window.close();

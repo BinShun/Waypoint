@@ -42,8 +42,8 @@
   --blue-300:#7FA9E8; --blue-400:#4E85DE; --blue-500:#2A6BE0;
   --blue-600:#2563D9; --blue-700:#1554C0; --blue-800:#12489F; --blue-900:#0F3E8C;
   /* semantic */
-  --ok:#0E7A5A; --ok-600:#0B6B4E; --ok-50:#E7F5EF; --ok-100:#C4E7D8;
-  --warn:#9A6207; --warn-600:#8A5606; --warn-50:#FCF3E4; --warn-100:#F0DDB4;
+  --ok:#0E7A5A; --ok-50:#E7F5EF; --ok-100:#C4E7D8;
+  --warn:#9A6207; --warn-50:#FCF3E4; --warn-100:#F0DDB4;
   --risk:#B4232A; --risk-600:#A61E24; --risk-50:#FCEDEE; --risk-100:#F2C6C9;
   --violet:#4B5BD6; --violet-600:#3A47B8; --violet-50:#EEF0FB; --violet-line:#DCE0F6;
   --info:#2563D9; --info-50:#EEF4FD;
@@ -157,12 +157,12 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
   font-size:13px;font-weight:500;color:var(--ink);transition:.12s ease-out;
   box-shadow:0 1px 2px rgba(16,24,40,.04)}
 .btn:hover{background:var(--surface-2);border-color:var(--line-strong)}
-.btn.pri{background:linear-gradient(180deg,#2465D6,#1554C0);border-color:#12489F;color:#fff;
+.btn.pri{background:linear-gradient(180deg,var(--blue-600),var(--blue-700));border-color:var(--blue-800);color:#fff;
   font-weight:600;box-shadow:0 1px 2px rgba(12,64,150,.35), inset 0 1px 0 rgba(255,255,255,.14)}
-.btn.pri:hover{background:linear-gradient(180deg,#2E70E4,#1A5CCB)}
+.btn.pri:hover{background:linear-gradient(180deg,var(--blue-500),var(--blue-600))}
 .btn.sm{padding:4px 11px;font-size:12px}
 .btn.ai{background:var(--violet-50);border-color:var(--violet-line);color:var(--violet);font-weight:600}
-.btn.ai:hover{background:#E3E6F9}
+.btn.ai:hover{background:var(--violet-50);border-color:var(--violet);color:var(--violet-600)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
   padding:var(--s4);box-shadow:var(--e1)}
 .grid{display:grid;gap:var(--s4)}
@@ -172,6 +172,8 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
 @media(max-width:1080px){.g4{grid-template-columns:repeat(2,1fr)}.g3,.g2{grid-template-columns:1fr}}
 .row{display:flex;align-items:center;gap:var(--s2)}
 .muted{color:var(--ink-3)}
+/* A number or a sentence that needs you now. Overdue is not decoration. */
+.urgent{color:var(--risk)}
 .tiny{font-size:11.5px}
 .mono{font-variant-numeric:tabular-nums;font-family:var(--font-mono)}
 
@@ -266,6 +268,14 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
 .t-grey{background:var(--surface-3);color:var(--ink-2);border-color:var(--line)}
 .t-violet{background:var(--violet-50);color:var(--violet);border-color:var(--violet-line)}
 .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+/* A dot says one word — saved, offline, overdue, on track, no date. The
+   word was painted in thirteen style attributes; now it is a class, so the
+   stylesheet knows what a dot can mean. */
+.dot--ok{background:var(--ok)}
+.dot--warn{background:var(--warn)}
+.dot--risk{background:var(--risk)}
+.dot--blue{background:var(--blue)}
+.dot--muted{background:var(--ink-0)}
 
 /* filter chips */
 .fchip{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r-chip);
@@ -759,6 +769,15 @@ body.nowm .wm{display:none}
    ------------------------------------------------------------------------ */
 .card--attention{background:var(--warn-50);border-color:var(--warn-100)}
 .card--recessed{background:var(--surface-3);border-color:transparent}
+/* An edge that carries the verdict: this card is the risk, this one is the
+   warning. Kept as classes so "which cards look alarmed" is one question. */
+.card--risk{border-color:var(--risk)}
+.card--warn{border-color:var(--warn)}
+/* The model's own surface — the one card in the product that is not ours. */
+.card--brand{background:var(--violet-50);border-color:var(--violet-line)}
+/* The calendar day number: quiet, but today is not. */
+.cal-d{font-size:11.5px;font-weight:500;color:var(--ink-2);margin-bottom:2px;padding-left:2px}
+.cal-d.today{font-weight:700;color:var(--blue)}
 /* A row card: the same surface as `.card`, at list density. The Customers
    board used to set this padding inline, so the one number that decides how
    dense a list reads was invisible to the stylesheet and agreed with its
@@ -874,7 +893,7 @@ body.nowm .wm{display:none}
       </button>
       <div class="me">
         <span class="tiny muted conn" id="connState"></span>
-        <span class="dot" id="connDot" style="background:var(--ok)"></span>
+        <span class="dot dot--ok" id="connDot"></span>
         <div class="av" id="meAv">–</div>
         <span id="meName"></span>
       </div>
@@ -2039,7 +2058,7 @@ function screenToday(){
     const late = stepOverdue(s);
     const d = stepDays(s);
     return `<div class="row" style="padding:11px var(--s4);border-bottom:1px solid var(--line)">
-      <span class="dot" style="background:${late ? 'var(--risk)' : d != null ? 'var(--warn)' : 'var(--ink-0)'}"></span>
+      <span class="dot ${late ? 'dot--risk' : d != null ? 'dot--warn' : 'dot--muted'}"></span>
       <span class="tag ${s.from === 'customer' ? 't-blue' : 't-grey'}" style="flex:0 0 auto"
         title="${s.from === 'customer' ? 'In their court — we are waiting on them' : 'In our court — we owe this'}">${s.from === 'customer' ? 'them' : 'us'}</span>
       <div style="min-width:0;flex:1">
@@ -2074,7 +2093,7 @@ function screenToday(){
     <div class="fb-cells">
       <div class="fig"><div class="v">${cm(open)}</div><div class="l">Open pipeline</div><div class="n">${Object.keys(D.opps).length} opportunit${Object.keys(D.opps).length === 1 ? 'y' : 'ies'} · ${D.customers.length} customer${D.customers.length === 1 ? '' : 's'}</div></div>
       <div class="fig"><div class="v">${cm(weighted)}</div><div class="l">Weighted</div><div class="n">Probability-adjusted</div></div>
-      <div class="fig"><div class="v" style="color:${overdue.length ? 'var(--risk)' : 'var(--ink)'}">${overdue.length}</div><div class="l">Overdue</div><div class="n">Ours, past the date we set</div></div>
+      <div class="fig"><div class="v${overdue.length ? ' urgent' : ''}">${overdue.length}</div><div class="l">Overdue</div><div class="n">Ours, past the date we set</div></div>
     </div>
     <div class="fb-bar">
       <div class="fb-track">
@@ -2083,9 +2102,9 @@ function screenToday(){
         <div class="fb-seg n" style="flex:${noDate.length}"></div>
       </div>
       <div class="fb-legend">
-        <span class="fb-li"><span class="dot" style="background:var(--risk)"></span>Overdue ${overdue.length}</span>
-        <span class="fb-li"><span class="dot" style="background:var(--warn)"></span>Waiting on ${soon.length}</span>
-        <span class="fb-li"><span class="dot" style="background:var(--ink-0)"></span>No date ${noDate.length}</span>
+        <span class="fb-li"><span class="dot dot--risk"></span>Overdue ${overdue.length}</span>
+        <span class="fb-li"><span class="dot dot--warn"></span>Waiting on ${soon.length}</span>
+        <span class="fb-li"><span class="dot dot--muted"></span>No date ${noDate.length}</span>
       </div>
     </div>
   </div>
@@ -2230,7 +2249,7 @@ function screenCalendar(){
     const isToday = iso === today;
     cells.push(`
       <div style="border:1px solid var(--line);border-radius:var(--r-sm);padding:5px 4px;min-height:88px;overflow:hidden;${isToday ? 'outline:2px solid var(--blue);outline-offset:-2px' : ''}">
-        <div class="tiny" style="font-weight:${isToday ? 700 : 500};color:${isToday ? 'var(--blue)' : 'var(--ink-2)'};margin-bottom:2px;padding-left:2px">${d}</div>
+        <div class="cal-d${isToday ? ' today' : ''}">${d}</div>
         ${items.slice(0, 3).map(calItem).join('')}
         ${items.length > 3 ? `<div class="tiny muted" style="padding:1px 4px">+${items.length - 3} more</div>` : ''}
       </div>`);
@@ -2255,7 +2274,7 @@ function screenCalendar(){
       <button class="row" data-cgo="${esc(s.c)}"
         style="gap:9px;padding:9px var(--s4);border:0;border-bottom:1px solid var(--line);background:none;cursor:pointer;width:100%;text-align:left;align-items:center"
         title="Opens the timeline of ${esc((cust(s.c) || {}).name || 'the account')}">
-        <span class="dot" style="background:var(--risk)"></span>
+        <span class="dot dot--risk"></span>
         <div style="min-width:0;flex:1">
           <div style="font-size:13px;font-weight:500">${esc(s.t)}</div>
           <div class="tiny muted">${esc((cust(s.c) || {}).name || '')} · ${esc(stepExec(s) || 'nobody named')}</div>
@@ -2281,7 +2300,7 @@ function screenCalendar(){
       <button class="row" data-cgo="${esc(s.c)}"
         style="gap:9px;padding:8px var(--s4);border:0;border-bottom:1px solid var(--line);background:none;cursor:pointer;width:100%;text-align:left;align-items:center"
         title="Opens the timeline of ${esc((cust(s.c) || {}).name || 'the account')}">
-        <span class="dot" style="background:var(--ink-0)"></span>
+        <span class="dot dot--muted"></span>
         <div style="min-width:0;flex:1">
           <div style="font-size:13px;font-weight:500">${esc(s.t)}</div>
           <div class="tiny muted">${esc((cust(s.c) || {}).name || '')} · ${esc(stepExec(s) || 'nobody named')}</div>
@@ -2500,7 +2519,7 @@ function screenCustomers(){
           ${stanceTag(c.stance)}
         </div>
         <div class="tiny" style="display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;color:var(--ink-2)">
-          ${ns ? `<b style="font-weight:600">Next ·</b> ${esc(ns.t)}${late ? ' <span style="color:var(--risk)">' + stepWhen(ns) + ' overdue</span>' : ' · ' + stepWhen(ns)}`
+          ${ns ? `<b style="font-weight:600">Next ·</b> ${esc(ns.t)}${late ? ' <span class="urgent">' + stepWhen(ns) + ' overdue</span>' : ' · ' + stepWhen(ns)}`
                : (lm ? `<b style="font-weight:600">Met</b> ${fmtDay(lm.d)} · ${esc(lm.t)}`
                /* A record without a brief is normal — the field is optional and
                   older rows simply do not carry it. The card used to crash on
@@ -4188,7 +4207,7 @@ function personCard(c, p){
       ${p.em ? `<div class="k">Email</div><div><a class="lk" href="mailto:${esc(p.em)}">${esc(p.em)}</a></div>` : ''}
       ${p.ph ? `<div class="k">Phone</div><div><a class="lk" href="tel:${esc(String(p.ph).replace(/[^+0-9]/g, ''))}">${esc(p.ph)}</a></div>` : ''}
       <div class="k">In a room with us</div>
-      <div>${m ? fmtDay(m.d) + ' · ' + ms.length + ' meeting' + (ms.length === 1 ? '' : 's') : '<span style="color:var(--risk)">never — nobody has met them</span>'}</div>
+      <div>${m ? fmtDay(m.d) + ' · ' + ms.length + ' meeting' + (ms.length === 1 ? '' : 's') : '<span class="urgent">never — nobody has met them</span>'}</div>
     </div>
     <div class="hr" style="margin:var(--s3) 0"></div>
     <div class="tiny muted" style="margin-bottom:6px">Classification
@@ -7176,7 +7195,7 @@ function paintConn(){
   const s = connTone();
   el.textContent = s.text;
   el.title = s.why;
-  if (dot) dot.style.background = `var(--${s.tone})`;
+  if (dot) dot.className = 'dot dot--' + s.tone;
 }
 
 /* A quiet page has no reason to ask the server anything. That is the whole
@@ -8078,7 +8097,7 @@ function saveEdit(key){
    crash is honest. Shown at the top of every screen, with a way to try again. */
 function syncBanner(){
   if (!SY.note) return '';
-  return '<div class="card" style="margin-bottom:var(--s4);border-color:var(--risk)">'
+  return '<div class="card card--risk" style="margin-bottom:var(--s4)">'
     + '<div class="row" style="gap:8px;flex-wrap:wrap">'
     + '<span class="tag t-risk">Not saved</span>'
     + '<span class="tiny">' + esc(SY.note) + '</span>'
@@ -9085,7 +9104,7 @@ async function askModel(prompt, system){
    the screen shows why — it does not quietly drop the subject. */
 function modelAskBox(mountId, label){
   if (!(aiState && aiState.configured && aiState.reachable)) return aiOffNote();
-  return `<div class="card" style="background:var(--violet-50);border-color:var(--violet-line)" id="${mountId}">
+  return `<div class="card card--brand" id="${mountId}">
     <div class="row">${mascot('box', 'm-box')}<span class="ai-mark model">AI</span><div class="spacer"></div>
       <span class="tiny muted">${esc(aiState.model)}</span></div>
     <div class="row" style="margin-top:8px">
@@ -9300,7 +9319,7 @@ function taskAskBox(mountId, label, hint, ask = {}, variants = []){
   if (!(aiState && aiState.configured && aiState.reachable)) return aiOffNote();
   const st = aiTasks.get(mountId);
   const body = taskBoxStateHtml(st && st.state !== 'idle' ? st : null);
-  return `<div class="card" style="background:var(--violet-50);border-color:var(--violet-line)" id="${mountId}">
+  return `<div class="card card--brand" id="${mountId}">
     ${body || `
     <div class="row"><span class="ai-mark model">AI</span><div class="spacer"></div>
       <span class="tiny muted">${esc(aiState.model)}</span></div>
@@ -10176,7 +10195,7 @@ function drawNewCustomer(){
   if (ncState.stage === 'error'){
     const e = ncState.error || {};
     b.innerHTML = `
-      <div class="card" style="border-color:var(--risk)">
+      <div class="card card--risk">
         <div class="row" style="margin-bottom:var(--s2)">
           <span class="tag t-risk">Not found</span>
           <div class="spacer"></div>
@@ -10225,7 +10244,7 @@ function drawNewCustomer(){
         <span class="tiny muted">Found on their own pages — no official page means no chip.</span>
       </div>` : ''}
 
-    ${r.warning ? `<div class="card" style="border-color:var(--warn);margin-bottom:var(--s4)">
+    ${r.warning ? `<div class="card card--warn" style="margin-bottom:var(--s4)">
       <div class="tiny">${esc(r.warning)}</div></div>` : ''}
 
     ${fields.length ? fields.map(f => {
