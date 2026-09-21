@@ -428,6 +428,31 @@ check('a success toast stays quiet',
   !/var\(--risk\)/.test(lastToast?.getAttribute('style') || ''));
 lastToast?.remove();
 
+/* --------------------------------------------------- the tour lives in the corner
+   L1: the top bar used to carry a permanent "Quick tour" button — the one
+   action you take once, then only occasionally, holding pixels that search,
+   status and identity need every day. The tour is now a corner float, and
+   its menu opens upward from it, because below a bottom-corner button there
+   is nothing but the edge of the screen. */
+const fab = doc.getElementById('tourOpen');
+const topBar = doc.querySelector('header.top');
+check('the top bar no longer carries the tour', !!fab && !!topBar
+  && !topBar.querySelector('#tourOpen') && /tour-fab/.test(fab?.className || ''),
+  fab ? `class="${(fab.className || '').slice(0, 40)}"` : 'the float was not found');
+window.eval("tourMenu()");
+const tmenu = doc.getElementById('tMenu');
+check('the corner float still opens the tours', !!tmenu?.classList.contains('on')
+  && /data-tour-start/.test(tmenu?.innerHTML || ''),
+  tmenu ? `${tmenu.querySelectorAll('[data-tour-start]').length} tours listed` : 'the menu did not open');
+/* jsdom lays nothing out, so "above the float" cannot be measured here — that
+   is photographed in Playwright. What jsdom can prove is that the menu is
+   placed by the anchor at all, in pixels, not left at the stylesheet's
+   top-right default. (With no layout the rect reads 0 everywhere, so the
+   anchor legitimately writes -10px — the sign is not the point.) */
+check('the menu is anchored by the float, in pixels',
+  !!tmenu && /^-?\d+px$/.test(tmenu.style.top || '') && /^-?\d+px$/.test(tmenu.style.left || ''),
+  tmenu ? `top ${tmenu.style.top} · left ${tmenu.style.left}` : 'no inline anchor');
+
 /* ------------------------------------------------------------------ done */
 
 dom.window.close();

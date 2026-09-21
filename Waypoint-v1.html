@@ -476,6 +476,17 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 .t-dots b{width:5px;height:5px;border-radius:50%;background:var(--line-2)}
 .t-dots b.on{background:var(--blue)}
 /* tour menu */
+/* L1: the tour used to sit in the top bar as a permanent button, spending the
+   scarcest pixels in the product on an action you take once, then only
+   occasionally. A corner float keeps it one click away and gives the bar back
+   to its three jobs: ask, status, identity. */
+.tour-fab{position:fixed;right:18px;bottom:18px;width:38px;height:38px;
+  border-radius:50%;border:1px solid var(--line-2);background:var(--surface);
+  color:var(--ink-2);font-size:16px;font-weight:600;display:flex;align-items:center;
+  justify-content:center;box-shadow:var(--e2);cursor:pointer;z-index:60;
+  transition:transform .12s ease,box-shadow .12s ease}
+.tour-fab:hover{color:var(--ink);border-color:var(--ink-3);
+  transform:translateY(-1px);box-shadow:var(--e3)}
 .tmenu{position:fixed;z-index:95;top:54px;right:var(--s6);width:308px;background:var(--surface);
   border:1px solid var(--line);border-radius:var(--r-ctl);box-shadow:var(--e3);padding:var(--s2);display:none}
 .tmenu.on{display:block}
@@ -861,7 +872,6 @@ body.nowm .wm{display:none}
         Ask, or tell it what to do
         <span class="kbd">⌘K</span>
       </button>
-      <button class="btn sm" id="tourOpen">Quick tour</button>
       <div class="me">
         <span class="tiny muted conn" id="connState"></span>
         <span class="dot" id="connDot" style="background:var(--ok)"></span>
@@ -871,6 +881,8 @@ body.nowm .wm{display:none}
     </header>
     <div class="page" id="page"></div>
   </main>
+  <button class="tour-fab" id="tourOpen" aria-label="Quick tour"
+    title="Quick tour — walkthroughs over the real screens">?</button>
 </div>
 <div id="navBack"></div>
 <div id="loginRoot"></div>
@@ -10954,9 +10966,11 @@ function anchorTourMenu(){
   const vw = window.innerWidth || document.documentElement.clientWidth || 0;
   let left = Math.round(r.right - w);
   left = Math.max(pad, Math.min(left, Math.max(pad, vw - w - pad)));
-  let top = Math.round(r.bottom + 8);
+  /* The float sits in the bottom corner, so the menu opens upward from it —
+     below the button there is no room left, only the edge of the screen. */
   const h = m.offsetHeight || 0;
-  if (h && top + h > (window.innerHeight || 0) - pad) top = Math.max(pad, r.top - h - 8);
+  let top = Math.round(r.top - h - 10);
+  if (h && top < pad) top = Math.round(r.bottom + 8);
   m.style.right = 'auto';
   m.style.width = w + 'px';
   m.style.left = left + 'px';
@@ -10965,7 +10979,7 @@ function anchorTourMenu(){
 
 function tourMenu(){
   const m = document.getElementById('tMenu');
-  m.innerHTML = `<div class="tm-f" style="padding-bottom:8px">Six walkthroughs. Each one plays over the
+  m.innerHTML = `<div class="tm-f" style="padding-bottom:8px">${TOURS.length} walkthroughs. Each one plays over the
     real screens — same data, same words.</div>` +
     TOURS.map(t => `<button class="tm-i" data-tour-start="${t.id}">
       <span class="n">${t.name}<div class="d">${t.blurb}</div></span>

@@ -548,5 +548,24 @@ check('a quiet insight may stand shorter than a loud one',
   /grid g3" style="[^"]*align-items:start/.test(html),
   'the six-card grid starts its rows at the top');
 
+/* --------------------------------------- 9. the bar keeps its three jobs ---
+   L1: "Quick tour" sat in the top bar as a permanent button — spending the
+   scarcest pixels in the product on an action you take once, then only
+   occasionally. The bar is left to its three jobs (ask, status, identity);
+   the tour lives on a corner float, and its menu opens upward from there,
+   because below a bottom-corner button there is no room left. */
+const topBar = /<header class="top">[\s\S]*?<\/header>/.exec(html)?.[0] || '';
+const fabDef = /\.tour-fab\{[^}]*\}/.exec(html)?.[0] || '';
+check('the top bar spends its pixels on ask, status and identity — not on the tour',
+  topBar.includes('id="cmdOpen"') && topBar.includes('id="meAv"')
+    && !topBar.includes('tourOpen')
+    && /class="tour-fab" id="tourOpen"/.test(html)
+    && fabDef.includes('position:fixed') && fabDef.includes('border-radius:50%'),
+  topBar.includes('tourOpen') ? 'the tour button is still in the top bar' : 'the tour is a corner float');
+const anchorSrc = /function anchorTourMenu\(\)\{[\s\S]*?\n\}/.exec(src)?.[0] || '';
+check('the tour menu opens upward from the corner float',
+  /let top = Math\.round\(r\.top\s*-\s*h/.test(anchorSrc),
+  anchorSrc ? 'the menu is anchored above the float' : 'anchorTourMenu was not found');
+
 console.log(`\n${ran} checks run.${bad ? '  *** FAILURES ***' : '  all passed'}`);
 process.exit(bad ? 1 : 0);
