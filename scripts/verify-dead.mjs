@@ -594,10 +594,11 @@ check('the primary button is wired to the ramp, not to hex literals',
     && /var\(--blue-(?:600|700|800)\)/.test(priDef)
     && /var\(--blue-(?:500|600)\)/.test(priHover),
   /#/.test(priColour) ? 'raw hex is still carrying the brand blue' : 'brand blue comes from --blue-*');
-check('a token nothing reads is not a token',
-  !/--ok-600\s*:/.test(html) && !/--warn-600\s*:/.test(html)
-    && /var\(--violet-600\)/.test(html),
-  'violet-600 is read; ok-600 and warn-600 were kept for nobody and are gone');
+/* The wave 8 version of "a token nothing reads is not a token" named the two
+   tokens it had just deleted. That proves the last edit was honest and proves
+   nothing about the next one — `--ink-on-dark` went on being defined for
+   nobody for another wave. The rule is now a sweep over every definition;
+   see §12. */
 
 /* --------------------------------------- 11. no half a dark mode, one weight of done ---
    X4: the stylesheet answered prefers-color-scheme:dark for the login page
@@ -614,6 +615,79 @@ const doneBtns = [...html.matchAll(/class="([^"]*)"\s+data-act="stepdone"/g)].ma
 check('finishing a step is a light action, not a call to action',
   doneBtns.length > 0 && doneBtns.every(c => c === 'mini'),
   doneBtns.length ? doneBtns.map(c => `"${c}"`).join(' · ') : 'no step-done button was found');
+
+/* --------------------------------------- 12. a hex has one home ------------
+   C4–C11 asked whether the ramp was complete; the honest test is not "is
+   every colour a name" but "can a colour exist that the ramp does not know
+   about". It could: the brand tile carried its own blue, the sign-in hero
+   carried two greys of its own, and a battery and a switch drawn for the
+   admin page carried five more between them. None of them were wrong, and
+   all of them were unfindable — the next person to retune the blue would
+   not have known they were there.
+   So: outside the token block, a colour is either white (the absence of one,
+   on a surface that already has a colour) or the black of a mask (presence,
+   not hue). Everything else has a name. Comments are stripped first — a hex
+   in a note about the hex that used to be here is prose, not paint. */
+/* The longest <style> is not the one that matters — there is a compressed
+   block beside it. The one with the tokens in it is the one under test. */
+const styleBlocks = [...html.matchAll(/<style>([\s\S]*?)<\/style>/g)].map(m => m[1]);
+const css = styleBlocks.find(b => b.includes(':root{')) || '';
+const cssBare = css.replace(/\/\*[\s\S]*?\*\//g, '');
+let depth = 0, rootEnd = -1;
+const rootStart = cssBare.indexOf(':root{');
+for (let k = rootStart; k < cssBare.length; k++) {
+  if (cssBare[k] === '{') depth++;
+  else if (cssBare[k] === '}' && --depth === 0) { rootEnd = k; break; }
+}
+const rootBody = cssBare.slice(rootStart, rootEnd + 1);
+const cssBody = cssBare.slice(0, rootStart) + cssBare.slice(rootEnd + 1);
+const strayHex = [...cssBody.matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map(m => m[0])
+  .filter(h => h.toLowerCase() !== '#fff' && h.toLowerCase() !== '#000');
+check('a colour outside the ramp is a decision, and it lives with the ramp',
+  rootStart >= 0 && rootEnd > rootStart && strayHex.length === 0,
+  rootEnd <= rootStart ? 'the token block was not found'
+    : strayHex.length ? `${strayHex.length} strays: ${[...new Set(strayHex)].join(' ')}`
+      : 'every colour outside the block has a name');
+
+/* The same sweep as §10 wanted, over every definition instead of the two
+   that happened to be dead last week. */
+const tokenNames = [...new Set([...rootBody.matchAll(/(--[a-z0-9-]+)\s*:/g)].map(m => m[1]))];
+const deadTokens = tokenNames.filter(t => !new RegExp(`var\\(${t}\\s*[,)]`).test(html));
+check('a token nothing reads is not a token',
+  tokenNames.length > 40 && deadTokens.length === 0,
+  deadTokens.length ? `${deadTokens.length} of ${tokenNames.length} are for nobody: ${deadTokens.join(' ')}`
+    : `all ${tokenNames.length} are read`);
+
+/* The stage ramp and the blue ramp were the same six numbers typed twice —
+   the pipeline's colour lived in one place and the brand's in another, and
+   nothing kept them honest. They are one ramp now: the stages take their
+   colour from the blue they already were. */
+/* The four stage colours and two of their ink/tint steps have a twin on the
+   blue ramp. The rest — the inks that sit darker than any blue we use, the
+   tints between two steps — are their own numbers, and that is fine; the
+   claim is only that where the ramp already has the colour, we read it. */
+const stageMain = [...rootBody.matchAll(/--stage-\d\s*:\s*([^;]+);/g)].map(m => m[1].trim());
+const stageWired = [...rootBody.matchAll(/--stage-\d(?:-t|-ink)?\s*:\s*(var\(--blue-[^)]+\))/g)];
+check('the stage ramp is the blue ramp, not a copy of it',
+  stageMain.length >= 4 && stageMain.every(v => /^var\(--blue-/.test(v)) && stageWired.length >= 6,
+  `${stageWired.length} steps read from --blue-*, ${stageMain.filter(v => /^var\(--blue-/.test(v)).length} of ${stageMain.length} of them the stage colours themselves`);
+
+/* T1: `.bf-h` set the display face inside a card, so one card title spoke in
+   Sora while the card beside it spoke in Plex. The page keeps Sora — the h1,
+   the section heads, the KPI figures; a title inside a card is body copy at
+   600, because inside a card the title is one line of the content, not a
+   headline announcing it. */
+/* Saying "not the display face" is not enough — these are h2s, and h2 is
+   Sora, so an unsaid family inherits the very face this rule exists to
+   avoid. The body face has to be named, not merely preferred. */
+const bfHead = /\.bf-h\{[^}]*\}/.exec(html)?.[0] || '';
+check('a title inside a card speaks in the body face',
+  bfHead.length > 0 && !bfHead.includes('--font-display')
+    && /font-family:\s*var\(--font\)/.test(bfHead) && /font-weight:\s*600/.test(bfHead),
+  !bfHead ? '.bf-h was not found'
+    : bfHead.includes('--font-display') ? 'the display face is still in the card'
+      : /font-family:\s*var\(--font\)/.test(bfHead) ? 'body face, named, 600'
+        : 'no family is named, so h2 hands it Sora');
 
 console.log(`\n${ran} checks run.${bad ? '  *** FAILURES ***' : '  all passed'}`);
 process.exit(bad ? 1 : 0);

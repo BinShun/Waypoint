@@ -46,17 +46,16 @@
   --warn:#9A6207; --warn-50:#FCF3E4; --warn-100:#F0DDB4;
   --risk:#B4232A; --risk-600:#A61E24; --risk-50:#FCEDEE; --risk-100:#F2C6C9;
   --violet:#4B5BD6; --violet-600:#3A47B8; --violet-50:#EEF0FB; --violet-line:#DCE0F6;
-  --info:#2563D9; --info-50:#EEF4FD;
   /* stage ramp — one hue, deepening. The pipeline reads as a channel getting
      deeper, not as four unrelated colours. */
-  --stage-1:#7FA9E8; --stage-1-t:#EEF4FD; --stage-1-ink:#1D4FA8;
-  --stage-2:#4E85DE; --stage-2-t:#E7F0FC; --stage-2-ink:#1A56C4;
-  --stage-3:#2563D9; --stage-3-t:#E3EDFB; --stage-3-ink:#12489F;
-  --stage-4:#12489F; --stage-4-t:#DFE9FA; --stage-4-ink:#0F3E8C;
+  --stage-1:var(--blue-300); --stage-1-t:var(--blue-50); --stage-1-ink:#1D4FA8;
+  --stage-2:var(--blue-400); --stage-2-t:#E7F0FC; --stage-2-ink:#1A56C4;
+  --stage-3:var(--blue-600); --stage-3-t:#E3EDFB; --stage-3-ink:#12489F;
+  --stage-4:var(--blue-800); --stage-4-t:#DFE9FA; --stage-4-ink:var(--blue-900);
   /* ink. `--ink-3` moved down one step: 3.79:1 on white was below AA for the
      muted text it carries, 4.60:1 is not. */
   --ink:#10151C; --ink-2:#4A5461; --ink-3:#6B7686; --ink-0:#A9B1BC;
-  --ink-on-dark:#E7ECF3; --ink-on-dark-2:#A9BCD8;
+  --ink-on-dark:#A9BCD8; --ink-on-dark-2:#8FA6C8;
   /* line */
   --line:#E3E8EF; --line-2:#CDD5E0; --line-strong:#B6C0CE; --line-tinted:#D5E2F7;
   /* rail */
@@ -74,6 +73,13 @@
   --font-display:"Sora",var(--font);
   --font-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   --rail:216px;
+  /* A drawing, not a decision: the battery that sits beside the sleeping
+     mascot, and the switch in the rail footer. They are shapes rather than
+     semantics, and they are brighter than the semantic colours because a
+     3px square of --risk reads as mud. They live here for the same reason
+     every other colour does: one home, so a retune can find them. */
+  --fig-shell:#3D2317; --fig-track:#C6CEDB;
+  --fig-low:#E05B4B; --fig-mid:#F2A93B; --fig-full:#4CAF7D;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -108,7 +114,7 @@ main{min-width:0}
 .rail::-webkit-scrollbar{width:8px}
 .rail::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:4px}
 .brand{display:flex;align-items:center;gap:10px;padding:0 var(--s2) var(--s5)}
-.brand-m{width:28px;height:28px;border-radius:var(--r-sm);background:linear-gradient(160deg,#2A6BE0,#1554C0);
+.brand-m{width:28px;height:28px;border-radius:var(--r-sm);background:linear-gradient(160deg,var(--blue-500),var(--blue-700));
   display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;letter-spacing:-.02em;
   box-shadow:0 4px 10px rgba(21,84,192,.45)}
 /* A stray dot here made the selector `..brand-t`, which matches nothing, so
@@ -187,7 +193,12 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
 .bf-hero{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:var(--s7);
   padding:var(--s1) 0 var(--s6);border-bottom:1px solid var(--line);margin-bottom:var(--s5)}
 .bf-col{min-width:0}
-.bf-h{font-family:var(--font-display);font-size:15px;font-weight:600;letter-spacing:-.01em;margin:0}
+/* T1: a title inside a card is a line of the content, not a headline in
+   front of it — the display face is kept for the page: the h1, the section
+   heads, the figures. In here it is body copy at 600, and it says so
+   outright: these are h2s, and h2 is Sora, so leaving the family unsaid
+   would simply inherit the face we are trying not to use. */
+.bf-h{font-family:var(--font);font-size:15px;font-weight:600;letter-spacing:-.01em;margin:0}
 .bf-who{font-size:15px;line-height:1.7;color:var(--ink);margin:0;max-width:78ch}
 .bf-fit{font-size:13.5px;line-height:1.65;color:var(--ink-2);margin:0;max-width:78ch}
 .bf-label{font-size:11px;font-weight:600;letter-spacing:.05em;color:var(--ink-3);margin-bottom:5px}
@@ -547,14 +558,14 @@ body.onlogin #app{display:none}
 .lg-tile{width:36px;height:36px;border-radius:var(--r-sm);background:#fff;color:var(--blue);
   display:grid;place-items:center;box-shadow:0 8px 22px rgba(0,0,0,.32)}
 .lg-word{font-size:16.5px;font-weight:600;letter-spacing:-.012em}
-.lg-word i{font-style:normal;color:#8FA6C8;font-weight:500}
+.lg-word i{font-style:normal;color:var(--ink-on-dark-2);font-weight:500}
 .lg-net{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;margin:var(--s5) 0}
 .lg-net svg{width:100%;height:auto;max-height:400px;animation:lgdrift 18s ease-in-out infinite}
 .lg-copy{margin-top:auto}
 .lg-kick{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
-  color:#7C90AE;margin:0 0 12px}
+  color:var(--ink-on-dark-2);margin:0 0 12px}
 .lg-h{font-size:27px;line-height:1.26;font-weight:600;letter-spacing:-.02em;margin:0 0 10px;max-width:15ch}
-.lg-p{font-size:13.5px;color:var(--ink-on-dark-2);margin:0;max-width:44ch;line-height:1.62}
+.lg-p{font-size:13.5px;color:var(--ink-on-dark);margin:0;max-width:44ch;line-height:1.62}
 .lg-form{display:flex;flex-direction:column;align-items:center;justify-content:center;
   padding:var(--s6) var(--s5);gap:var(--s5)}
 .lg-card{width:100%;max-width:352px}
@@ -804,15 +815,15 @@ body.nowm .wm{display:none}
   filter:drop-shadow(0 6px 14px rgba(16,24,40,.16))}
 /* a model is out — asleep beside the battery */
 .m-sleep{height:34px;width:auto;flex:none}
-.battery{width:44px;height:20px;border:3px solid #3D2317;border-radius:var(--r-xs);position:relative;
+.battery{width:44px;height:20px;border:3px solid var(--fig-shell);border-radius:var(--r-xs);position:relative;
   display:inline-block;flex:none;background:#fff;box-sizing:content-box;margin-left:10px}
 .battery::after{content:"";position:absolute;left:calc(100% + 2px);top:50%;transform:translateY(-50%);
-  width:3px;height:8px;background:#3D2317;border-radius:0 2px 2px 0}
+  width:3px;height:8px;background:var(--fig-shell);border-radius:0 2px 2px 0}
 .battery .btrack{position:absolute;inset:2px;overflow:hidden;border-radius:2px}
 .battery .bfill{position:absolute;left:0;top:0;bottom:0;width:12%;border-radius:2px;
-  background:#E05B4B;animation:charge 2.4s ease-in-out infinite}
-@keyframes charge{0%{width:12%;background:#E05B4B}45%{width:55%;background:#F2A93B}
-  72%{width:100%;background:#4CAF7D}100%{width:100%;background:#4CAF7D}}
+  background:var(--fig-low);animation:charge 2.4s ease-in-out infinite}
+@keyframes charge{0%{width:12%;background:var(--fig-low)}45%{width:55%;background:var(--fig-mid)}
+  72%{width:100%;background:var(--fig-full)}100%{width:100%;background:var(--fig-full)}}
 /* the AI card — thinking out of the box */
 .m-box{height:46px;width:auto;flex:none}
 /* toasts and the sign-in refusal */
@@ -837,7 +848,7 @@ body.nowm .wm{display:none}
   font-size:12px;font-weight:500}
 .ctheme:hover{background:rgba(16,24,40,.06);color:var(--rail-ink)}
 .ctheme img{height:26px;width:auto;flex:none}
-.ctheme .sw{width:26px;height:15px;border-radius:var(--r-chip);background:#C6CEDB;position:relative;
+.ctheme .sw{width:26px;height:15px;border-radius:var(--r-chip);background:var(--fig-track);position:relative;
   margin-left:auto;flex:none;transition:background .15s}
 .ctheme .sw::after{content:"";position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;
   background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
@@ -846,7 +857,7 @@ body.nowm .wm{display:none}
 .ctheme.on .sw::after{left:13px}
 @media(prefers-reduced-motion:reduce){
   .mascot{animation:none!important}
-  .battery .bfill{width:100%;background:#4CAF7D;animation:none}
+  .battery .bfill{width:100%;background:var(--fig-full);animation:none}
 }
 @media print{
   body:not(.canprint) .page,body:not(.canprint) main,body:not(.canprint) .rail{display:none !important}
