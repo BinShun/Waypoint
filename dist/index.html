@@ -588,20 +588,11 @@ body.onlogin #app{display:none}
   .lg-mob{display:flex}
   .lg-form{padding:var(--s5) var(--s4) var(--s6)}
 }
-@media(prefers-color-scheme:dark){
-  .lg{background:#0B0F16}
-  .lg-form{color:#E7ECF3}
-  .lg-card h1{color:#F2F5F9}
-  .lg-sub{color:#8B97A8}
-  .f{color:#9AA6B6}
-  .inp{background:#141A23;border-color:#2A3341;color:#E7ECF3}
-  .inp:focus{border-color:var(--blue-500);box-shadow:0 0 0 3px rgba(42,107,224,.22)}
-  .lg-row{color:#8B97A8}
-  .lg-form .btn{background:#141A23;border-color:#2A3341;color:#E7ECF3}
-  .lg-form .btn:hover{background:#1B222C}
-  .lg-form .btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
-  .lg-foot{color:#6B7787}
-}
+/* X4: this block used to answer the dark colour scheme for the login screen
+   and for nothing else — a dark front door opening onto a white product.
+   Half a dark mode is worse than none: it is a promise the rest of the file
+   does not keep. The door is the colour of the room until the whole product
+   has an evening. */
 @media(prefers-reduced-motion:reduce){
   .lg-net svg,.lg-n,.lg-big{animation:none}
 }
@@ -4116,7 +4107,7 @@ function actionsCard(c){
           ${stepRoleLine(s)}
         </div>
         <span class="tag ${late ? 't-risk' : 't-grey'}">${esc(stepWhen(s))}${late ? ' overdue' : ''}</span>
-        ${can('log') ? `<button class="btn sm" data-act="stepdone" data-sid="${esc(s.id)}"
+        ${can('log') ? `<button class="mini" data-act="stepdone" data-sid="${esc(s.id)}"
           title="Mark this done — recorded on the timeline with your name">Done</button>` : ''}
         ${rmBar(rmKey.step(c, s), s.t)}
       </div>${edFor === rmKey.step(c, s) ? edForm(rmKey.step(c, s),
@@ -4968,7 +4959,7 @@ function interactionCard(m){
           <span class="tag ${s.from === 'customer' ? 't-blue' : 't-grey'}" style="flex:0 0 auto">${s.from === 'customer' ? 'them' : 'us'}</span>
           <span style="font-size:13px;flex:1;min-width:0">${esc(s.t)}</span>
           <span class="tag ${stepOverdue(s) ? 't-risk' : 't-grey'}">${esc(stepWhen(s))}${stepOverdue(s) ? ' overdue' : ''}</span>
-          ${can('log') ? `<button class="btn sm" data-act="stepdone" data-sid="${esc(s.id)}"
+          ${can('log') ? `<button class="mini" data-act="stepdone" data-sid="${esc(s.id)}"
             title="Mark this done — recorded on the timeline with your name">Done</button>` : ''}
         </div>`).join('')}
         ${owed.length > 4 ? `<div class="tiny muted" style="margin-top:6px">+ ${owed.length - 4} more on the customer’s record</div>` : ''}

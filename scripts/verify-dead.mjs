@@ -599,5 +599,21 @@ check('a token nothing reads is not a token',
     && /var\(--violet-600\)/.test(html),
   'violet-600 is read; ok-600 and warn-600 were kept for nobody and are gone');
 
+/* --------------------------------------- 11. no half a dark mode, one weight of done ---
+   X4: the stylesheet answered prefers-color-scheme:dark for the login page
+   and for nothing else. A person on a dark desktop was met by a dark
+   front door and then shown a white product — a promise the product does
+   not keep. The door is now the same colour as the room.
+   X2: "Done" on a step was a solid primary-weight button, as loud as
+   "Add this person". Finishing one small thing is a light action; it is
+   drawn like one. */
+check('the login page does not promise a dark mode the product does not have',
+  !/prefers-color-scheme:\s*dark/.test(html),
+  /prefers-color-scheme:\s*dark/.test(html) ? 'the dark query is still there' : 'one surface, one light');
+const doneBtns = [...html.matchAll(/class="([^"]*)"\s+data-act="stepdone"/g)].map(m => m[1]);
+check('finishing a step is a light action, not a call to action',
+  doneBtns.length > 0 && doneBtns.every(c => c === 'mini'),
+  doneBtns.length ? doneBtns.map(c => `"${c}"`).join(' · ') : 'no step-done button was found');
+
 console.log(`\n${ran} checks run.${bad ? '  *** FAILURES ***' : '  all passed'}`);
 process.exit(bad ? 1 : 0);
