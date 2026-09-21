@@ -42,7 +42,11 @@
   --line:#E3E8EF; --line-2:#CDD5E0; --line-strong:#B6C0CE; --line-tinted:#D5E2F7;
   /* rail */
   --rail-bg:#F4F6F9; --rail-line:#E3E8EF; --rail-ink:#333C4E; --rail-ink-dim:#717E91;
-  --r-card:16px; --r-ctl:12px; --r-chip:999px;
+  /* The radius ladder, smallest to largest: a hairline round on a micro
+     control (--r-xs), a small panel or tile (--r-sm), an interactive control
+     (--r-ctl), a card or floating surface (--r-card), a pill (--r-chip).
+     Circles (50%) are a shape, not a step, and stay literal. */
+  --r-card:16px; --r-ctl:12px; --r-sm:10px; --r-xs:6px; --r-chip:999px;
   --e1:0 1px 2px rgba(16,24,40,.03), 0 1px 3px rgba(16,24,40,.04);
   --e2:0 8px 24px rgba(16,24,40,.06), 0 2px 6px rgba(16,24,40,.04);
   --e3:0 24px 64px rgba(16,24,40,.1);
@@ -85,7 +89,7 @@ main{min-width:0}
 .rail::-webkit-scrollbar{width:8px}
 .rail::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:4px}
 .brand{display:flex;align-items:center;gap:10px;padding:0 var(--s2) var(--s5)}
-.brand-m{width:28px;height:28px;border-radius:8px;background:linear-gradient(160deg,#2A6BE0,#1554C0);
+.brand-m{width:28px;height:28px;border-radius:var(--r-sm);background:linear-gradient(160deg,#2A6BE0,#1554C0);
   display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;letter-spacing:-.02em;
   box-shadow:0 4px 10px rgba(21,84,192,.45)}
 /* A stray dot here made the selector `..brand-t`, which matches nothing, so
@@ -233,13 +237,13 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
 .tag{display:inline-flex;align-items:center;gap:5px;border-radius:var(--r-chip);
   padding:2.5px 9px;font-size:11.5px;font-weight:600;letter-spacing:.01em;white-space:nowrap;
   border:1px solid transparent}
-.t-with{background:var(--ok-50);color:var(--ok);border-color:#BFE3D4}
+.t-with{background:var(--ok-50);color:var(--ok);border-color:var(--ok-100)}
 .t-und{background:var(--surface-3);color:var(--ink-2);border-color:var(--line)}
-.t-against{background:var(--risk-50);color:var(--risk);border-color:#F2C6C9}
-.t-blue{background:var(--blue-50);color:var(--blue);border-color:#C9D9F4}
-.t-warn{background:var(--warn-50);color:var(--warn);border-color:#F0DDB4}
-.t-risk{background:var(--risk-50);color:var(--risk);border-color:#F2C6C9}
-.t-ok{background:var(--ok-50);color:var(--ok);border-color:#BFE3D4}
+.t-against{background:var(--risk-50);color:var(--risk);border-color:var(--risk-100)}
+.t-blue{background:var(--blue-50);color:var(--blue);border-color:var(--blue-100)}
+.t-warn{background:var(--warn-50);color:var(--warn);border-color:var(--warn-100)}
+.t-risk{background:var(--risk-50);color:var(--risk);border-color:var(--risk-100)}
+.t-ok{background:var(--ok-50);color:var(--ok);border-color:var(--ok-100)}
 .t-grey{background:var(--surface-3);color:var(--ink-2);border-color:var(--line)}
 .t-violet{background:var(--violet-50);color:var(--violet);border-color:var(--violet-line)}
 .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
@@ -274,7 +278,7 @@ tr.lnk:hover td{background:var(--blue-25)}
 /* segments */
 .seg{display:inline-flex;background:var(--surface-3);border-radius:var(--r-ctl);padding:2px}
 .seg button{border:none;background:none;padding:4px 12px;font-size:12.5px;
-  border-radius:6px;color:var(--ink-3);font-weight:500}
+  border-radius:var(--r-xs);color:var(--ink-3);font-weight:500}
 .seg button.on{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:var(--e1)}
 
 /* ----------------------------------------------------------------- AI */
@@ -304,7 +308,7 @@ tr.lnk:hover td{background:var(--blue-25)}
 .pchip .d{font-size:12px;color:var(--ink-3);min-width:0;overflow-wrap:anywhere}
 .pchip>*{min-width:0}
 .cite{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);
-  border:1px solid var(--line);border-radius:6px;padding:2px 8px;font-size:11.5px;
+  border:1px solid var(--line);border-radius:var(--r-xs);padding:2px 8px;font-size:11.5px;
   color:var(--blue);font-weight:500;margin:0 5px 5px 0}
 .cite:hover{background:var(--blue-50)}
 
@@ -312,7 +316,7 @@ tr.lnk:hover td{background:var(--blue-25)}
 .veil{position:fixed;inset:0;background:rgba(16,21,28,.36);z-index:60;
   display:none;align-items:center;justify-content:center;padding:var(--s5)}
 .veil.on{display:flex}
-.sheet{background:var(--surface);width:min(720px,100%);border-radius:16px;
+.sheet{background:var(--surface);width:min(720px,100%);border-radius:var(--r-card);
   box-shadow:var(--e3);max-height:88vh;overflow-y:auto;
   transform:translateY(10px) scale(.99);opacity:0;transition:.2s cubic-bezier(.2,.8,.2,1)}
 .veil.on .sheet{transform:none;opacity:1}
@@ -340,7 +344,7 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 
 /* command palette */
 .pal{position:fixed;top:16vh;left:50%;transform:translateX(-50%);width:min(620px,92vw);
-  background:var(--surface);border-radius:14px;box-shadow:var(--e3);z-index:80;display:none;overflow:hidden}
+  background:var(--surface);border-radius:var(--r-card);box-shadow:var(--e3);z-index:80;display:none;overflow:hidden}
 .pal.on{display:block}
 .pal-i{width:100%;border:none;outline:none;padding:var(--s4) var(--s5);font-size:15px;
   border-bottom:1px solid var(--line)}
@@ -358,7 +362,7 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 .diff .old{color:var(--ink-3);text-decoration:line-through}
 .diff .new{color:var(--ink);font-weight:500}
 .diff .why{color:var(--ink-3);font-size:11.5px}
-.mini{border:1px solid var(--line-2);background:var(--surface);border-radius:6px;
+.mini{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r-xs);
   padding:3px 8px;font-size:12px;font-weight:600}
 .mini.on{background:var(--ok);border-color:var(--ok);color:#fff}
 
@@ -376,7 +380,7 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 .col-t{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
 /* empty stage column: header + one quiet line, nothing taller */
 .col-empty{padding:0 2px;font-size:11.5px;color:var(--ink-3)}
-.opp{background:var(--surface);border:1px solid var(--line);border-radius:10px;
+.opp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
   padding:11px var(--s3);margin-bottom:var(--s2);box-shadow:var(--e1)}
 .opp:hover{border-color:var(--line-2)}
 .opp .t{font-size:13px;font-weight:600;letter-spacing:-.005em}
@@ -424,7 +428,7 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 .tour{position:fixed;inset:0;z-index:90;display:none}
 .tour.on{display:block}
 .t-block{position:fixed;inset:0}
-.t-spot{position:fixed;z-index:91;border-radius:12px;pointer-events:none;opacity:0;
+.t-spot{position:fixed;z-index:91;border-radius:var(--r-ctl);pointer-events:none;opacity:0;
   box-shadow:0 0 0 9999px rgba(16,21,28,.46),0 0 0 1px var(--blue-100);
   outline:1.5px solid var(--blue);outline-offset:4px;
   transition:left .5s cubic-bezier(.2,.8,.2,1),top .5s cubic-bezier(.2,.8,.2,1),
@@ -439,7 +443,7 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 @keyframes tping{0%{transform:scale(.55);opacity:.55}70%{transform:scale(1.3);opacity:0}100%{opacity:0}}
 .t-card{position:fixed;z-index:94;left:50%;bottom:26px;transform:translateX(-50%);
   width:min(580px,92vw);background:var(--surface);border:1px solid var(--line);
-  border-radius:14px;box-shadow:var(--e3);padding:var(--s4) var(--s5) var(--s3)}
+  border-radius:var(--r-card);box-shadow:var(--e3);padding:var(--s4) var(--s5) var(--s3)}
 .t-head{display:flex;align-items:center;gap:10px;font-size:11.5px;color:var(--ink-3)}
 .t-head .n{font-weight:600;color:var(--ink-2)}
 .t-x{margin-left:auto;border:none;background:none;color:var(--ink-3);font-size:12px}
@@ -454,10 +458,10 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 .t-dots b.on{background:var(--blue)}
 /* tour menu */
 .tmenu{position:fixed;z-index:95;top:54px;right:var(--s6);width:308px;background:var(--surface);
-  border:1px solid var(--line);border-radius:12px;box-shadow:var(--e3);padding:var(--s2);display:none}
+  border:1px solid var(--line);border-radius:var(--r-ctl);box-shadow:var(--e3);padding:var(--s2);display:none}
 .tmenu.on{display:block}
 .tm-i{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;border:none;
-  background:none;padding:9px 10px;border-radius:8px}
+  background:none;padding:9px 10px;border-radius:var(--r-sm)}
 .tm-i:hover{background:var(--surface-3)}
 .tm-i .n{font-size:13px;font-weight:500;color:var(--ink)}
 .tm-i .d{font-size:11.5px;color:var(--ink-3);line-height:1.45;margin-top:1px}
@@ -474,13 +478,13 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 /* customer marks — a trademark is the one place colour may be arbitrary,
    because it is their identity, not our taxonomy. Fallback is initials. */
 .logo{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
-  border:1px solid var(--line);border-radius:7px;background:var(--surface);overflow:hidden}
+  border:1px solid var(--line);border-radius:var(--r-sm);background:var(--surface);overflow:hidden}
 .logo svg{width:64%;height:64%;display:block}
 .monogram{display:inline-grid;place-items:center;flex:0 0 auto;border:1px solid var(--line);
-  border-radius:7px;background:var(--surface-3);color:var(--ink-2);
+  border-radius:var(--r-sm);background:var(--surface-3);color:var(--ink-2);
   font-size:10px;font-weight:700;letter-spacing:.02em}
 .src{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2);
-  border:1px solid var(--line);border-radius:6px;padding:1px 7px;font-size:11px;color:var(--ink-3);font-weight:500}
+  border:1px solid var(--line);border-radius:var(--r-xs);padding:1px 7px;font-size:11px;color:var(--ink-3);font-weight:500}
 
 /* ================================================================== login */
 /*  Two surfaces: a dark brand surface that carries the idea (signal →
@@ -500,7 +504,7 @@ body.onlogin #app{display:none}
   mask-image:radial-gradient(720px 520px at 32% 42%,#000,transparent)}
 .lg-hero>*{position:relative;z-index:1}
 .lg-brand{display:flex;align-items:center;gap:11px}
-.lg-tile{width:36px;height:36px;border-radius:10px;background:#fff;color:var(--blue);
+.lg-tile{width:36px;height:36px;border-radius:var(--r-sm);background:#fff;color:var(--blue);
   display:grid;place-items:center;box-shadow:0 8px 22px rgba(0,0,0,.32)}
 .lg-word{font-size:16.5px;font-weight:600;letter-spacing:-.012em}
 .lg-word i{font-style:normal;color:#8FA6C8;font-weight:500}
@@ -655,7 +659,7 @@ body.picked .pd-back{display:inline-flex}
   font-size:12.5px;color:var(--ink-3);width:100%;border-left:none;border-right:none;border-bottom:none;background:none}
 .more:hover{color:var(--blue)}
 .soc{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface-2);
-  border-radius:999px;padding:2px 8px;font-size:11px;color:var(--ink-2);text-decoration:none;white-space:nowrap}
+  border-radius:var(--r-chip);padding:2px 8px;font-size:11px;color:var(--ink-2);text-decoration:none;white-space:nowrap}
 .soc:hover{border-color:var(--blue);color:var(--blue)}
 .find-row{display:flex;align-items:center;gap:var(--s3);width:100%;border:none;background:none;
   padding:10px var(--s4);border-bottom:1px solid var(--line);text-align:left}
@@ -681,7 +685,7 @@ body.picked .pd-back{display:inline-flex}
    a 5px vertical padding and a 999px radius on a block that holds three
    lines of text reads as wording spilling out of its box. Two classes, two
    jobs; a second definition of the same name is a bug, not a shortcut. */
-.rchip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 12px;
+.rchip{border:1px solid var(--line);background:var(--surface);border-radius:var(--r-chip);padding:5px 12px;
   font-size:12.5px;color:var(--ink-2);cursor:pointer}
 .rchip.on{border-color:var(--blue);background:var(--blue-50);color:var(--blue);font-weight:500}
 
@@ -749,7 +753,7 @@ body.nowm .wm{display:none}
   filter:drop-shadow(0 6px 14px rgba(16,24,40,.16))}
 /* a model is out — asleep beside the battery */
 .m-sleep{height:34px;width:auto;flex:none}
-.battery{width:44px;height:20px;border:3px solid #3D2317;border-radius:6px;position:relative;
+.battery{width:44px;height:20px;border:3px solid #3D2317;border-radius:var(--r-xs);position:relative;
   display:inline-block;flex:none;background:#fff;box-sizing:content-box;margin-left:10px}
 .battery::after{content:"";position:absolute;left:calc(100% + 2px);top:50%;transform:translateY(-50%);
   width:3px;height:8px;background:#3D2317;border-radius:0 2px 2px 0}
@@ -782,7 +786,7 @@ body.nowm .wm{display:none}
   font-size:12px;font-weight:500}
 .ctheme:hover{background:rgba(16,24,40,.06);color:var(--rail-ink)}
 .ctheme img{height:26px;width:auto;flex:none}
-.ctheme .sw{width:26px;height:15px;border-radius:99px;background:#C6CEDB;position:relative;
+.ctheme .sw{width:26px;height:15px;border-radius:var(--r-chip);background:#C6CEDB;position:relative;
   margin-left:auto;flex:none;transition:background .15s}
 .ctheme .sw::after{content:"";position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;
   background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s}
@@ -2157,7 +2161,7 @@ function calItem(it){
     : it.k === 'meet' ? 'var(--blue)' : 'var(--violet)';
   const mark = it.k === 'step' ? '▲' : it.k === 'meet' ? '●' : '✦';
   return `<button class="row" data-cgo="${esc(it.c)}" data-cgotab="${it.k === 'close' ? 'opportunities' : 'timeline'}"
-    style="gap:5px;padding:2px 4px;width:100%;border:0;background:none;cursor:pointer;text-align:left;align-items:center;border-radius:6px"
+    style="gap:5px;padding:2px 4px;width:100%;border:0;background:none;cursor:pointer;text-align:left;align-items:center;border-radius:var(--r-xs)"
     title="${esc(it.t)} — opens the ${it.k === 'close' ? 'opportunities' : 'timeline'} of ${esc((cust(it.c) || {}).name || 'the account')}">
     <span class="tiny" style="flex:0 0 auto;color:${colour};font-size:10px;line-height:1">${mark}</span>
     <span class="tiny" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(it.t)}</span>
@@ -2183,7 +2187,7 @@ function screenCalendar(){
     dated += items.length;
     const isToday = iso === today;
     cells.push(`
-      <div style="border:1px solid var(--line);border-radius:8px;padding:5px 4px;min-height:88px;overflow:hidden;${isToday ? 'outline:2px solid var(--blue);outline-offset:-2px' : ''}">
+      <div style="border:1px solid var(--line);border-radius:var(--r-sm);padding:5px 4px;min-height:88px;overflow:hidden;${isToday ? 'outline:2px solid var(--blue);outline-offset:-2px' : ''}">
         <div class="tiny" style="font-weight:${isToday ? 700 : 500};color:${isToday ? 'var(--blue)' : 'var(--ink-2)'};margin-bottom:2px;padding-left:2px">${d}</div>
         ${items.slice(0, 3).map(calItem).join('')}
         ${items.length > 3 ? `<div class="tiny muted" style="padding:1px 4px">+${items.length - 3} more</div>` : ''}
@@ -2696,7 +2700,7 @@ function aiReady(c){
 async function aiCompanyBrief(cid){
   const c = cust(cid);
   if (!c || !can('edit') || aiBusy) return;
-  if (!aiReady(c)){ toast('No model endpoint is answering.'); return; }
+  if (!aiReady(c)){ toast('No model endpoint is answering.', null, 'err'); return; }
   aiBusy = true;
   toast('Asking the model — this can take a minute or two.');
   try {
@@ -2704,20 +2708,20 @@ async function aiCompanyBrief(cid){
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: c.name, site: c.site, industry: c.industry, hq: c.hq, people: c.people }) });
     const b = await res.json();
-    if (!res.ok || !b.ok){ toast('No draft — ' + (b.error || 'the model did not answer')); return; }
+    if (!res.ok || !b.ok){ toast('No draft — ' + (b.error || 'the model did not answer'), null, 'err'); return; }
     c.aiBrief = { who: b.who, fit: b.fit, at: todayISO(), sources: b.sources || [] };
     audit('ai', 'Company brief drafted', c.name, '-', 'model draft — unverified');
     syncSave(); render();
     toast('Draft ready · it stays unverified until you confirm it.');
   } catch {
-    toast('The model could not be reached.');
+    toast('The model could not be reached.', null, 'err');
   } finally { aiBusy = false; }
 }
 
 async function aiCollectNews(cid){
   const c = cust(cid);
   if (!c || !can('log') || aiBusy) return;
-  if (!aiReady(c)){ toast('No model endpoint is answering.'); return; }
+  if (!aiReady(c)){ toast('No model endpoint is answering.', null, 'err'); return; }
   aiBusy = true;
   toast('Searching public news for ' + c.name + ' — this can take a minute or two.');
   try {
@@ -2725,7 +2729,7 @@ async function aiCollectNews(cid){
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: c.name, site: c.site || '' }) });
     const b = await res.json();
-    if (!res.ok || !b.ok){ toast('Nothing collected — ' + (b.error || 'the news search did not answer')); return; }
+    if (!res.ok || !b.ok){ toast('Nothing collected — ' + (b.error || 'the news search did not answer'), null, 'err'); return; }
     /* The top five are kept on the customer, so the next person who opens this
        page sees them instantly instead of waiting a minute for a search. A
        cached result says when it was taken; it never pretends to be live. */
@@ -2734,7 +2738,7 @@ async function aiCollectNews(cid){
     syncSave();
     render();
   } catch {
-    toast('The model could not be reached.');
+    toast('The model could not be reached.', null, 'err');
   } finally { aiBusy = false; }
 }
 
@@ -2982,7 +2986,7 @@ async function runMom(mid){
     momState.painsMade = [];
     drawMom();
   } catch {
-    toast('The model could not be reached.');
+    toast('The model could not be reached.', null, 'err');
     momState.out = null; drawMom();
   }
 }
@@ -3012,8 +3016,8 @@ function momCreatePains(){
   if (!momState || !momState.out) return;
   const m = (D.interactions || []).find(x => x.id === momState.mid);
   const c = m ? cust(m.c) : (momState.cid ? cust(momState.cid) : null);
-  if (!c){ toast('That customer is no longer in the book.'); return; }
-  if (!can('log')){ toast('Your role cannot record work.'); return; }
+  if (!c){ toast('That customer is no longer in the book.', null, 'err'); return; }
+  if (!can('log')){ toast('Your role cannot record work.', null, 'err'); return; }
   const todo = (momState.out.pains || [])
     .map((p, pi) => ({ p, pi }))
     .filter(({ pi }) => (momState.painsPicked || []).includes(pi) && !(momState.painsMade || []).includes(pi));
@@ -3052,7 +3056,7 @@ function momCreateSelected(mid){
   const m = (D.interactions || []).find(x => x.id === mid);
   const c = m ? cust(m.c) : (momState.cid ? cust(momState.cid) : null);
   if (!c) return;
-  if (!can('log')){ toast('Your role cannot record work.'); return; }
+  if (!can('log')){ toast('Your role cannot record work.', null, 'err'); return; }
   const todo = (momState.out.steps || [])
     .map((st, i) => ({ st, i }))
     .filter(({ i }) => momState.picked.includes(i) && !momState.created.includes(i));
@@ -3101,7 +3105,7 @@ function openOppConfirm(mid, oi){
      only there on the minutes path. */
   const m = (D.interactions || []).find(x => x.id === mid);
   const c = m ? cust(m.c) : (momState.cid ? cust(momState.cid) : null);
-  if (!c){ toast('That customer is no longer in the book.'); return; }
+  if (!c){ toast('That customer is no longer in the book.', null, 'err'); return; }
   confirmOppSheet(c, sug, oi);
 }
 
@@ -3116,7 +3120,7 @@ function openOppConfirm(mid, oi){
    figure in a pipeline is worse than an empty field (§10: speculation is not
    confirmed demand). */
 function confirmOppSheet(c, sug, oi){
-  if (!can('commercial')){ toast('Only the commercial owner creates opportunities.'); return; }
+  if (!can('commercial')){ toast('Only the commercial owner creates opportunities.', null, 'err'); return; }
   const veil = document.getElementById('capVeil');
   veil.classList.add('on');
   document.querySelector('#capVeil .sheet-h').innerHTML = `
@@ -3192,7 +3196,7 @@ function saveMom(mid){
   const m = (D.interactions || []).find(x => x.id === mid);
   const c = m && cust(m.c);
   if (!m || !c || !momState || !momState.out) return;
-  if (!can('log')){ toast('Your role cannot record work.'); return; }
+  if (!can('log')){ toast('Your role cannot record work.', null, 'err'); return; }
   m.sum = momState.out.summary || m.sum;
   m.out = momState.out.outcome || m.out;
   /* The timeline entry is the same fact as the meeting - keep the pair in step. */
@@ -3325,7 +3329,7 @@ async function runInsights(cid){
     insState.out = b; insState.sent = [];
     drawInsights();
   } catch {
-    toast('The model could not be reached.');
+    toast('The model could not be reached.', null, 'err');
     insState.out = null; drawInsights();
   }
 }
@@ -3393,7 +3397,7 @@ function addNewsLead(i){
   const c = cid ? cust(cid) : null;
   const it = c && c.newsCache ? (c.newsCache.items || [])[Number(i)] : null;
   if (!it || !c) return;
-  if (!can('log')){ toast('Your role cannot record signals.'); return; }
+  if (!can('log')){ toast('Your role cannot record signals.', null, 'err'); return; }
   D.watch.unshift({
     id: 'w' + Date.now(), c: c.id, d: it.d || todayISO(), k: it.kind || 'note',
     h: it.h, src: 'Public news — ' + (it.src || hostOf(it.u || '')), u: it.u || '',
@@ -3407,14 +3411,14 @@ function addNewsLead(i){
 async function aiClassifyCustomer(cid){
   const c = cust(cid);
   if (!c || !can('edit') || aiBusy) return;
-  if (!aiReady(c)){ toast('No model endpoint is answering.'); return; }
+  if (!aiReady(c)){ toast('No model endpoint is answering.', null, 'err'); return; }
   aiBusy = true;
   try {
     const res = await fetch('/api/ai/classify', { method: 'POST', credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: c.name, site: c.site }) });
     const b = await res.json();
-    if (!res.ok || !b.ok){ toast('No classification — ' + (b.error || 'the model did not answer')); return; }
+    if (!res.ok || !b.ok){ toast('No classification — ' + (b.error || 'the model did not answer'), null, 'err'); return; }
     const before = c.industry;
     c.industry = b.industry;
     c.industrySrc = 'model suggestion';
@@ -3422,14 +3426,14 @@ async function aiClassifyCustomer(cid){
     syncSave(); render();
     toast('Industry set to ' + b.industry + ' · a model suggestion — confirm it.');
   } catch {
-    toast('The model could not be reached.');
+    toast('The model could not be reached.', null, 'err');
   } finally { aiBusy = false; }
 }
 
 function openDeleteCustomer(cid){
   const c = cust(cid);
   if (!c) return;
-  if (!can('del')){ toast('Only an administrator can delete a customer.'); return; }
+  if (!can('del')){ toast('Only an administrator can delete a customer.', null, 'err'); return; }
   delCust = cid;
   document.querySelector('#capVeil .sheet-h').innerHTML =
     `<strong style="font-size:14.5px">Delete ${esc(c.name)}</strong>
@@ -3462,9 +3466,9 @@ function openDeleteCustomer(cid){
 async function deleteCustomerNow(){
   const c = cust(delCust);
   if (!c) return;
-  if (!can('del')){ toast('Only an administrator can delete a customer.'); return; }
+  if (!can('del')){ toast('Only an administrator can delete a customer.', null, 'err'); return; }
   const typed = ((document.getElementById('delName') || {}).value || '').trim();
-  if (typed !== c.name){ toast('The name does not match — nothing was deleted.'); return; }
+  if (typed !== c.name){ toast('The name does not match — nothing was deleted.', null, 'err'); return; }
   const cid = c.id;
   ensureIds();
   const gone = {
@@ -3673,13 +3677,13 @@ function saveFile(){
   if (!c) return;
   /* The same gate the button was drawn behind. A read-only role never sees
      the form, and a forged click must not reach the server either. */
-  if (!can('log')){ toast('Your role cannot add documents.'); return; }
+  if (!can('log')){ toast('Your role cannot add documents.', null, 'err'); return; }
   const input = document.getElementById('aff');
   const f = input && input.files && input.files[0];
   const note = document.getElementById('afnote');
   if (!f){ toast('Choose the document first — nothing has been uploaded yet.'); return; }
   if (f.size > 25 * 1024 * 1024){
-    toast('That file is ' + (f.size / 1048576).toFixed(1) + ' MB — the limit is 25 MB.');
+    toast('That file is ' + (f.size / 1048576).toFixed(1) + ' MB — the limit is 25 MB.', null, 'err');
     return;
   }
   const k = (document.getElementById('afk') || {}).value || 'Other';
@@ -3699,12 +3703,12 @@ function saveFile(){
       });
       body = await res.json().catch(() => ({}));
     } catch {
-      toast('Not saved — the server could not be reached. Nothing was added.');
+      toast('Not saved — the server could not be reached. Nothing was added.', null, 'err');
       if (note) note.textContent = 'Upload failed. Try again.';
       return;
     }
     if (!res.ok){
-      toast(body.error || 'The document could not be stored. Nothing was added.');
+      toast(body.error || 'The document could not be stored. Nothing was added.', null, 'err');
       if (note) note.textContent = body.error || 'Upload failed.';
       return;
     }
@@ -5163,20 +5167,20 @@ function roleMatrix(){
    copied button would leave no trace. Asking the server means the answer is
    the server's — a BD or an SA is refused there even if they forge the click. */
 async function exportCsv(){
-  if (!can('export')){ toast('Export is an administrator action.'); return; }
+  if (!can('export')){ toast('Export is an administrator action.', null, 'err'); return; }
   let r;
   try {
     r = await fetch('/api/export?kind=customers', { credentials: 'same-origin' });
   } catch {
-    toast('Export failed — the server could not be reached. Nothing left the product.');
+    toast('Export failed — the server could not be reached. Nothing left the product.', null, 'err');
     return;
   }
   if (r.status === 403){
-    toast('The server refused that — export is an administrator action. Nothing left the product.');
+    toast('The server refused that — export is an administrator action. Nothing left the product.', null, 'err');
     return;
   }
   if (!r.ok){
-    toast('Export failed — the server refused it. Nothing left the product.');
+    toast('Export failed — the server refused it. Nothing left the product.', null, 'err');
     return;
   }
   const text = await r.text();
@@ -5195,7 +5199,7 @@ async function exportCsv(){
   } catch (e) {
     /* Say it failed. An export that announced itself and produced nothing is
        the exact kind of promise this product must not make. */
-    toast('Export failed — the browser blocked the download. Nothing left the product.');
+    toast('Export failed — the browser blocked the download. Nothing left the product.', null, 'err');
     return;
   }
   audit('data', 'Exported the workspace', 'CSV', '—', rows + ' customers');
@@ -5841,7 +5845,7 @@ async function setUserActive(name, active){
     ok = res.ok;
     if (!res.ok) why = ((await res.json().catch(() => ({}))).error) || why;
   } catch { why = 'the server could not be reached'; }
-  if (!ok){ toast('Not changed · ' + why + '. Nothing was changed.'); return; }
+  if (!ok){ toast('Not changed · ' + why + '. Nothing was changed.', null, 'err'); return; }
   t.st = active ? 'Active' : 'Disabled';
   audit('access', active ? 'Account re-activated' : 'Account disabled', name,
     active ? 'Disabled' : 'Active', active ? 'Active' : 'Disabled');
@@ -5863,7 +5867,7 @@ async function resetUserPassword(name){
     ok = res.ok;
     if (!res.ok) why = ((await res.json().catch(() => ({}))).error) || why;
   } catch { why = 'the server could not be reached'; }
-  if (!ok){ toast('Not set · ' + why + '. Nothing was changed.'); return; }
+  if (!ok){ toast('Not set · ' + why + '. Nothing was changed.', null, 'err'); return; }
   euPw = false;
   audit('access', 'Password reset', name, '-', 'must change at next sign-in');
   drawEditUser();
@@ -5881,7 +5885,7 @@ async function removeUser(name){
     ok = res.ok;
     if (!res.ok) why = ((await res.json().catch(() => ({}))).error) || why;
   } catch { why = 'the server could not be reached'; }
-  if (!ok){ toast('Not removed · ' + why + '. Nothing was changed.'); return; }
+  if (!ok){ toast('Not removed · ' + why + '. Nothing was changed.', null, 'err'); return; }
   /* Off every customer too — membership was their access, and it goes with it. */
   D.customers.forEach(c => setOn(name, c.id, false));
   D.team = (D.team || []).filter(x => x.n !== name);
@@ -5921,10 +5925,10 @@ async function saveEditUser(){
       });
       if (!res.ok){
         const b = await res.json().catch(() => ({}));
-        toast('Saved here · but their sign-in was not changed: ' + (b.error || 'the server refused.'));
+        toast('Saved here · but their sign-in was not changed: ' + (b.error || 'the server refused.'), null, 'err');
       }
     } catch {
-      toast('Saved here · but their sign-in was not changed — the server could not be reached.');
+      toast('Saved here · but their sign-in was not changed — the server could not be reached.', null, 'err');
     }
   }
 }
@@ -8306,12 +8310,12 @@ async function saveAiConfig(){
       body: JSON.stringify({ base, model, key })
     });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.ok){ toast(j.error || 'The server would not save that.'); return; }
+    if (!r.ok || !j.ok){ toast(j.error || 'The server would not save that.', null, 'err'); return; }
     await refreshAi();
     audit('ai', 'Model endpoint saved', 'Workspace AI', '—', base);
     render();
     toast(aiState && aiState.reachable ? 'Saved · the endpoint answered.' : 'Saved · but the endpoint did not answer.');
-  } catch { toast('Could not reach the server to save that.'); }
+  } catch { toast('Could not reach the server to save that.', null, 'err'); }
 }
 
 /* How much the model is allowed to think. A reasoning model spends its budget
@@ -8329,12 +8333,12 @@ async function saveAiBudget(){
       body: JSON.stringify({ maxTokens: tok, timeoutMs: Math.round(secs * 1000) })
     });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok || !j.ok){ toast(j.error || 'The server would not save that.'); return; }
+    if (!r.ok || !j.ok){ toast(j.error || 'The server would not save that.', null, 'err'); return; }
     await refreshAi();
     audit('ai', 'Model budget saved', 'Workspace AI', '—', Math.round(tok) + ' tokens · ' + Math.round(secs) + 's');
     render();
     toast('Budget saved · ' + j.maxTokens + ' tokens, ' + Math.round(j.timeoutMs / 1000) + 's.');
-  } catch { toast('Could not reach the server to save that.'); }
+  } catch { toast('Could not reach the server to save that.', null, 'err'); }
 }
 
 async function disconnectAi(){
@@ -8343,7 +8347,7 @@ async function disconnectAi(){
     await refreshAi();
     audit('ai', 'Model endpoint disconnected', 'Workspace AI', 'Connected', 'Not connected');
     render(); toast('Disconnected · every screen now works from rules.');
-  } catch { toast('Could not reach the server.'); }
+  } catch { toast('Could not reach the server.', null, 'err'); }
 }
 
 async function testAi(){
@@ -9342,7 +9346,7 @@ async function retryTaskAsk(mountId){
    typed by hand are indistinguishable to the book. Only the audit note
    remembers where the suggestion came from. */
 function confirmStepSheet(c, pre, source, cb){
-  if (!can('log')){ toast('Your role cannot record work.'); return; }
+  if (!can('log')){ toast('Your role cannot record work.', null, 'err'); return; }
   const veil = document.getElementById('capVeil');
   veil.classList.add('on');
   document.querySelector('#capVeil .sheet-h').innerHTML = `
@@ -9416,7 +9420,7 @@ function openStepConfirm(mountId, i){
   const item = st && st.result && Array.isArray(st.result.items) ? st.result.items[i] : null;
   if (!item) return;
   const c = cust(item.customerId);
-  if (!c){ toast('That customer is no longer in the book.'); return; }
+  if (!c){ toast('That customer is no longer in the book.', null, 'err'); return; }
   confirmStepSheet(c, { t: item.suggested || '' }, 'confirmed from a copilot suggestion');
 }
 
@@ -9583,7 +9587,7 @@ async function retryAiTask(id){
     const j = await r.json().catch(() => ({}));
     if (!r.ok || !j.ok) throw new Error(j.error || 'The retry was refused.');
     toast('The task is queued again.');
-  } catch (e) { toast(e.message || 'The retry failed.'); }
+  } catch (e) { toast(e.message || 'The retry failed.', null, 'err'); }
   fetchAiTasks();
 }
 
@@ -10102,7 +10106,7 @@ function drawNewCustomer(){
       <div style="display:flex;flex-direction:column;gap:8px">
         ${list.map((c) => `
           <button class="nc-pick" data-pick="${esc(c.id)}"
-            style="text-align:left;border:1px solid var(--line-2);border-radius:var(--r-ctl);padding:10px var(--s3);background:var(--bg-1, #fff);cursor:pointer;font:inherit">
+            style="text-align:left;border:1px solid var(--line-2);border-radius:var(--r-ctl);padding:10px var(--s3);background:var(--surface);cursor:pointer;font:inherit">
             <div style="font-size:13.5px;font-weight:600">${esc(c.label)}</div>
             ${c.description ? `<div class="tiny muted" style="margin-top:2px">${esc(c.description)}</div>` : ''}
           </button>`).join('')}
@@ -10150,7 +10154,7 @@ function drawNewCustomer(){
   b.innerHTML = `
     <div class="row" style="align-items:flex-start;margin-bottom:var(--s4)">
       ${logoUrl
-        ? `<img src="${esc(logoUrl)}" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:9px;background:var(--surface-3)"
+        ? `<img src="${esc(logoUrl)}" alt="" style="width:44px;height:44px;object-fit:contain;border-radius:var(--r-sm);background:var(--surface-3)"
              onerror="this.style.display='none'" />`
         : `<span class="logo" style="width:44px;height:44px">
              <svg viewBox="0 0 24 24" fill="none"><path d="M3 17h4V8h10v9h4" stroke="#1554C0" stroke-width="2" stroke-linejoin="round"/><path d="M7 17v-3h6v3" stroke="#1554C0" stroke-width="2"/></svg>
@@ -10278,10 +10282,18 @@ function createCustomer(enriched){
    So the label is gone, not disabled. Real undo, when it is built, arrives
    with its handler attached — and `verify:dead` fails the build if a call
    ever hands this function an action again. */
-function toast(msg, mascotId){
+function toast(msg, mascotId, kind){
   const t = document.createElement('div');
+  /* One surface for every message, and that is deliberate: what a person has
+     to tell apart at a glance is not the surface but the verdict. An error
+     carries the risk edge on its left — same black bar, same rhythm, one
+     signal — so "Could not reach the server" never again reads as
+     "Customer created". Nothing else about the toast changes: no red
+     background, no icon, no longer life. The colour says what happened;
+     the surface stays calm. */
   t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;' +
-    'padding:10px 16px;border-radius:10px;font-size:13px;z-index:99;box-shadow:var(--e3);display:flex;gap:14px;align-items:center';
+    'padding:10px 16px;border-radius:var(--r-sm);font-size:13px;z-index:99;display:flex;gap:14px;align-items:center;' +
+    'box-shadow:' + (kind === 'err' ? 'inset 3px 0 0 var(--risk), ' : '') + 'var(--e3)';
   t.innerHTML = (mascotId && corgiOn()
       ? '<img class="mascot m-proud" src="' + CORGI[mascotId] + '" alt="" aria-hidden="true">' : '')
     + `<span>${esc(msg)}</span>`;
@@ -10463,7 +10475,7 @@ document.addEventListener('click', async (e) => {
     if (a === 'showall'){ showAllPeople = true; render(); return; }
     if (a === 'showless'){ showAllPeople = false; render(); return; }
     if (a === 'unpick'){ pickedPerson = null; render(); return; }
-    if (a === 'fileadd'){ if (!can('log')){ toast('Your role cannot add documents.'); return; } fileAdd = !fileAdd; render(); return; }
+    if (a === 'fileadd'){ if (!can('log')){ toast('Your role cannot add documents.', null, 'err'); return; } fileAdd = !fileAdd; render(); return; }
     if (a === 'filesave'){ saveFile(); return; }
     if (a === 'watchadd'){ watchAdd = true; render(); return; }
     if (a === 'wano'){ watchAdd = false; render(); return; }
@@ -10476,7 +10488,7 @@ document.addEventListener('click', async (e) => {
       const o = D.opps[ac.dataset.op]; const c = o && cust(o.c);
       const sel = document.getElementById('oppItem' + ac.dataset.op);
       if (!o || !c || !sel || !sel.value) return;
-      if (!canEditKind(rmKey.opp(c, o))){ toast('Only the commercial owner changes what we are selling.'); return; }
+      if (!canEditKind(rmKey.opp(c, o))){ toast('Only the commercial owner changes what we are selling.', null, 'err'); return; }
       o.items = o.items || [];
       if (o.items.includes(sel.value)) return;
       const p = (D.products || []).find(x => x.id === sel.value);
@@ -10488,14 +10500,14 @@ document.addEventListener('click', async (e) => {
     if (a === 'oppitemrm'){
       const o = D.opps[ac.dataset.op]; const c = o && cust(o.c);
       if (!o || !c) return;
-      if (!canEditKind(rmKey.opp(c, o))){ toast('Only the commercial owner changes what we are selling.'); return; }
+      if (!canEditKind(rmKey.opp(c, o))){ toast('Only the commercial owner changes what we are selling.', null, 'err'); return; }
       o.items = (o.items || []).filter(x => x !== ac.dataset.item);
       audit('data', 'Product removed from opportunity', o.t, '-', c.name);
       render(); syncSave();
       return;
     }
     if (a === 'importcsv'){
-      if (!can('users')){ toast('Only an administrator imports the book.'); return; }
+      if (!can('users')){ toast('Only an administrator imports the book.', null, 'err'); return; }
       openImport(); return;
     }
     if (a === 'mom'){ openMom(ac.dataset.mid); return; }
@@ -10576,7 +10588,7 @@ document.addEventListener('click', async (e) => {
       const s = (D.steps || []).find(x => x.id === ac.dataset.sid);
       const tc = s ? cust(s.c) : null;
       if (!s || !tc) return;
-      if (!can('log')){ toast('Your role cannot record work.'); return; }
+      if (!can('log')){ toast('Your role cannot record work.', null, 'err'); return; }
       const closedBy = meName();
       s.done = todayISO();
       s.doneBy = closedBy;
@@ -10640,7 +10652,7 @@ document.addEventListener('click', async (e) => {
         ok = res.ok;
         if (!res.ok) why = ((await res.json().catch(() => ({}))).error) || why;
       } catch { why = 'the server could not be reached'; }
-      if (!ok){ toast('Not disabled · ' + why + '. Nothing was changed.'); return; }
+      if (!ok){ toast('Not disabled · ' + why + '. Nothing was changed.', null, 'err'); return; }
       if (t){ t.st = 'Disabled'; audit('access', 'Account disabled', euName, 'Active', 'Disabled'); }
       closeCapture(); render(); syncSave();
       toast(euName + ' disabled · they keep their records, they lose the door.');

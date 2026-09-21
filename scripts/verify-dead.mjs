@@ -479,5 +479,30 @@ src.split('\n').forEach((line, i) => {
 check('a toast never draws an action it cannot perform', toastBad.length === 0,
   toastBad.length ? toastBad.join(' · ') : `${toastSites} toasts, none promising an action`);
 
+/* --------------------------------------- 6. shapes and edges stay on the tokens ---
+   The radius ladder and the chip borders are the two places where a bare
+   pixel or a hex quietly walks back into the system. The worst case is a
+   value that LOOKS like its token twin (a #F2C6C9 beside --risk-100): it
+   passes every eyeball, and then the token changes and the twin does not.
+   Radii that are shapes rather than sizes are exempt on purpose: the 50%
+   circle, the 999px pill, sub-5px hairline rounds, compound corners that
+   begin with 0, and radii computed FROM the size of the thing they round
+   (the logo() helper) — a token per literal is its own kind of noise. */
+const radii = [...html.matchAll(/border-radius:\s*([^;}"']+)/g)].map((m) => m[1].trim());
+const looseRadii = radii.filter((v) => !/^var\(/.test(v) && !/\$\{/.test(v)
+  && !/^(0|50%|999px|[1-4]px)(\s|$)/.test(v) && !/^0\s/.test(v));
+check('every radius that sizes a panel or control comes from a token', looseRadii.length === 0,
+  looseRadii.length ? `bare radii: ${[...new Set(looseRadii)].slice(0, 8).join(', ')}`
+    : `${radii.length} radii, all token or shape`);
+/* Chip borders are checked rule by rule, not by hunting hexes: the tokens
+   themselves define those hexes, and a check that cannot tell a definition
+   from a use would be red forever. */
+const chipRules = [...html.matchAll(/\.t-[a-z]+\{[^}]*\}/g)].map((m) => m[0]);
+const looseBorders = chipRules.filter((r) => /border-color:\s*#/.test(r));
+check('chip borders are token values, not near-token hex twins', looseBorders.length === 0,
+  looseBorders.length ? looseBorders[0].slice(0, 70) : `${chipRules.length} chips, borders on var(--*-100)`);
+check('no style reads a token that was never defined', !/var\(--bg-1\b/.test(html),
+  /var\(--bg-1\b/.test(html) ? 'var(--bg-1…) is still referenced' : 'every var() has a definition');
+
 console.log(`\n${ran} checks run.${bad ? '  *** FAILURES ***' : '  all passed'}`);
 process.exit(bad ? 1 : 0);

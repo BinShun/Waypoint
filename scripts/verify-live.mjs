@@ -410,6 +410,24 @@ await wait(2500);
 check('a failed save is visible on screen', /Not saved/i.test(seen()), seen().match(/Not saved[^·]{0,60}/i)?.[0] || '');
 check('the failed save offers a retry', !!label('Retry now'));
 
+/* ------------------------------------------------- an error must not look like a success
+   Every message shares one black surface, and that is fine — the surface is
+   not what a person needs to tell apart at a glance. "Could not reach the
+   server" and "Customer created" used to be identical; an error now carries
+   the risk edge and nothing else changes. Called straight on the window
+   because the state that produces each one has just been destroyed above. */
+window.eval("toast('The model could not be reached.', null, 'err')");
+let lastToast = [...doc.querySelectorAll('body > div')].pop();
+check('an error toast carries the risk edge',
+  /var\(--risk\)/.test(lastToast?.getAttribute('style') || ''),
+  (lastToast?.getAttribute('style') || '').slice(60, 140));
+lastToast?.remove();
+window.eval("toast('Customer created.')");
+lastToast = [...doc.querySelectorAll('body > div')].pop();
+check('a success toast stays quiet',
+  !/var\(--risk\)/.test(lastToast?.getAttribute('style') || ''));
+lastToast?.remove();
+
 /* ------------------------------------------------------------------ done */
 
 dom.window.close();
