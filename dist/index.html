@@ -6634,7 +6634,7 @@ const SY = { rev: 0, live: false, sending: false, retry: false, timer: null, sen
              changed: false, cfgSig: '', refused: false, down: false, beat: null,
              /* `armed` is set the first time the server answers for a real
                 session. Until then there is nobody to save for. */
-             armed: false };
+             armed: false, flight: null };
 
 /* Removals travel under their own envelope, because silence is no longer a
    delete. The server puts back every row a save does not mention — that is what
@@ -6703,6 +6703,34 @@ function rememberSent(){
     if (!map || typeof map !== 'object') continue;
     for (const r of Object.values(map)) if (r && r.id != null) SY.sent[k + ':' + r.id] = rowBody(r);
   }
+}
+
+/* A read-only picture of every row, taken either from the live state or from
+   a payload that has already left. `stampChanged` cannot serve for the second
+   job: comparing is one thing and moving the baseline it compares against is
+   another — a comparison that adopts the edit it finds has just told the next
+   save there is nothing to send. */
+function rowsFrom(src){
+  const out = {};
+  for (const k of SYNC_LISTS){
+    const list = src ? src[k] : D[k];
+    if (!Array.isArray(list)) continue;
+    for (const r of list) if (r && r.id != null) out[k + ':' + r.id] = rowBody(r);
+  }
+  for (const k of SYNC_MAPS){
+    const map = src ? src[k] : D[k];
+    if (!map || typeof map !== 'object' || Array.isArray(map)) continue;
+    for (const r of Object.values(map)) if (r && r.id != null) out[k + ':' + r.id] = rowBody(r);
+  }
+  return out;
+}
+const rowsNow = () => rowsFrom(null);
+function sameRows(a, b){
+  if (!a || !b) return false;
+  const ka = Object.keys(a), kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  for (const k of ka) if (a[k] !== b[k]) return false;
+  return true;
 }
 
 function stampChanged(){
@@ -6875,6 +6903,10 @@ async function syncSave(){
     const cfgSig = JSON.stringify(state.config || {});
     if (!SY.changed && !gone && cfgSig === SY.cfgSig) return;
     SY.cfgSig = cfgSig;
+    /* What this payload says, frozen as strings: rows it holds are references
+       into `D`, and an edit made while it is in flight would otherwise reach
+       backwards into the snapshot too. */
+    SY.flight = rowsFrom(state);
     const res = await fetch('/api/data', {
       method: 'PUT',
       credentials: 'same-origin',
@@ -6889,12 +6921,20 @@ async function syncSave(){
       goneClear();
       /* Only a merge hands the state back: the server has combined our copy
          with somebody else's, so take the truth now, not at the next poll.
-         But not when another save is already queued: this answer was built
-         from a payload that did not contain the work done since it was sent —
-         an audit row written, a field corrected — and adopting it would take
-         that work off the screen before it was ever sent. The queued save
-         carries it, and the merge after that is the truth both can agree on. */
-      if (b.state && !SY.retry){ adopt(b.state); render(); }
+         But not when this page has work the answer cannot know about. The
+         `!SY.retry` guard covers a save that was ASKED FOR while this one was
+         in flight. The case it misses is quieter: an edit made after this
+         payload left but inside the 700 ms debounce, before the next save was
+         even requested. `SY.retry` is still false, and adopting the merge
+         replaces the whole book with a copy that does not contain that edit —
+         it leaves the screen, the next save finds nothing changed, and it is
+         never sent at all. Work vanishing inside the one product whose promise
+         is that nothing is lost.
+         The check is a READ-ONLY comparison against a snapshot taken when the
+         payload left. It cannot be `stampChanged()`: that would move the
+         comparison baseline to include the new edit, and the save that was
+         going to carry it would then find "nothing changed" and never leave. */
+      if (b.state && !SY.retry && sameRows(SY.flight, rowsNow())){ adopt(b.state); render(); }
       SY.note = '';
     } else if (res.status === 401){
       SY.live = false;

@@ -406,10 +406,19 @@ if (addTeam) {
   const opts = [...((bd.$('#teamAdd' + c.id) || {}).options || [])].map(o => o.value);
   check('the colleague list offers the real roster', opts.includes('John Teh'), JSON.stringify(opts));
   await bd.set(bd.$('#teamAdd' + c.id), 'John Teh');
-  await bd.click(addTeam, 1300);
-  const cTeam = (disk().customers || []).find(x => x.id === c.id);
-  check('the colleague is on the customer', (cTeam.team || []).includes('John Teh'),
-    JSON.stringify(cTeam.team));
+  await bd.click(addTeam, 300);
+  /* A fixed wait can only be wrong twice — too short and it fails a working
+     product under load (the 700 ms debounce sits between the click and the
+     disk, and a save queued behind an in-flight one adds the rest), too long
+     and it slows every run down. Every other step here polls for the fact;
+     this one used to sleep 1300 ms and flake 1-in-8 under exactly the queue
+     it now waits out. */
+  const cTeam = await lands(() => {
+    const cc = (disk().customers || []).find(x => x.id === c.id);
+    return cc && (cc.team || []).includes('John Teh') ? cc : undefined;
+  });
+  check('the colleague is on the customer', !!cTeam,
+    cTeam ? JSON.stringify(cTeam.team) : 'not on disk');
 }
 
 /* 11b. The same record, the other half: a BD reads what they run but does
