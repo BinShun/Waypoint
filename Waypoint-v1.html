@@ -88,7 +88,11 @@ main{min-width:0}
 .brand-m{width:28px;height:28px;border-radius:8px;background:linear-gradient(160deg,#2A6BE0,#1554C0);
   display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;letter-spacing:-.02em;
   box-shadow:0 4px 10px rgba(21,84,192,.45)}
-..brand-t{font-family:var(--font-display);font-size:14.5px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+/* A stray dot here made the selector `..brand-t`, which matches nothing, so
+   the wordmark rendered in the browser's default sans at body weight — the
+   one piece of typography that names the product was the one piece that was
+   never styled. */
+.brand-t{font-family:var(--font-display);font-size:14.5px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
 .grp{font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
   color:var(--rail-ink-dim);padding:var(--s4) var(--s2) var(--s2)}
 .nav{display:flex;align-items:center;gap:10px;padding:9px var(--s2);border-radius:var(--r-ctl);
@@ -763,6 +767,16 @@ body.nowm .wm{display:none}
    off has to be reachable from on and back. The rail itself is already
    a flex column (see the shell block) so margin-top:auto pins this down. */
 .rail-foot{margin-top:auto;padding-top:var(--s4)}
+/* The workspace-level "this is sample data" badge, under the theme switch.
+   Neutral grey, and that is a decision rather than a default: amber in this
+   product means "this needs you" (the sync note, the risk chips), and a book
+   of sample figures is not asking anybody for anything — it is stating a fact
+   about itself. Small and uppercase so it reads as a label on the rail rather
+   than as a headline somebody has to act on. */
+.sample-tag{display:inline-flex;align-items:center;margin:7px var(--s2) 0;
+  padding:3px 8px;border-radius:var(--r-chip);border:1px solid var(--rail-line);
+  background:rgba(16,24,40,.045);color:var(--rail-ink-dim);
+  font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
 .ctheme{display:flex;align-items:center;gap:8px;width:100%;border:none;background:none;
   padding:7px var(--s2);border-radius:var(--r-ctl);color:var(--rail-ink-dim);
   font-size:12px;font-weight:500}
@@ -1081,6 +1095,13 @@ const D = {
     { id:'p148', n:'Customer Data Platform', ab:'CDP', cat:'IoT & Industry', one:'One customer profile from every touchpoint.', by:[] },
     { id:'p149', n:'Fusion Analytics', ab:'FA', cat:'IoT & Industry', one:'Marketing analytics on the unified data.', by:[] },
   ],
+
+  /* Whether the "sample data" badge is hidden. Read from the workspace, not
+     from this browser: the badge is a sentence about the BOOK, so who may
+     silence it is an administrator and where the silence lives is the server
+     — otherwise one person's preference would quietly become everybody's
+     missing warning. It is only ever meaningful when `SY.demo` is true. */
+  hideDemoBadge: false,
 };
 /* Industry is a closed list and it is TEXT, not colour. Colour is reserved for
    status (stance · health · consequence). Spending the status channel on a
@@ -1633,7 +1654,20 @@ function renderNav(){
     }).join('');
   /* The theme switch rides with the nav so it re-draws with the app. */
   const foot = document.getElementById('railFoot');
-  if (foot) foot.innerHTML = corgiToggleRow();
+  if (foot) foot.innerHTML = corgiToggleRow() + sampleBadge();
+}
+
+/* Every screen in this workspace looks exactly like a real one: the figures
+   were seeded, but nothing about them says so. Somebody quotes a pipeline
+   number in a meeting and nobody in the room can tell whether it came from a
+   customer or from a script — so the rail says which book this is, once,
+   quietly, on every screen. An administrator may turn it off; the mark itself
+   is the server's, and only a workspace the seeder wrote ever carries it. */
+function sampleBadge(){
+  if (!SY.demo || D.hideDemoBadge) return '';
+  return '<span class="sample-tag" data-tour="sampletag"'
+    + ' title="This workspace was seeded as a sample. The accounts, the deals and the figures in it are not real.">'
+    + 'Sample data</span>';
 }
 
 /* When you are looking through somebody else's eyes, say so on every screen.
@@ -5207,6 +5241,32 @@ function dataGuardCard(){
 `;
 }
 
+/* The "sample data" badge, and the one person who may say it is not needed.
+   Only drawn when the workspace actually is the sample book: a switch for a
+   badge nobody is showing is a control that promises something it cannot do.
+   Hiding the badge is legitimate — a room that already knows may not want to
+   be told on every screen — so it is offered plainly, and it is recorded,
+   because turning off the sentence that says "these numbers are not real" is
+   an act somebody should be able to see afterwards. */
+function sampleCard(){
+  if (!SY.demo) return '';
+  const hidden = !!D.hideDemoBadge;
+  return `
+  <h2 style="margin-top:var(--s5)">This workspace</h2>
+  <div class="card" data-tour="samplecard">
+    <div class="row">
+      <div><div style="font-size:13.5px;font-weight:600">“Sample data” badge — ${hidden ? 'hidden' : 'shown'}</div>
+        <div class="tiny muted">This workspace was seeded as a sample: the accounts, the deals and every figure
+          in it were written by a script, and they read exactly like real ones. The badge in the rail is the
+          only thing on screen that says so. Hide it when the room already knows — the numbers stay sample
+          either way, and hiding the label does not make the pipeline real.</div></div>
+      <div class="spacer"></div>
+      <button class="btn sm" data-act="demobadge">${hidden ? 'Hidden — show it' : 'Shown — hide it'}</button>
+    </div>
+  </div>
+`;
+}
+
 function viewAsCard(){
   return `
   <div class="card" data-tour="viewas" style="margin-bottom:var(--s5)">
@@ -6192,7 +6252,7 @@ function screenAdmin(){
 
   ${adminTab === 'people' ? teamRosterCard() : ''}
   ${adminTab === 'audit'  ? adminAudit() : ''}
-  ${adminTab === 'roles'  ? roleMatrix() + viewAsCard() + dataGuardCard() : ''}
+  ${adminTab === 'roles'  ? roleMatrix() + viewAsCard() + sampleCard() + dataGuardCard() : ''}
   ${adminTab === 'jobs'   ? jobsCard : ''}
   ${adminTab === 'ai'     ? `<div class="grid g2"><div>${aiCard}</div><div>${modelCard}${budgetCard}</div></div>` : ''}
   `;
@@ -6638,7 +6698,12 @@ const SY = { rev: 0, live: false, sending: false, retry: false, timer: null, sen
              changed: false, cfgSig: '', refused: false, down: false, beat: null,
              /* `armed` is set the first time the server answers for a real
                 session. Until then there is nobody to save for. */
-             armed: false, flight: null };
+             armed: false, flight: null,
+             /* `demo` is what the server said about the WORKSPACE: the seeded
+                sample book carries it, a real one does not. It is never sent
+                and never guessed — the server answers on every read and keeps
+                the mark through every save. */
+             demo: false };
 
 /* Removals travel under their own envelope, because silence is no longer a
    delete. The server puts back every row a save does not mention — that is what
@@ -6814,6 +6879,12 @@ function adopt(state){
        person's name on their own edits, scoped to another person's book. */
     if (cfg.me && !meFromSession) D.me = cfg.me;
     if (cfg.stages) D.stages = cfg.stages;
+    /* Whether the "sample data" badge is showing, for everybody reading this
+       book. An administrator may turn it off — a demo in front of a customer
+       who already knows the book is a sample should not have to keep saying
+       so — but the choice lives in the workspace, not in one browser, or it
+       would be a preference that quietly stops being true. */
+    D.hideDemoBadge = !!cfg.hideDemoBadge;
     /* Legacy only: workspaces saved before `watch` became a record keep it in
        config. Prefer the real collection whenever both are present. */
     if (cfg.watch && !Array.isArray(state.watch)) D.watch = cfg.watch;
@@ -6833,7 +6904,7 @@ function buildState(){
      `interactions` and the old key stops being sent. */
   for (const k of SYNC_LISTS) if (Array.isArray(D[k]) && k !== 'meetings') s[k] = D[k];
   for (const k of SYNC_MAPS) if (D[k] && typeof D[k] === 'object' && !Array.isArray(D[k])) s[k] = D[k];
-  s.config = { stages: D.stages };
+  s.config = { stages: D.stages, hideDemoBadge: !!D.hideDemoBadge };
   if (!meFromSession && D.me) s.config.me = D.me;   /* see adopt(): identity is not shared */
   return s;
 }
@@ -6849,6 +6920,11 @@ async function syncLoad(){
     SY.rev = b.rev || 0;
     SY.live = true;
     SY.armed = true;
+    /* Which book this is, told by the server. Read on every load and never
+       inferred: a workspace whose figures were seeded is not the same object
+       as one a colleague has been filling in for a year, and the difference
+       is invisible on screen until somebody says it. */
+    SY.demo = !!b.demo;
     return 'live';
   } catch { return 'offline'; }
 }
@@ -10470,6 +10546,15 @@ document.addEventListener('click', async (e) => {
       watermarkOn = !watermarkOn;
       audit('access', watermarkOn ? 'Watermark turned on' : 'Watermark turned off', 'Data protection',
             watermarkOn ? 'Off' : 'On', watermarkOn ? 'On' : 'Off');
+      render(); return;
+    }
+    if (a === 'demobadge'){
+      D.hideDemoBadge = !D.hideDemoBadge;
+      audit('access', D.hideDemoBadge ? 'Sample-data badge hidden' : 'Sample-data badge shown',
+            'This workspace', D.hideDemoBadge ? 'Shown' : 'Hidden', D.hideDemoBadge ? 'Hidden' : 'Shown');
+      toast(D.hideDemoBadge
+        ? 'Badge hidden — the figures in this workspace are still sample data.'
+        : 'Badge shown — this workspace says it is sample data again.');
       render(); return;
     }
     if (a === 'export'){ exportCsv(); return; }

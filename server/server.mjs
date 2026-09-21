@@ -3589,6 +3589,10 @@ const handler = async (req, res, secure) => {
         // Tells the client its view is narrowed, so it can stop offering the
         // controls that would only ever come back refused.
         scoped: scope !== null,
+        /* Whether this workspace is the seeded sample book. It travels beside
+           the state rather than inside it: it is not a row anybody edits, and
+           the client's own saves carry no opinion about it (see the PUT). */
+        demo: !!(state && state.demo),
         savedAt: info.savedAt,
         bytes: info.bytes,
         rev: await readRev(),
@@ -3777,6 +3781,21 @@ const handler = async (req, res, secure) => {
       if (disk && disk.users !== undefined && !Array.isArray(payload.users)) {
         next.users = disk.users;
       }
+        /* Whether this book is the seeded sample is the server's to say, and
+           only the server's. Two ways to get it wrong, both silent:
+           a whole-state save takes the payload as the truth, so the mark
+           would be dropped and the "SAMPLE DATA" badge that stops somebody
+           quoting these figures in a real meeting would go with it — in the
+           middle of the demo it exists for; and a client that asserted
+           `demo` of its own could label a real book as a sample, or strip
+           the label off a sample one. The disk answers, on every path, in
+           both directions. */
+        if (disk) {
+          if (disk.demo !== undefined) next.demo = disk.demo;
+          else delete next.demo;
+        } else {
+          delete next.demo;
+        }
         /* The product catalogue is shared reference data, and `perm.ts` gates
            editing it to the administrator alone — a manager's copy of it is
            reverted too. (`ADMIN_ONLY_KEYS` above is the broader guard: it keeps

@@ -20,6 +20,7 @@
     "verify:roster": "node --env-file-if-exists=.env scripts/verify-roster.mjs",
     "verify:live": "node --env-file-if-exists=.env scripts/verify-live.mjs",
     "verify:truth": "node --env-file-if-exists=.env scripts/verify-truth.mjs",
+    "verify:demo": "node --env-file-if-exists=.env scripts/verify-demo.mjs",
     "verify:isolation": "node --env-file-if-exists=.env scripts/verify-isolation.mjs",
     "verify:newflows": "node --env-file-if-exists=.env scripts/verify-newflows.mjs",
     "verify:ai": "node --env-file-if-exists=.env scripts/verify-ai.mjs",

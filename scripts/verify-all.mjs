@@ -41,6 +41,7 @@ const SUITES = [
   ['server', 'scripts/verify-server.mjs', 'the data server holds its guards'],
   ['isolation', 'scripts/verify-isolation.mjs', 'the book stays inside its own covers'],
   ['truth', 'scripts/verify-truth.mjs', 'the numbers on the board are true'],
+  ['demo', 'scripts/verify-demo.mjs', 'the sample book says it is the sample book'],
   ['security', 'scripts/verify-security.mjs', 'encryption, headers, lockout'],
   ['acid', 'scripts/verify-acid.mjs', 'a save is atomic'],
   ['roster', 'scripts/verify-roster.mjs', 'the roster survives a save'],

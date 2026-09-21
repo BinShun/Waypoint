@@ -502,6 +502,15 @@ for (const n of ['TencentDB for MySQL', 'Cloud Native Database TDSQL-C', 'Data T
 const state = {
   schemaVersion: 1,
   setupComplete: true,
+  /* A book-wide "this is sample data" mark, and the reason it lives here
+     rather than in the client: the seeded workspace's figures read exactly
+     like a real pipeline, so which book you are looking at has to be a fact
+     about the FILE, told by the server on every read and kept by it on every
+     save. A client-side flag would be dropped by the first whole-state save
+     — the badge would vanish mid-demo, which is the moment it matters.
+     The customer carries `demo: true` too, but that is a different claim:
+     it marks one ROW as a sample inside whatever book it sits in. */
+  demo: true,
   customers: [customer],
   interactions,
   steps,
