@@ -504,5 +504,19 @@ check('chip borders are token values, not near-token hex twins', looseBorders.le
 check('no style reads a token that was never defined', !/var\(--bg-1\b/.test(html),
   /var\(--bg-1\b/.test(html) ? 'var(--bg-1…) is still referenced' : 'every var() has a definition');
 
+/* --------------------------------------------- 7. the page carries its own type ---
+   The fonts came from a CDN, which means the one thing the product is —
+   a single file that works wherever it is opened — was quietly false the
+   moment the network was gone: every heading fell to Helvetica and the
+   wordmark to the browser default. The face files are embedded now, and
+   this keeps them embedded: no stylesheet request to a domain that may not
+   answer, and one data-URI face per family-and-weight the tokens name. */
+const cdnFontRefs = (html.match(/fonts\.(googleapis|gstatic)\.com/g) || []);
+check('no font is fetched from a domain that may not answer', cdnFontRefs.length === 0,
+  cdnFontRefs.length ? `${cdnFontRefs.length} CDN font reference(s) remain` : 'type ships inside the file');
+const embeddedFaces = (html.match(/data:font\/woff2;base64,/g) || []).length;
+check('every family the tokens name has an embedded face', embeddedFaces >= 4,
+  `${embeddedFaces} embedded woff2 face(s)`);
+
 console.log(`\n${ran} checks run.${bad ? '  *** FAILURES ***' : '  all passed'}`);
 process.exit(bad ? 1 : 0);
