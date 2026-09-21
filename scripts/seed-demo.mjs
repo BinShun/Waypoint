@@ -539,7 +539,14 @@ const state = {
   })),
   logs: [],
   config: {
-    stages: ['Interested', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'],
+    /* Four stages on the path, and no more. The book's own logic parks Won
+       and Lost off the board — `parked = !D.stages.includes(stage)`, the
+       Parked heading reads "not a position on the path", and parkedCard
+       paints them as results (green / red), not positions. The colour ramp
+       has exactly four shades (s1..s4) and the built-in default is four
+       stages, so a fifth and sixth entry here rendered as empty board
+       columns with capsules no stylesheet answers. */
+    stages: ['Interested', 'Qualified', 'Proposal', 'Negotiation'],
   },
 };
 

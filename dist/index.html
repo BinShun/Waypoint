@@ -1212,6 +1212,18 @@ const stageIdx = (s) => D.stages.indexOf(s);
    parked stage lands on `s0`, which has no rule and therefore renders as the
    plain pill — a stage we do not recognise should look unstyled, not wrong. */
 const stageCls = (s) => 's' + (stageIdx(s) + 1);
+/* One shape for a stage, whichever screen happens to be drawing it. Three
+   screens used to draw it three ways: the board a `.stage-pill`, the Customers
+   card the stage welded into the money chip, and the Opportunities table the
+   `s1..s4` shade hung on a `.tag` — a class no stylesheet answers, since the
+   shades are declared on `.stage-pill`, so the Stage column was painting with
+   a colour that does not exist and the pipeline read as four shades of none.
+   Off the path — Won, Lost, parked — a stage is not a position in the pipeline
+   and must not borrow its colour, so it is said in grey. The ramp is for the
+   path, and only for the path. */
+const stageTag = (s) => D.stages.includes(s)
+  ? `<span class="stage-pill ${stageCls(s)}">${esc(s)}</span>`
+  : `<span class="tag t-grey">${esc(s)}</span>`;
 /* `.filter(Boolean)` is not defensive decoration: a customer can carry the id
    of an opportunity that no longer exists — deleted on another screen, or left
    behind by an older workspace. Without it one dangling id turns every total
@@ -2444,7 +2456,7 @@ function screenCustomers(){
         </div>
         <div class="row" style="margin-top:9px;gap:6px;flex-wrap:wrap;align-items:center">
           ${ns ? `<span class="tag ${stepOverdue(ns) && ns.from === 'us' ? 't-risk' : 't-grey'}" style="font-weight:600">Next · ${esc(ns.t)}${stepOverdue(ns) ? ' · ' + stepWhen(ns) + ' overdue' : ' · ' + stepWhen(ns)}</span>` : ''}
-          ${to ? `<span class="tag t-grey">${money(to.v)} · ${esc(to.stage)}</span>` : ''}
+          ${to ? `<span class="mono" style="font-size:11.5px;flex:0 0 auto" title="Open pipeline with ${esc(c.name)}">${money(to.v)}</span>${stageTag(to.stage)}` : ''}
           <span class="tag t-grey">${lm ? 'Met ' + fmtDay(lm.d) + ' — ' + esc(lm.t) : 'No meeting logged'}</span>
           ${openThreats(c.id).length
             ? `<span class="tag t-risk" title="A competitor or a regulator moved, and nobody has opened the source yet.">${openThreats(c.id).length} to check</span>` : ''}
@@ -2488,6 +2500,11 @@ function screenCustomers(){
     </div>`;
   }
 
+  /* L4: "Board" here is a grid of cards; on Opportunities the same word is
+     four columns of a pipeline. One word, two things, and it is left that
+     way on purpose — this is the default way into the book, and renaming it
+     would cost more in surprise than the ambiguity costs in confusion.
+     Recorded rather than "fixed", so the next person knows it was seen. */
   const open = rows.reduce((a, r) => a + r.val, 0);
   const weighted = rows.reduce((a, r) => a + r.ops.reduce((x, o) => x + o.v * o.p / 100, 0), 0);
   const atRisk = rows.filter(r => r.c.health === 'At risk').length;
@@ -2520,11 +2537,6 @@ function screenCustomers(){
   </div>
 
   ${filterBar()}
-  /* L4: "Board" here is a grid of cards; on Opportunities the same word is
-     four columns of a pipeline. One word, two things, and it is left that
-     way on purpose — this is the default way into the book, and renaming it
-     would cost more in surprise than the ambiguity costs in confusion.
-     Recorded rather than "fixed", so the next person knows it was seen. */
   ${rows.length ? `<div class="grid g3" data-tour="cboard">
     ${rows.map(({c, ops, val}) => {
       const { lm, ns, to } = custContext(c);
@@ -2549,7 +2561,7 @@ function screenCustomers(){
                : esc(String(c.brief ?? '').split('.')[0]) + '.')}
         </div>
         <div class="row" style="margin-top:6px;gap:6px;flex-wrap:wrap">
-          ${to ? `<span class="tag t-grey">${money(to.v)} · ${esc(to.stage)}</span>` : ''}
+          ${to ? `<span class="mono" style="font-size:11.5px;flex:0 0 auto" title="Open pipeline with ${esc(c.name)}">${money(to.v)}</span>${stageTag(to.stage)}` : ''}
           ${lm ? `<span class="tag t-grey">Met ${fmtDay(lm.d)}</span>` : ''}
         </div>
         <div class="row opt" style="margin-top:6px;gap:6px;flex-wrap:wrap">
@@ -4759,13 +4771,14 @@ function screenOpportunities(){
         </tr></thead>
         <tbody>${sorted.map(o => {
           const c = cust(o.c);
-          const onPath = D.stages.includes(o.stage);
+          /* No `onPath` here any more: whether a stage is on the path is
+             `stageTag`'s question to answer, and it answers it once. */
           const toClose = o.close ? -dayGap(o.close) : null;
           const k = rmKey.opp(c, o);
           return `<tr>
             <td><strong>${esc(o.t)}</strong></td>
             <td>${esc(c.name)}</td>
-            <td>${onPath ? `<span class="tag ${stageCls(o.stage)}">${esc(o.stage)}</span>` : `<span class="tag t-grey">${esc(o.stage)}</span>`}</td>
+            <td>${stageTag(o.stage)}</td>
             <td>${o.owner ? `<span style="white-space:nowrap">${esc(o.owner)}</span>` : '<span class="muted">unowned</span>'}</td>
             <td class="mono" style="text-align:right;white-space:nowrap">${money(o.v)}</td>
             <td class="tiny muted" style="text-align:right;white-space:nowrap">${o.p}%</td>
@@ -4845,6 +4858,10 @@ function screenOpportunities(){
 function parkedCard(o){
   const c = cust(o.c);
   const k = rmKey.opp(c, o);
+  /* The stage below is deliberately not `stageTag`: a parked opportunity is
+     off the path on purpose, and what matters about it is the outcome, not a
+     position along the ramp. Won is green and Lost is red because those are
+     results; the ramp stays for the four stages a deal walks through. */
   return `<div class="card">
     <div class="row" style="align-items:flex-start;margin-bottom:var(--s2)">
       ${logo(c, 20)}

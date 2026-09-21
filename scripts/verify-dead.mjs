@@ -730,5 +730,43 @@ check('the refused field is drawn as refused, and it clears',
       : html.indexOf('.inp.err') > html.indexOf('.inp:focus') ? 'risk edge, outranking focus'
         : 'the refusal is declared before the focus rule');
 
+/* --------------------------------------- 14. a stage has one shape ---
+   C3: the same stage was drawn three different ways depending on where you
+   happened to be standing — a `.stage-pill` on the board, grey prose welded
+   to the money on the Customers card, and on the Opportunities table a
+   `class="tag s2"` that no stylesheet answers at all (the stage ramp lives
+   on `.stage-pill.s2`, so the Stage column was rendering a class with
+   nothing behind it and the pipeline read as four shades of no colour).
+   A stage is one thing: where it sits on the path it takes the path's
+   shade, and where it does not — Won, Lost, parked — it says so in grey
+   rather than borrowing a colour that means something else.
+   The money beside it is not a colour either: §4.11 of the visual spec is
+   plain that an amount does not carry a hue, and "RM 450k · Interested"
+   gave the number and the stage one pill between them. */
+const stageTagAt = src.indexOf('const stageTag');
+const stageTagSrc = stageTagAt >= 0 ? src.slice(stageTagAt, stageTagAt + 400) : '';
+const stageTagCalls = (src.match(/\bstageTag\(/g) || []).length;
+/* `class="tag ${stageCls(...)}"` is the dead pairing: the s1..s4 shades are
+   declared on .stage-pill, so hanging them on .tag paints nothing at all. */
+check('a stage is drawn by one thing, on the path or off it',
+  /stage-pill/.test(stageTagSrc) && /stageCls/.test(stageTagSrc) && /t-grey/.test(stageTagSrc)
+    && !/class="tag \$\{stageCls/.test(src) && stageTagCalls >= 3,
+  !stageTagSrc ? 'every view still invents its own stage'
+    : /class="tag \$\{stageCls/.test(src) ? 'the stage shade is hung on .tag, which paints nothing'
+      : stageTagCalls < 3 ? `only ${stageTagCalls - 1} views draw it through the one place`
+        : `${stageTagCalls - 1} views, one shape`);
+
+check('money is not a colour, and it does not share a pill with the stage',
+  /money\(to\.v\)/.test(src) && !/\$\{money\(to\.v\)\} · \$\{esc\(to\.stage\)\}/.test(src),
+  !/money\(to\.v\)/.test(src) ? 'the top opportunity no longer carries a value'
+    : /\$\{money\(to\.v\)\} · \$\{esc\(to\.stage\)\}/.test(src)
+      ? 'the amount and the stage still share one chip' : 'the amount is type, the stage is the pill');
+
+/* A note that ships to the screen is checked where it can be seen at all:
+   verify-live walks the rendered pages and refuses any `/*` in the copy. A
+   static scan of the source cannot do this reliably — a template expression
+   full of destructuring and arrows has braces a bracket counter cannot
+   fairly attribute, and a false accusation is worse than no check. */
+
 console.log(`\n${ran} checks run.${bad ? '  *** FAILURES ***' : '  all passed'}`);
 process.exit(bad ? 1 : 0);

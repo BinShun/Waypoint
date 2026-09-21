@@ -319,6 +319,14 @@ check('no screen shows an undefined or NaN value', broken.length === 0, broken.j
    honest test: same data, narrower scope, and any computed value that assumed
    the whole workspace shows up here as undefined. */
 const roleBroken = [];
+/* Twice a source comment has sat inside a template literal and shipped to the
+   screen as prose — once at the top of the default screen, where it stayed
+   until a screenshot for something else caught it. A static scan of the
+   source cannot fairly tell a template's copy from its code (braces from
+   destructuring look exactly like braces from interpolation), so the check
+   lives here, where there is nothing to interpret: if `/*` is in the page
+   the user reads, it shipped. */
+const commentLeak = [];
 for (const role of ['manager', 'bd', 'sa']) {
   /* The view-as switcher lives on the Admin screen when you are an admin, and in
      the banner on every screen once you are not. Enter from Admin, leave from
@@ -335,6 +343,17 @@ for (const role of ['manager', 'bd', 'sa']) {
     if (viewRoute() === 'admin') { roleBroken.push(role + '/' + r + ':locked-out'); continue; }
     const t = seen();
     if (/\bundefined\b|\bNaN\b/.test(t)) roleBroken.push(role + '/' + r);
+    if (t.includes('/*')) commentLeak.push(role + '/' + r);
+    /* Every view of the two screens that have them — the board was where the
+       leak lived, and the default is exactly where a glance does not go. */
+    for (const cv of ['list', 'table', 'board']) {
+      const btn = doc.querySelector('#page [data-cv="' + cv + '"]');
+      if (!btn) continue;
+      btn.click(); await wait(140);
+      const tv = seen();
+      if (/\bundefined\b|\bNaN\b/.test(tv)) roleBroken.push(role + '/' + r + '/' + cv);
+      if (tv.includes('/*')) commentLeak.push(role + '/' + r + '/' + cv);
+    }
   }
   act('[data-go="customers"]'); await wait(200);
   const card = doc.querySelector('#page [data-open]');
@@ -348,6 +367,9 @@ for (const role of ['manager', 'bd', 'sa']) {
   act('[data-as="admin"]'); await wait(300);
 }
 check('every screen renders for every role, with nothing undefined', roleBroken.length === 0, roleBroken.join(', '));
+
+check('a comment never ships to the screen', commentLeak.length === 0,
+  commentLeak.length ? commentLeak.join(', ') : 'no source note renders as copy, on any view');
 
 
 check('no uncaught page errors', errs.length === 0, errs.slice(0, 3).join(' // '));
