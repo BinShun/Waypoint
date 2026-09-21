@@ -575,6 +575,14 @@ body.onlogin #app{display:none}
 .inp{width:100%;border:1px solid var(--line-2);border-radius:var(--r-ctl);padding:10px var(--s3);
   font-size:13.5px;outline:none;background:var(--surface);margin-bottom:var(--s3)}
 .inp:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-50)}
+/* A refused field, and it has to outrank :focus — the refusal is the more
+   important thing to say about a field somebody is currently typing in.
+   `!important` is not a habit here but an answer: `input:focus` above claims
+   the focus border with `!important`, so a state that wants to be seen while
+   the field is focused has to meet it at the same weight. Measured: without
+   it the border goes blue the instant refuse() puts the cursor in the field,
+   which is exactly when the refusal needs to be legible. */
+.inp.err,.inp.err:focus{border-color:var(--risk)!important;box-shadow:0 0 0 3px var(--risk-50)}
 .lg-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3);margin:2px 0 var(--s4)}
 .lg-go{width:100%;justify-content:center;padding:10px 14px;font-size:13.5px}
 /* #C0392B was a different red from the one every other error in the app used.
@@ -1670,16 +1678,23 @@ function custContext(c){
    change still carries them, and showing a chip we no longer believe in is
    worse than dropping it here. */
 const DROPPED_SOCIALS = ['YouTube', 'Instagram'];
-function socialChips(c){
+/* `max` exists because a card on the board is a summary and the customer page
+   is the record. A lookup that found four profiles used to grow the card by
+   a row, so seven customers rendered at seven heights and the grid read as
+   ragged rather than as a board. Two ways out is enough; the rest are one
+   click away, on the customer. */
+function socialChips(c, max){
   const have = (c.links || []).filter(l => !DROPPED_SOCIALS.includes(l.n));
   const site = c.site ? `<a class="soc pri" href="https://${esc(c.site)}" target="_blank" rel="noopener"
       onclick="event.stopPropagation()" title="${esc(c.site)} — their own site, and the source behind the rest of this card">Website ↗</a>` : '';
-  return site + have.map(l =>
+  const found = have.map(l =>
     `<a class="soc" href="${esc(l.u)}" target="_blank" rel="noopener" onclick="event.stopPropagation()"
-        title="${esc(l.n)} — found on ${esc(l.src || 'their own site')}, unverified">${esc(l.n)} ↗</a>`).join('')
-    + (have.some(l => l.n === 'LinkedIn') ? '' :
+        title="${esc(l.n)} — found on ${esc(l.src || 'their own site')}, unverified">${esc(l.n)} ↗</a>`);
+  const find = have.some(l => l.n === 'LinkedIn') ? '' :
       `<a class="soc" href="${esc(liCompany(c.name))}" target="_blank" rel="noopener"
-          onclick="event.stopPropagation()" title="Their website is the link we know. This opens a search — we never invent a profile URL.">Find on LinkedIn ↗</a>`);
+          onclick="event.stopPropagation()" title="Their website is the link we know. This opens a search — we never invent a profile URL.">Find on LinkedIn ↗</a>`;
+  const all = [site, ...found, find].filter(Boolean);
+  return (max && all.length > max ? all.slice(0, max) : all).join('');
 }
 const nameWords = (n) => n.replace(NAME_PRE, '').split(/\s+/).filter(w => w.length > 2 && !/^\(r\)$/i.test(w));
 const metWith = (c, p) => D.interactions.filter(m => m.c === c.id &&
@@ -2505,6 +2520,11 @@ function screenCustomers(){
   </div>
 
   ${filterBar()}
+  /* L4: "Board" here is a grid of cards; on Opportunities the same word is
+     four columns of a pipeline. One word, two things, and it is left that
+     way on purpose — this is the default way into the book, and renaming it
+     would cost more in surprise than the ambiguity costs in confusion.
+     Recorded rather than "fixed", so the next person knows it was seen. */
   ${rows.length ? `<div class="grid g3" data-tour="cboard">
     ${rows.map(({c, ops, val}) => {
       const { lm, ns, to } = custContext(c);
@@ -2533,7 +2553,7 @@ function screenCustomers(){
           ${lm ? `<span class="tag t-grey">Met ${fmtDay(lm.d)}</span>` : ''}
         </div>
         <div class="row opt" style="margin-top:6px;gap:6px;flex-wrap:wrap">
-          ${socialChips(c)}
+          ${socialChips(c, 2)}
         </div>
         <div class="hr" style="margin:var(--s3) 0"></div>
         <div class="row tiny">
@@ -3021,7 +3041,7 @@ function drawMom(){
 async function runMom(mid){
   if (!momState) return;
   const text = (document.getElementById('momT') || {}).value || momState.text;
-  if (text.trim().length < 40){ toast('Paste the notes first - a couple of lines is not enough.'); return; }
+  if (text.trim().length < 40){ refuse(null, 'Paste the notes first - a couple of lines is not enough.'); return; }
   momState.text = text;
   document.getElementById('capBody').innerHTML = `<div class="row"><span class="ai-mark model">AI</span>
     <span class="tiny muted" style="margin-left:8px">Reading ${momState.mid ? 'the minutes' : 'the notes'}...</span></div>`;
@@ -3084,7 +3104,7 @@ function momCreatePains(){
   const todo = (momState.out.pains || [])
     .map((p, pi) => ({ p, pi }))
     .filter(({ pi }) => (momState.painsPicked || []).includes(pi) && !(momState.painsMade || []).includes(pi));
-  if (!todo.length){ toast('Tick the pain points you want first.'); return; }
+  if (!todo.length){ refuse(null, 'Tick the pain points you want first.'); return; }
   (c.pains = c.pains || []).push(...todo.map(({ p }) => p));
   momState.painsMade = [...(momState.painsMade || []), ...todo.map(({ pi }) => pi)];
   momState.painsPicked = (momState.painsPicked || []).filter((pi) => !momState.painsMade.includes(pi));
@@ -3123,7 +3143,7 @@ function momCreateSelected(mid){
   const todo = (momState.out.steps || [])
     .map((st, i) => ({ st, i }))
     .filter(({ i }) => momState.picked.includes(i) && !momState.created.includes(i));
-  if (!todo.length){ toast('Tick the steps you want first.'); return; }
+  if (!todo.length){ refuse(null, 'Tick the steps you want first.'); return; }
   /* §5 on the minutes path too: an action accepted from a MOM is a Next Step
      like any other, so it carries the same two roles. The Execution Owner is
      whoever the minutes put it on — named in the text, the customer, or the
@@ -3225,7 +3245,7 @@ function confirmOppSheet(c, sug, oi){
        is worse than none. */
     const close = document.getElementById('ocClose').value || '';
     if (close && !/^\d{4}-\d{2}-\d{2}$/.test(close)){
-      toast('The close date needs to look like 2027-03-31 — or leave it empty.'); return;
+      refuse('ocClose', 'The close date needs to look like 2027-03-31 — or leave it empty.'); return;
     }
     const stage = document.getElementById('ocStage').value || 'Interested';
     /* The description carries its own caveat — the demand was read out of the
@@ -7496,9 +7516,9 @@ function saveAdd(){
   /* A product does not belong to a customer. Everything else does, and it used
      to return silently when none was picked — the form stayed open, the button
      read "Cancel", and the save looked like it had worked. Say what is wrong. */
-  if (!c && kind !== 'product'){ toast('Pick the customer this belongs to.'); return; }
+  if (!c && kind !== 'product'){ refuse('ad0', 'Pick the customer this belongs to.'); return; }
   const one = v('ad1');
-  if (!one){ toast(kind === 'note' ? 'Say what happened.' : 'A name, at least.'); return; }
+  if (!one){ refuse('ad1', kind === 'note' ? 'Say what happened.' : 'A name, at least.'); return; }
 
   if (kind === 'contact'){
     if ((c.contacts || []).some(p => p.n === one)){ toast(one + ' is already on this customer.'); return; }
@@ -7514,7 +7534,7 @@ function saveAdd(){
        row was created empty of both date and description. */
     const close = v('ad4');
     if (close && !/^\d{4}-\d{2}-\d{2}$/.test(close)){
-      toast('The close date needs to look like 2027-03-31 — or leave it empty.'); return;
+      refuse('ad4', 'The close date needs to look like 2027-03-31 — or leave it empty.'); return;
     }
     const id = 'o' + Date.now();
     const val = Number(String(v('ad2')).replace(/[^0-9.]/g, '')) || 0;
@@ -7916,7 +7936,7 @@ function saveEdit(key){
     const row = (c.contacts || []).find(x => x.n === was);
     if (!row) return;
     const n = v('ed1');
-    if (!n){ toast('A name, at least.'); return; }
+    if (!n){ refuse('ed1', 'A name, at least.'); return; }
     const before = row.n + ' · ' + row.t;
     row.n = n; row.t = v('ed2') || '-'; row.b = v('ed3'); row.s = v('ed4');
     row.em = v('ed5') || ''; row.ph = v('ed6') || '';
@@ -7927,7 +7947,7 @@ function saveEdit(key){
     const row = (c.apps || []).find(x => x.n === was);
     if (!row) return;
     const n = v('ed1');
-    if (!n){ toast('A name, at least.'); return; }
+    if (!n){ refuse('ed1', 'A name, at least.'); return; }
     const before = row.n + ' · ' + row.v;
     row.n = n; row.v = v('ed2') || '-'; row.stance = v('ed3');
     audit('data', 'System updated', n + ' - ' + c.name, before, row.n + ' · ' + row.v);
@@ -7935,10 +7955,10 @@ function saveEdit(key){
     const row = D.opps[was];
     if (!row) return;
     const n = v('ed1');
-    if (!n){ toast('Say what it is.'); return; }
+    if (!n){ refuse('ed1', 'Say what it is.'); return; }
     const close = v('ed5');
     if (close && !/^\d{4}-\d{2}-\d{2}$/.test(close)){
-      toast('The close date needs to look like 2027-03-31 — or leave it empty.'); return;
+      refuse('ed5', 'The close date needs to look like 2027-03-31 — or leave it empty.'); return;
     }
     /* A deal worth zero is not a deal, and it is not a harmless blank either:
        it sits in Open pipeline and Weighted as a real row, so the figures the
@@ -8041,7 +8061,7 @@ function saveEdit(key){
           row.t + ' · ' + row.exec + ' · tracked by ' + row.track);
   } else if (kind === 'cust'){
     const n = v('ed1');
-    if (!n){ toast('A name, at least.'); return; }
+    if (!n){ refuse('ed1', 'A name, at least.'); return; }
     const before = c.name + ' · ' + c.owner;
     /* §5, on the write path. The three commercial fields are not drawn for a
        role that cannot write them, and they are not written here either. A
@@ -10354,6 +10374,24 @@ function createCustomer(enriched){
    So the label is gone, not disabled. Real undo, when it is built, arrives
    with its handler attached — and `verify:dead` fails the build if a call
    ever hands this function an action again. */
+/* A refused save has to answer two questions at once: what was refused, and
+   where. The toast alone answers the first and then disappears in four
+   seconds, which leaves a form that looks perfectly fine and will not go —
+   and it used to draw itself as a notification, the same black bar as
+   "Customer created". So the field is marked too, and the mark clears the
+   moment the field is corrected: a mark that outlives the correction is a
+   claim about a state that is no longer true. */
+function refuse(id, msg){
+  toast(msg, null, 'err');
+  const el = id ? document.getElementById(id) : null;
+  if (!el) return;
+  el.classList.add('err');
+  el.focus();
+  const clear = () => { el.classList.remove('err');
+    el.removeEventListener('input', clear); el.removeEventListener('change', clear); };
+  el.addEventListener('input', clear);
+  el.addEventListener('change', clear);
+}
 function toast(msg, mascotId, kind){
   const t = document.createElement('div');
   /* One surface for every message, and that is deliberate: what a person has

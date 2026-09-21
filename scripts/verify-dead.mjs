@@ -689,5 +689,46 @@ check('a title inside a card speaks in the body face',
       : /font-family:\s*var\(--font\)/.test(bfHead) ? 'body face, named, 600'
         : 'no family is named, so h2 hands it Sora');
 
+/* --------------------------------------- 13. a card stops growing, and a refusal says where ---
+   D2: a card on the board is a summary, not a record, and it used to be as
+   tall as whatever the customer happened to carry — a website, four social
+   profiles, a prompted "find them on LinkedIn". Seven customers rendered at
+   seven heights and the grid read as ragged rather than as a board. Two
+   links is enough to get to the rest; the full set is on the customer.
+   S5: a refused save said what was wrong and then vanished in four seconds,
+   leaving a form that looked fine and would not go — and it drew itself as
+   a notification, the same black bar as "Customer created". A refusal is a
+   verdict, and it belongs on the field that was refused. */
+const chipsSrc = /function socialChips\(c[^{]*\{[\s\S]*?\n\}/.exec(src)?.[0] || '';
+check('a card on the board carries two links and no more',
+  /socialChips\(c,\s*2\)/.test(src) && /function socialChips\(c,\s*max\)/.test(src)
+    && /slice\(0,\s*max\)/.test(chipsSrc),
+  !/socialChips\(c,\s*2\)/.test(src) ? 'the board still asks for every link'
+    : /slice\(0,\s*max\)/.test(chipsSrc) ? 'two links, and the rest are on the customer'
+      : 'socialChips takes a limit but never applies it');
+
+const refuseSrc = /function refuse\([\s\S]*?\n\}/.exec(src)?.[0] || '';
+const refuseCalls = (src.match(/\brefuse\(/g) || []).length;
+check('a refusal says what was refused, and where',
+  refuseSrc.length > 0 && /,\s*'err'\)/.test(refuseSrc)
+    && /classList\.add\('err'\)/.test(refuseSrc) && /\.focus\(\)/.test(refuseSrc)
+    && /removeEventListener/.test(refuseSrc) && refuseCalls >= 5
+    && !/toast\('A name, at least\.'\)/.test(src),
+  !refuseSrc ? 'nothing refuses anything'
+    : !/,\s*'err'\)/.test(refuseSrc) ? 'the refusal still reads as a notification'
+      : refuseCalls < 5 ? `only ${refuseCalls} refusals go through it`
+        : `${refuseCalls - 1} refusals, one place`);
+const errRule = /\.inp\.err[^}]*\}/.exec(html)?.[0] || '';
+/* `input:focus` claims the focus border with !important, so a refused field
+   that is also focused needs the same weight or it goes blue the moment
+   refuse() puts the cursor in it — which is when it most needs to be read. */
+check('the refused field is drawn as refused, and it clears',
+  /var\(--risk/.test(errRule) && /!important/.test(errRule)
+    && html.indexOf('.inp.err') > html.indexOf('.inp:focus') > 0,
+  !errRule ? 'no refused state is drawn'
+    : !/!important/.test(errRule) ? 'focus would repaint it blue'
+      : html.indexOf('.inp.err') > html.indexOf('.inp:focus') ? 'risk edge, outranking focus'
+        : 'the refusal is declared before the focus rule');
+
 console.log(`\n${ran} checks run.${bad ? '  *** FAILURES ***' : '  all passed'}`);
 process.exit(bad ? 1 : 0);
