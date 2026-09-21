@@ -768,5 +768,50 @@ check('money is not a colour, and it does not share a pill with the stage',
    full of destructuring and arrows has braces a bracket counter cannot
    fairly attribute, and a false accusation is worse than no check. */
 
+/* -------------------------------- 15. wave 13 — the four repairs ---
+   The sign-out, the walkthrough door, the pen on the board card, and the
+   demo boundary. Each is a shape the source must hold, because each was a
+   thing a user reached for and could not find. */
+check('a session can be ended from where the name is',
+  /id="meBtn"/.test(html) && /id="meMenu"/.test(html)
+    && /data-act="endsession"/.test(src) && /\/api\/logout/.test(src)
+    && /drawMeMenu\(\)/.test(src),
+  !/id="meBtn"/.test(html) ? 'the identity chip is not a control'
+    : !/\/api\/logout/.test(src) ? 'signing out never tells the server — reload signs back in'
+      : 'chip, menu, action, server call');
+
+check('the walkthroughs have a second door in the rail',
+  /function tourRailRow/.test(src) && /tourRailRow\(\) \+ corgiToggleRow\(\)/.test(src)
+    && /a === 'tourmenu'/.test(src),
+  !/function tourRailRow/.test(src) ? 'the corner float is the only door again'
+    : 'rail entry and corner float open the same menu');
+
+check('the board card carries the pen behind the same rule as the List',
+  (/opp-act/.test(src) && /data-act="ed" data-ed="\$\{k\}"/.test(src)
+    && /col-ed/.test(src)),
+  !/opp-act/.test(src) ? 'the board is a wall again — no way into a card'
+    : 'Edit on the card, the form opens under it');
+
+/* The demo boundary, in three shapes: the book is built by one function,
+   that function is loaded by exactly one posture, and the posture writes
+   nothing. `loadGuestBook` must not appear anywhere else — a second caller
+   is a second chance for the demo book to leak into a session that saves. */
+const loadCalls = (src.match(/loadGuestBook\(\);/g) || []).length;
+check('the demo book has one loader and it belongs to the guest alone',
+  /function demoBook\(\)/.test(src) && /function loadGuestBook\(\)/.test(src)
+    && loadCalls === 1   /* exactly one call: inside enterApp's guest branch */
+    && /if \(guest\)\{[\s\S]{0,700}loadGuestBook\(\)/.test(src),
+  loadCalls !== 1 ? `loadGuestBook is called ${loadCalls} times — one caller too many`
+    : 'demoBook -> loadGuestBook -> enterApp(true), nothing else');
+
+check('the guest sees the whole book, and signs nothing',
+  /guest \|\| can\('allCustomers'\)/.test(src) && /if \(guest \|\| !SY\.armed\) return/.test(src),
+  'sight for the guest, no pen — both fences in place');
+
+check('every demo record says so where it is read',
+  /— DEMO/.test(src) && /is not a Waypoint or Tencent Cloud customer/.test(src)
+    && /demo: true/.test(src),
+  'name suffix, closing line of the brief, row flag — three marks');
+
 console.log(`\n${ran} checks run.${bad ? '  *** FAILURES ***' : '  all passed'}`);
 process.exit(bad ? 1 : 0);

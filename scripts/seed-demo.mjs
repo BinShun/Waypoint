@@ -552,6 +552,26 @@ const state = {
 
 /* ------------------------------------------------------------------ write */
 
+/* `--accounts-only` writes the book a real deployment starts from: the
+   roster, the credentials, the catalogue — and NO business data. The demo
+   companies live in the client's guest posture (demoBook() in
+   Waypoint-v1.html), which is the only place they are ever shown; a
+   signed-in view that carried sample customers would be a book somebody
+   cannot trust. This mode exists so a public deployment can be seeded
+   without ever putting a sample row where a real one belongs. */
+const ACCOUNTS_ONLY = process.argv.includes('--accounts-only');
+if (ACCOUNTS_ONLY){
+  state.demo = false;
+  state.customers = [];
+  state.interactions = [];
+  state.steps = [];
+  state.opps = {};
+  state.audit = [];
+  state.files = [];
+  state.watch = [];
+  state.team = state.team.map((t) => ({ ...t, c: null }));
+}
+
 if (existsSync(DATA_FILE) && !FORCE) {
   let existing = null;
   try { existing = JSON.parse(readFileSync(DATA_FILE, 'utf8')); } catch { /* unreadable */ }
@@ -572,11 +592,16 @@ writeFileSync(REV_FILE, JSON.stringify({ rev: 1, savedAt: now }, null, 0), 'utf8
 
 console.log('\nSeeded a demo workspace.\n');
 console.log(`  workspace : ${DATA_DIR}`);
-console.log(`  customer  : ${customer.name}  (flagged demo)`);
-console.log(`  people    : 1 Primary BD (${customer.owner}) + 1 Primary SA (${customer.sa})`);
-console.log(`  non-core  : ${customer.support.join(', ')}  (no account, no permission)`);
-console.log(`  chain     : customer → 2 opportunities → 3 next steps → 1 MOM → timeline`);
-console.log(`               one step is already completed by the non-core member.`);
+if (ACCOUNTS_ONLY){
+  console.log('  mode      : accounts only — no business data, no demo flag.');
+  console.log('  demo data : lives in the guest view (client-side demoBook), never here.');
+} else {
+  console.log(`  customer  : ${customer.name}  (flagged demo)`);
+  console.log(`  people    : 1 Primary BD (${customer.owner}) + 1 Primary SA (${customer.sa})`);
+  console.log(`  non-core  : ${customer.support.join(', ')}  (no account, no permission)`);
+  console.log(`  chain     : customer → 2 opportunities → 3 next steps → 1 MOM → timeline`);
+  console.log('               one step is already completed by the non-core member.');
+}
 console.log(`  catalogue : ${products.length} sellable services in ${new Set(products.map(p => p.cat)).size} categories`);
 console.log('\n  sign in with either of:');
 for (const p of PEOPLE) console.log(`    ${p.name.padEnd(16)} ${p.role.padEnd(8)} ${PASSWORD}`);

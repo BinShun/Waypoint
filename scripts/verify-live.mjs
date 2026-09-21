@@ -371,6 +371,51 @@ check('every screen renders for every role, with nothing undefined', roleBroken.
 check('a comment never ships to the screen', commentLeak.length === 0,
   commentLeak.length ? commentLeak.join(', ') : 'no source note renders as copy, on any view');
 
+/* --------------------------------------- wave 13 — the four repairs ---
+   Each of these was a thing a user reached for and could not find: the way
+   out, the second door to the walkthroughs, the pen on the board card, and
+   the guest's book. They are checked on the rendered DOM because that is
+   where the user met them. */
+act('[data-go="opportunities"]'); await wait(300);
+const boardEdit = doc.querySelector('#page .opp-act button[data-act="ed"]');
+check('the board card carries an Edit behind the half-of-the-record rule',
+  !!boardEdit, boardEdit ? 'the card is a door, not a wall' : 'no way into a card from the board');
+if (boardEdit){
+  boardEdit.click(); await wait(200);
+  const edopen = doc.querySelector('#page .col-ed');
+  check('the edit form opens under the card it came from',
+    !!edopen && !!edopen.querySelector('[data-act="edsave"]'),
+    edopen ? 'form, save and cancel under the card' : 'the click did nothing');
+  const edno = edopen && edopen.querySelector('[data-act="edno"]');
+  if (edno){ edno.click(); await wait(150); }
+  check('cancel closes it again', !doc.querySelector('#page .col-ed'));
+}
+
+const railTour = doc.querySelector('#railFoot button[data-act="tourmenu"]');
+check('the rail carries a second door to the walkthroughs',
+  !!railTour, railTour ? railTour.textContent.trim() : 'the corner float is the only door again');
+if (railTour){
+  railTour.click(); await wait(200);
+  const tm = doc.getElementById('tMenu');
+  check('the rail door opens the same tour menu',
+    !!tm?.classList.contains('on') && (tm?.querySelectorAll('[data-tour-start]').length || 0) >= 5,
+    `${tm?.querySelectorAll('[data-tour-start]').length || 0} tours listed`);
+  if (tm) tm.classList.remove('on');
+}
+
+const meBtn = doc.getElementById('meBtn');
+check('the identity chip is a control once you are signed in',
+  !!meBtn && meBtn.classList.contains('has-session'));
+if (meBtn){
+  meBtn.click(); await wait(200);
+  const mm = doc.getElementById('meMenu');
+  check('the identity menu offers the way out',
+    !!mm?.classList.contains('on') && /Sign out/.test(mm.textContent || '')
+      && /Change password/.test(mm.textContent || ''),
+    mm ? 'who you are, your secret, and the door' : 'the menu did not open');
+  if (mm) mm.classList.remove('on');
+}
+
 
 check('no uncaught page errors', errs.length === 0, errs.slice(0, 3).join(' // '));
 
@@ -486,6 +531,30 @@ check('the connection dot is painted by a class, not by an inline colour',
   cdot ? `class="${cdot.className}"` : 'the dot was not found');
 
 /* ------------------------------------------------------------------ done */
+
+/* --------------------------------------- the guest's book, seen last ---
+   The guest posture is entered last because it replaces the session's view
+   of the data: enterApp(true) loads the demo book into memory, and nothing
+   after this can assume the signed-in book is still on screen. What has to
+   be true there: the four DEMO companies are visible, the rail says which
+   book this is, and there is no pen anywhere — the guest reads. */
+window.eval('enterApp(true)');
+await wait(300);
+act('[data-go="customers"]'); await wait(250);
+const guestCards = doc.querySelectorAll('#page .card[data-open]');
+check('the guest sees all four DEMO companies',
+  guestCards.length === 4,
+  `${guestCards.length} cards: ${[...guestCards].map(c => (c.textContent || '').split('\n')[0]).join(' · ').slice(0, 80)}`);
+check('the guest book says it is sample data, in the rail',
+  !!doc.querySelector('#railFoot .sample-tag'));
+check('the guest board carries no pen',
+  (doc.querySelector('#page .opp-act') || null) === null
+    && !doc.querySelector('#page button[data-act="ed"]'));
+const guestBody = doc.body.textContent || '';
+check('the signed-in book left nothing behind in the guest view',
+  !/Nusantara/.test(guestBody), 'the sample workspace shows only the demo book');
+check('every DEMO record is marked where it is read',
+  /Maybank — DEMO/.test(guestBody) && /Astro — DEMO/.test(guestBody));
 
 dom.window.close();
 try { server.p.kill(); } catch { /* gone */ }

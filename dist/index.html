@@ -145,6 +145,27 @@ main{min-width:0}
 .cmd .kbd{margin-left:auto;font-size:10.5px;font-weight:600;color:var(--ink-0);
   border:1px solid var(--line-2);border-radius:4px;padding:1px 5px}
 .me{margin-left:auto;display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-2)}
+/* The identity chip is a door, not a label: a person who signed in has to be
+   able to end the session from where their name already is. It only behaves
+   like a control once there is a session to end — on the sign-in screen and
+   in the guest posture it stays inert (the guest banner owns the way back). */
+.me.has-session{cursor:pointer;padding:4px 8px;margin-left:auto;border-radius:var(--r-ctl)}
+.me.has-session:hover{background:var(--surface-2)}
+.me-caret{color:var(--ink-3);flex:0 0 10px;transition:transform .12s ease}
+.me.has-session.open .me-caret{transform:rotate(180deg)}
+.memenu{position:fixed;z-index:96;top:52px;right:var(--s5);width:262px;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r-ctl);box-shadow:var(--e3);padding:var(--s2);
+  display:none}
+.memenu.on{display:block}
+.memenu .mm-id{padding:9px 10px 10px;border-bottom:1px solid var(--line);margin-bottom:6px}
+.memenu .mm-id b{display:block;font-size:13px;color:var(--ink)}
+.memenu .mm-id span{font-size:11.5px;color:var(--ink-3)}
+.memenu button{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;
+  border:none;border-radius:var(--r-sm);padding:8px 10px;font-size:12.5px;color:var(--ink-2);
+  cursor:pointer;font-family:inherit}
+.memenu button:hover{background:var(--surface-2);color:var(--ink)}
+.memenu button.out{color:var(--risk)}
+.memenu button.out:hover{background:var(--risk-bg,var(--surface-2))}
 .av{width:28px;height:28px;border-radius:50%;background:var(--blue-100);color:var(--blue);
   display:grid;place-items:center;font-size:11px;font-weight:700}
 
@@ -433,6 +454,13 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
   font-size:11px;font-weight:600;color:var(--ink-2);line-height:1}
 .opp-own .av{width:18px;height:18px;font-size:9px;flex:0 0 18px}
 .opp .amt{font-size:15px;font-weight:600;letter-spacing:-.01em}
+/* the pen on the board card: one quiet row, same rule as the List's Edit */
+.opp-act{margin-top:9px;display:flex;gap:8px}
+/* an edit form opened from a board card sits in a ~230px column, so the two
+   column grid it uses on the wide List collapses to one — a form that
+   overflows its column would break the board it was opened from */
+.col-ed .grid.g2{grid-template-columns:1fr}
+.col-ed .card{margin:0 0 var(--s2)}
 .rail-dots{display:flex;gap:3px;margin-top:9px}
 .rail-dots i{width:22px;height:6px;border-radius:var(--r-chip);background:var(--line-2)}
 .rail-dots i.on{background:var(--blue)}
@@ -901,11 +929,12 @@ body.nowm .wm{display:none}
         Ask, or tell it what to do
         <span class="kbd">⌘K</span>
       </button>
-      <div class="me">
+      <div class="me" id="meBtn" title="Your session">
         <span class="tiny muted conn" id="connState"></span>
         <span class="dot dot--ok" id="connDot"></span>
         <div class="av" id="meAv">–</div>
         <span id="meName"></span>
+        <svg class="me-caret" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
     </header>
     <div class="page" id="page"></div>
@@ -915,6 +944,8 @@ body.nowm .wm{display:none}
 </div>
 <div id="navBack"></div>
 <div id="loginRoot"></div>
+<!-- signed-in identity menu: who you are, and the way out -->
+<div class="memenu" id="meMenu"></div>
 
 <!-- capture sheet -->
 <div class="veil" id="capVeil">
@@ -1516,7 +1547,12 @@ const setOn = (n, cid, on) => {
   c.team = [...t];
 };
 
-const myIds = () => (can('allCustomers') ? D.customers.map(c => c.id) : withPerson(meName()));
+/* A guest is the manager's sight and nobody's pen, so the ONE capability the
+   guest posture holds is the whole book: a person looking around a sample
+   workspace that hides three of its four companies has not been shown the
+   product. Every other cap stays off — `can` still refuses a guest
+   everything that writes, asks, or exports. */
+const myIds = () => (guest || can('allCustomers') ? D.customers.map(c => c.id) : withPerson(meName()));
 const visibleCustomers = () => D.customers.filter(c => myIds().includes(c.id));
 const inScope = (cid) => myIds().includes(cid);
 
@@ -1746,9 +1782,19 @@ function renderNav(){
         return `<button class="nav ${view.s === n.k ? 'on' : ''}" data-go="${n.k}">
         ${n.l}${c != null ? `<span class="c">${c}</span>` : ''}</button>`; }).join('')}`;
     }).join('');
-  /* The theme switch rides with the nav so it re-draws with the app. */
+  /* The theme switch rides with the nav so it re-draws with the app. So does
+     the walkthrough door: the corner float is one click away, but one click
+     away only helps somebody who knows it is there. The rail is where a person
+     looks for where to go; a tour is a place to go. */
   const foot = document.getElementById('railFoot');
-  if (foot) foot.innerHTML = corgiToggleRow() + sampleBadge();
+  if (foot) foot.innerHTML = tourRailRow() + corgiToggleRow() + sampleBadge();
+}
+
+/* Same list as the corner float opens — one function, two doors, no drift. */
+function tourRailRow(){
+  return '<button class="ctheme" data-act="tourmenu"' +
+    ' title="Guided walkthroughs that play over the real screens — same data, same words">' +
+    '<span>Walkthroughs</span></button>';
 }
 
 /* Every screen in this workspace looks exactly like a real one: the figures
@@ -2049,8 +2095,16 @@ function loginScreen(){
 
 function enterApp(asGuest){
   guest = !!asGuest;
-  if (guest) asRole = 'manager';   /* sight, no pen — the only honest posture
+  if (guest){
+    asRole = 'manager';   /* sight, no pen — the only honest posture
                                       for someone who never authenticated */
+    /* The guest's book is the demo book: the four DEMO companies, in memory,
+       never on disk. Loaded here and only here — before the first render, so
+       no guest screen is ever an empty shelf with a "sample workspace" banner
+       promising something the data does not hold. */
+    loadGuestBook();
+    try { sessionStorage.setItem('cwb-guest', '1'); } catch (e) { /* storage refused */ }
+  }
   else if (D.me && D.me.role) adoptRole();
   /* Today is the default, not the destination. A reload on `#/customers/c123`
      has to come back to that customer — that is the whole point of having an
@@ -4807,6 +4861,13 @@ function screenOpportunities(){
         const c = cust(o.c);
         /* dayGap() is (today − close); a future close is negative, so −dayGap = days until it closes. */
         const toClose = o.close ? -dayGap(o.close) : null;
+        const k = rmKey.opp(c, o);
+        /* The board used to be a wall you could only look at: the List view has
+           had an Edit since the beginning, but the card a person actually works
+           from had none — no way in, no way to move a deal, no way to fix a
+           number. The card is where the deal is; the pen travels with it now
+           (behind the same `canEditKind` half-of-the-record rule as everywhere
+           else). */
         return `<div class="opp">
           <div class="opp-h">
             ${logo(c, 26)}
@@ -4824,7 +4885,9 @@ function screenOpportunities(){
             <span class="tiny muted">${o.p}%</span>
           </div>
           <div class="tiny muted" style="margin-top:5px;line-height:1.45">${esc(oppWhy(o))}</div>
-        </div>`;
+          ${canEditKind(k) ? `<div class="opp-act"><button class="btn sm" data-act="ed" data-ed="${k}">Edit</button></div>` : ''}
+        </div>
+        ${edFor === k ? `<div class="col-ed">${edForm(k, oppFormValues(o))}</div>` : ''}`;
       }).join('') || `<div class="col-empty">No opportunities here yet.</div>`}
     </div>`;
   }).join('');
@@ -6691,6 +6754,26 @@ function drawMe(){
   const label = document.getElementById('meName');
   if (av) av.textContent = name ? initials(name) : '–';
   if (label) label.textContent = name;
+  /* The identity chip only becomes a control for somebody who actually signed
+     in. A guest is reading, not acting; their way back is the banner's
+     Sign-in button, and a menu promising a session to end would be a door
+     drawn on a wall. */
+  const btn = document.getElementById('meBtn');
+  if (btn) btn.classList.toggle('has-session', !!(name && !guest && view.s !== 'login'));
+  drawMeMenu();
+}
+/* Who you are, and the way out. Change password belongs here too: it used to
+   live only behind the Admin screen, so the one action every account owns —
+   its own secret — was hidden behind a role not everybody has. */
+function drawMeMenu(){
+  const m = document.getElementById('meMenu');
+  if (!m) return;
+  const name = (D.me && D.me.name) || '';
+  const role = (D.me && (D.me.title || D.me.role)) || '';
+  m.innerHTML = name ? `
+    <div class="mm-id"><b>${esc(name)}</b><span>${esc(role)}</span></div>
+    <button data-act="changepwopen">Change password</button>
+    <button class="out" data-act="endsession">Sign out</button>` : '';
 }
 function logo(c, px){
   const box = `width:${px}px;height:${px}px`;
@@ -6953,11 +7036,373 @@ function stampChanged(){
 }
 
 /* ------------------------------------------------------------------ demo data
-   There is none, and this comment is the fence that keeps it that way.
-   A sample customer used to ship inside this file; it survived an empty
-   server state (see adopt) and wrote itself into real workspaces on the
-   first save. If a sample is ever wanted again, put it in a separate
-   throwaway workspace — never in the file real people load. */
+   The guest's book. It lives in this file, and it is allowed to — but only
+   as the guest's memory, never as anybody's disk. The old fence here said
+   "no sample data, ever" because the first attempt at a sample survived an
+   empty server state and wrote itself into real workspaces on the first
+   save (see adopt). The rule that keeps this book honest is different and
+   sharper: it is loaded ONLY inside enterApp(true) — the guest posture,
+   which has no session, no heartbeat, and a save path that returns before
+   it touches anything (see the `guest` guards on the sync). A signed-in
+   person never sees it; the server never receives it; a reload of the
+   signed-in screen replaces it with the real book. The four companies are
+   real Malaysian enterprises and the scenarios are realistic, but every
+   record is fiction and says so in three places: the name suffix, the
+   closing line of the brief, and the demo flag the rail badge reads. */
+
+/* relative dates, so the book is always fresh no matter when it is opened */
+const gd = (n) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+
+function demoBook(){
+  const NOW = new Date().toISOString();
+  const U = 'Jason Lim', P = 'Priya Nair', T = 'Tan Wei Ming', A = 'Teh Bin Shun';
+  const DT = 'David Tan (Product SA, Database)';
+  const mk = (id, over) => Object.assign({ id, demo: true, unverified: false, links: [], sources: [],
+    timeline: [], people: '', logo: '' }, over);
+
+  /* --- Maybank: the one that needs you. Stalled 34 days at the deepest
+         stage, an SOW revision six days overdue, a CFO against us. --- */
+  const may = mk('c_may', {
+    name: 'Maybank — DEMO', industry: 'Banking & Finance', hq: 'Kuala Lumpur',
+    size: '~40,000 staff group-wide', stance: 'Undecided', health: 'At risk',
+    owner: U, sa: P, since: gd(-120), site: 'maybank.example',
+    brief: "Malaysia's largest banking group, two years into a group-wide data modernisation "
+      + "programme. The core banking data platform decision lands this quarter. This is a demo "
+      + "record — Maybank is not a Waypoint or Tencent Cloud customer.",
+    pains: [
+      'Regulatory data retention is spread across three on-prem estates',
+      'The overnight batch window no longer finishes before market open',
+      'No single view of risk across the group subsidiaries',
+    ],
+    contacts: [
+      { id: 'p_may1', n: 'Nurul Aisyah', t: 'Head of Digital Banking', band: 'Decision maker', s: 'Undecided',
+        e: 'nurul.aisyah@maybank.example', ph: '+60 3-2071 1000', o: U },
+      { id: 'p_may2', n: 'Rajesh Menon', t: 'IT Director, Group Data', band: 'Influencer', s: 'With us',
+        e: 'rajesh.menon@maybank.example', ph: '+60 3-2071 1001', o: P },
+      { id: 'p_may3', n: 'Datuk Amir Halim', t: 'Group CFO', band: 'Blocker', s: 'Against us',
+        e: 'amir.halim@maybank.example', ph: '+60 3-2071 1002', o: U },
+    ],
+    apps: [
+      { n: 'Core data warehouse', v: 'On-prem, three estates', stance: 'Replace' },
+      { n: 'Risk reporting batch', v: 'Nightly COBOL jobs', stance: 'Replace' },
+      { n: 'Subsidiary ledgers', v: 'Per-entity ERP exports', stance: 'Integrate' },
+    ],
+    opps: ['o_may1', 'o_may2'],
+    support: [DT], team: [P],
+  });
+
+  /* --- Telekom Malaysia: the healthy one, with a win to show for it. --- */
+  const tm = mk('c_tm', {
+    name: 'Telekom Malaysia — DEMO', industry: 'Telecommunications', hq: 'Cyberjaya',
+    size: '~24,000 staff', stance: 'With us', health: 'Healthy',
+    owner: T, sa: P, since: gd(-200), site: 'tm.example',
+    brief: "The national carrier consolidating its operational systems after the 5G rollout. "
+      + "They standardised on us for the field force backend and are now looking wider. "
+      + "This is a demo record — Telekom Malaysia is not a Waypoint or Tencent Cloud customer.",
+    pains: [
+      'OSS data sits in nine systems that disagree about the same tower',
+      'Field crews reconcile job states by hand at end of shift',
+      'Edge sites report too late for proactive maintenance',
+    ],
+    contacts: [
+      { id: 'p_tm1', n: 'Shahrul Nizam', t: 'Office of the CTO', band: 'Decision maker', s: 'With us',
+        e: 'shahrul.nizam@tm.example', ph: '+60 3-8888 1000', o: T },
+      { id: 'p_tm2', n: 'Tan Mei Ling', t: 'Head of Data Platforms', band: 'Influencer', s: 'With us',
+        e: 'meiling.tan@tm.example', ph: '+60 3-8888 1001', o: P },
+      { id: 'p_tm3', n: 'Vijay Kumar', t: 'Procurement Lead', band: 'Influencer', s: 'Undecided',
+        e: 'vijay.kumar@tm.example', ph: '+60 3-8888 1002', o: T },
+    ],
+    apps: [
+      { n: 'OSS estate', v: 'Nine systems, two vendors', stance: 'Replace' },
+      { n: 'Field force backend', v: 'On us since last quarter', stance: 'Keep' },
+      { n: '5G edge telemetry', v: 'Vendor pilot, expiring', stance: 'Replace' },
+    ],
+    opps: ['o_tm1', 'o_tm2', 'o_tm3'],
+    support: [], team: [P],
+  });
+
+  /* --- Sunway: the watch-list one. The decision path is unmapped because
+         the Group CIO has never been in a room with us. --- */
+  const sun = mk('c_sun', {
+    name: 'Sunway — DEMO', industry: 'Property & Construction', hq: 'Petaling Jaya',
+    size: '~40,000 staff group-wide', stance: 'Undecided', health: 'Watch',
+    owner: T, sa: P, since: gd(-90), site: 'sunway.example',
+    brief: "A conglomerate modernising the software that runs its townships, malls and "
+      + "universities. Everyone below the CIO likes the proposal; nobody can say who signs it. "
+      + "This is a demo record — Sunway is not a Waypoint or Tencent Cloud customer.",
+    pains: [
+      'Each property runs its own management stack from a different decade',
+      'Facilities data cannot be consolidated for group reporting',
+      'No shared view of tenant lift-and-shift across the portfolio',
+    ],
+    contacts: [
+      { id: 'p_sun1', n: 'Wong Kai Weng', t: 'Group CIO', band: 'Decision maker', s: 'Undecided',
+        e: 'kaiweng.wong@sunway.example', ph: '+60 3-5639 1000', o: T },
+      { id: 'p_sun2', n: 'Siti Zaharah', t: 'Group Head of IT Operations', band: 'Influencer', s: 'With us',
+        e: 'siti.zaharah@sunway.example', ph: '+60 3-5639 1001', o: P },
+      { id: 'p_sun3', n: 'Daniel Ong', t: 'Digital Transformation Lead', band: 'Influencer', s: 'With us',
+        e: 'daniel.ong@sunway.example', ph: '+60 3-5639 1002', o: T },
+    ],
+    apps: [
+      { n: 'Property management', v: 'Per-site stacks, three vendors', stance: 'Replace' },
+      { n: 'Tenant billing', v: 'Legacy on-prem', stance: 'Integrate' },
+      { n: 'Mall footfall analytics', v: 'Point solution', stance: 'Keep' },
+    ],
+    opps: ['o_sun1'],
+    support: [], team: [P],
+  });
+
+  /* --- Astro: healthy, but quiet for nine days and waiting on them. --- */
+  const astro = mk('c_astro', {
+    name: 'Astro — DEMO', industry: 'Media & Entertainment', hq: 'Bukit Jalil',
+    size: '~5,000 staff', stance: 'With us', health: 'Healthy',
+    owner: U, sa: A, since: gd(-160), site: 'astro.example',
+    brief: "The national content group re-architecting its streaming stack for peak events. "
+      + "The technical evaluation went well; the ball has been in their court for nine days. "
+      + "This is a demo record — Astro is not a Waypoint or Tencent Cloud customer.",
+    pains: [
+      'Live event peaks overwhelm the current CDN contract',
+      'Storage costs double every World Cup cycle',
+      'Playback quality incidents are found by viewers before dashboards',
+    ],
+    contacts: [
+      { id: 'p_astro1', n: 'Aznan Abdul Aziz', t: 'CTO', band: 'Decision maker', s: 'With us',
+        e: 'aznan@astro.example', ph: '+60 3-9543 1000', o: U },
+      { id: 'p_astro2', n: 'Fareena Ismail', t: 'Head of Infrastructure', band: 'Influencer', s: 'With us',
+        e: 'fareena@astro.example', ph: '+60 3-9543 1001', o: U },
+    ],
+    apps: [
+      { n: 'CDN contract', v: 'Incumbent, per-GB', stance: 'Replace' },
+      { n: 'Origin storage', v: 'On-prem + vendor cloud mix', stance: 'Replace' },
+      { n: 'Playback monitoring', v: 'Vendor APM', stance: 'Integrate' },
+    ],
+    opps: ['o_astro1'],
+    support: [], team: [A],
+  });
+
+  const opps = {
+    o_may1: { id: 'o_may1', c: 'c_may', t: 'Core banking data platform migration',
+      stage: 'Negotiation', v: 4200000, p: 60, stageAt: gd(-34), owner: U,
+      comp: 'Incumbent global SI', close: gd(45), cust: 'Nurul Aisyah',
+      desc: 'Consolidate the three data estates onto one governed platform with regulatory retention built in.',
+      soln: 'TencentDB + managed data lake, phased over three quarters',
+      blockers: 'SOW renewal is overdue — procurement is waiting on revised commercials', updatedAt: NOW },
+    o_may2: { id: 'o_may2', c: 'c_may', t: 'Real-time fraud detection pilot',
+      stage: 'Proposal', v: 1800000, p: 35, stageAt: gd(-12), owner: P,
+      comp: 'A fintech point solution', close: gd(75), cust: 'Rajesh Menon',
+      desc: 'Stream scoring on card transactions with a two-week POC against their historical data.',
+      soln: 'Stream compute + model serving on managed GPU', blockers: '', updatedAt: NOW },
+    o_tm1: { id: 'o_tm1', c: 'c_tm', t: 'Network OSS data consolidation',
+      stage: 'Qualified', v: 2400000, p: 45, stageAt: gd(-9), owner: P,
+      comp: 'The incumbent OSS vendor', close: gd(60), cust: 'Tan Mei Ling',
+      desc: 'One data layer across the nine OSS systems, starting with tower inventory.',
+      soln: 'Managed streaming + conflation service', blockers: '', updatedAt: NOW },
+    o_tm2: { id: 'o_tm2', c: 'c_tm', t: 'Field force mobile backend',
+      stage: 'Won', v: 1600000, p: 100, stageAt: gd(-30), owner: T,
+      comp: 'A local app house', close: gd(-30), cust: 'Shahrul Nizam',
+      desc: 'The backend behind the crews\u2019 job app — already live across three regions.',
+      soln: 'Serverless APIs + push, on us since last quarter', blockers: '', updatedAt: NOW },
+    o_tm3: { id: 'o_tm3', c: 'c_tm', t: 'Edge monitoring for 5G sites',
+      stage: 'Interested', v: 1600000, p: 20, stageAt: gd(-5), owner: T,
+      comp: 'The expiring pilot vendor', close: gd(120), cust: 'Shahrul Nizam',
+      desc: 'Edge telemetry that reports before a site drops, replacing the pilot that expires in Q1.',
+      soln: 'Edge compute + time-series store', blockers: '', updatedAt: NOW },
+    o_sun1: { id: 'o_sun1', c: 'c_sun', t: 'Property management platform modernisation',
+      stage: 'Proposal', v: 3200000, p: 40, stageAt: gd(-18), owner: T,
+      comp: 'Two regional SIs', close: gd(80), cust: 'Siti Zaharah',
+      desc: 'One platform for the townships, malls and campuses, migrated site by site.',
+      soln: 'Managed containers + integration layer', blockers: 'Group CIO has not been in any meeting — the decision path is unmapped', updatedAt: NOW },
+    o_astro1: { id: 'o_astro1', c: 'c_astro', t: 'Streaming platform CDN & storage re-architecture',
+      stage: 'Qualified', v: 2600000, p: 30, stageAt: gd(-9), owner: U,
+      comp: 'The incumbent CDN', close: gd(95), cust: 'Fareena Ismail',
+      desc: 'CDN contract renewal with a re-architected origin, sized for live event peaks.',
+      soln: 'CDN + tiered object storage + playback monitoring', blockers: '', updatedAt: NOW },
+  };
+
+  const steps = [
+    { id: 's_may0', c: 'c_may', o: 'o_may1', t: 'Deliver the architecture assessment for the three data estates',
+      exec: DT, track: P, due: gd(-21), from: 'us', p: 'p1',
+      done: gd(-21), doneBy: DT, doneNote: 'Assessment delivered: 3 estates, 14-week phase one.',
+      createdAt: gd(-40), updatedAt: NOW },
+    { id: 's_may1', c: 'c_may', o: 'o_may1', t: 'Send the revised SOW with updated commercials',
+      exec: U, track: U, due: gd(-6), from: 'us', p: 'p1',
+      done: '', doneBy: '', doneNote: '', createdAt: gd(-34), updatedAt: NOW },
+    { id: 's_may2', c: 'c_may', o: 'o_may1', t: "Confirm the budget review meeting with the CFO's office",
+      exec: 'the customer', track: U, due: gd(4), from: 'customer', p: 'p1',
+      done: '', doneBy: '', doneNote: '', createdAt: gd(-20), updatedAt: NOW },
+    { id: 's_may3', c: 'c_may', o: 'o_may2', t: 'Review the fraud detection POC results with the risk team',
+      exec: P, track: P, due: gd(9), from: 'us', p: 'p2',
+      done: '', doneBy: '', doneNote: '', createdAt: gd(-12), updatedAt: NOW },
+    { id: 's_tm1', c: 'c_tm', o: 'o_tm1', t: 'Send the OSS consolidation solution design',
+      exec: P, track: P, due: gd(2), from: 'us', p: 'p1',
+      done: '', doneBy: '', doneNote: '', createdAt: gd(-9), updatedAt: NOW },
+    { id: 's_tm2', c: 'c_tm', o: 'o_tm2', t: 'Schedule the Won-project handover review',
+      exec: T, track: T, due: gd(-4), from: 'us', p: 'p2',
+      done: gd(-3), doneBy: T, doneNote: 'Handover done — support moves to the run team next week.',
+      createdAt: gd(-30), updatedAt: NOW },
+    { id: 's_tm3', c: 'c_tm', o: 'o_tm3', t: 'Collect the edge monitoring requirements from the 5G team',
+      exec: 'the customer', track: P, due: gd(6), from: 'customer', p: 'p2',
+      done: '', doneBy: '', doneNote: '', createdAt: gd(-5), updatedAt: NOW },
+    { id: 's_sun1', c: 'c_sun', o: 'o_sun1', t: "Secure the Group CIO's attendance at the proposal review",
+      exec: T, track: T, due: gd(10), from: 'us', p: 'p1',
+      done: '', doneBy: '', doneNote: '', createdAt: gd(-18), updatedAt: NOW },
+    { id: 's_sun2', c: 'c_sun', o: 'o_sun1', t: 'Deliver the POC environment for two pilot townships',
+      exec: P, track: P, due: gd(5), from: 'us', p: 'p1',
+      done: '', doneBy: '', doneNote: '', createdAt: gd(-15), updatedAt: NOW },
+    { id: 's_astro1', c: 'c_astro', o: 'o_astro1', t: "Collect the streaming team's feedback on the CDN evaluation",
+      exec: 'the customer', track: U, due: gd(3), from: 'customer', p: 'p1',
+      done: '', doneBy: '', doneNote: '', createdAt: gd(-9), updatedAt: NOW },
+    { id: 's_astro2', c: 'c_astro', o: 'o_astro1', t: 'Prepare the storage migration cost model',
+      exec: A, track: U, due: gd(8), from: 'us', p: 'p2',
+      done: '', doneBy: '', doneNote: '', createdAt: gd(-6), updatedAt: NOW },
+  ];
+
+  const interactions = [
+    { id: 'm_may1', c: 'c_may', o: 'o_may1', t: 'Data platform negotiation checkpoint',
+      d: gd(-34), w: 'Five weeks ago', loc: 'Their Menara Maybank office',
+      att: 'Nurul Aisyah, Rajesh Menon', ours: 'Jason Lim, Priya Nair',
+      sum: 'Walked the commercials line by line. Procurement flagged the SOW renewal terms as '
+        + 'the blocker; everything else was agreed in principle. The CFO did not attend.',
+      out: 'Commercials to be revised; SOW renewal paused until then.',
+      k: 'Meeting', createdAt: gd(-34), updatedAt: NOW },
+    { id: 'm_may2', c: 'c_may', o: 'o_may2', t: 'Fraud detection POC scoping call',
+      d: gd(-12), w: 'Two weeks ago', loc: 'Video call',
+      att: 'Rajesh Menon, 2 risk engineers', ours: 'Priya Nair',
+      sum: 'Agreed the two-week POC scope against one year of historical card data. '
+        + 'They will supply the anonymised extract once legal signs the addendum.',
+      out: 'POC scoped; waiting on their data extract.',
+      k: 'Video call', createdAt: gd(-12), updatedAt: NOW },
+    { id: 'm_tm1', c: 'c_tm', o: 'o_tm1', t: 'OSS consolidation design workshop',
+      d: gd(-9), w: 'Two weeks ago', loc: 'Their Cyberjaya campus',
+      att: 'Tan Mei Ling, 4 platform engineers', ours: 'Priya Nair, Jason Lim',
+      sum: 'Two days on tower inventory conflation. Their engineers accepted the streaming '
+        + 'approach; the open question is cutover ordering across the nine systems.',
+      out: 'Solution design promised this week; cutover plan to follow.',
+      k: 'Meeting', createdAt: gd(-9), updatedAt: NOW },
+    { id: 'm_tm2', c: 'c_tm', o: 'o_tm2', t: 'Field force backend go-live review',
+      d: gd(-30), w: 'A month ago', loc: 'Their Cyberjaya campus',
+      att: 'Shahrul Nizam, Tan Mei Ling', ours: 'Tan Wei Ming, Priya Nair',
+      sum: 'Third region live on schedule. Incident rate down 40% against the paper process. '
+        + 'They asked us to propose the same backend pattern for site surveys.',
+      out: 'Won and delivered; edge proposal invited.',
+      k: 'Meeting', createdAt: gd(-30), updatedAt: NOW },
+    { id: 'm_sun1', c: 'c_sun', o: 'o_sun1', t: 'Property platform proposal walkthrough',
+      d: gd(-18), w: 'Three weeks ago', loc: 'Their Bandar Sunway office',
+      att: 'Siti Zaharah, Daniel Ong', ours: 'Tan Wei Ming, Priya Nair',
+      sum: 'The proposal landed well with everyone in the room. The gap is above them: nobody '
+        + 'could say whether the Group CIO wants one platform or per-division choices.',
+      out: 'POC for two townships agreed; CIO attendance to be secured.',
+      k: 'Meeting', createdAt: gd(-18), updatedAt: NOW },
+    { id: 'm_astro1', c: 'c_astro', o: 'o_astro1', t: 'CDN evaluation technical deep-dive',
+      d: gd(-9), w: 'Two weeks ago', loc: 'Video call',
+      att: 'Fareena Ismail, 3 streaming engineers', ours: 'Jason Lim, Teh Bin Shun',
+      sum: 'Peak-event numbers reviewed against two World Cup replays of their traffic. The '
+        + 're-architecture fits; their team took the cost model away to model internally.',
+      out: 'Their feedback expected this week.',
+      k: 'Video call', createdAt: gd(-9), updatedAt: NOW },
+  ];
+
+  const timeline = [
+    { d: gd(-200), k: 'customer', t: 'Customer created: Telekom Malaysia — DEMO', x: 'Added by Tan Wei Ming' },
+    { d: gd(-160), k: 'customer', t: 'Customer created: Astro — DEMO', x: 'Added by Jason Lim' },
+    { d: gd(-120), k: 'customer', t: 'Customer created: Maybank — DEMO', x: 'Added by Jason Lim' },
+    { d: gd(-90), k: 'customer', t: 'Customer created: Sunway — DEMO', x: 'Added by Tan Wei Ming' },
+    { d: gd(-40), k: 'opp', t: 'Opportunity created: Core banking data platform migration', x: 'RM 4,200,000 · Interested' },
+    { d: gd(-34), k: 'opp', t: 'Core banking data platform migration → Negotiation', x: 'RM 4,200,000 · 60%' },
+    { d: gd(-34), k: 'interaction', t: 'Data platform negotiation checkpoint', x: 'Commercials to be revised; SOW renewal paused until then.' },
+    { d: gd(-30), k: 'opp', t: 'Field force mobile backend → Won', x: 'RM 1,600,000 · our first win here' },
+    { d: gd(-30), k: 'interaction', t: 'Field force backend go-live review', x: 'Won and delivered; edge proposal invited.' },
+    { d: gd(-21), k: 'done', t: 'Done: Deliver the architecture assessment for the three data estates', x: 'Completed by ' + DT },
+    { d: gd(-18), k: 'opp', t: 'Property management platform modernisation → Proposal', x: 'RM 3,200,000 · 40%' },
+    { d: gd(-18), k: 'interaction', t: 'Property platform proposal walkthrough', x: 'POC for two townships agreed; CIO attendance to be secured.' },
+    { d: gd(-12), k: 'opp', t: 'Real-time fraud detection pilot → Proposal', x: 'RM 1,800,000 · 35%' },
+    { d: gd(-12), k: 'interaction', t: 'Fraud detection POC scoping call', x: 'POC scoped; waiting on their data extract.' },
+    { d: gd(-9), k: 'opp', t: 'Network OSS data consolidation → Qualified', x: 'RM 2,400,000 · 45%' },
+    { d: gd(-9), k: 'interaction', t: 'OSS consolidation design workshop', x: 'Solution design promised this week; cutover plan to follow.' },
+    { d: gd(-9), k: 'opp', t: 'Streaming platform CDN & storage re-architecture → Qualified', x: 'RM 2,600,000 · 30%' },
+    { d: gd(-9), k: 'interaction', t: 'CDN evaluation technical deep-dive', x: 'Their feedback expected this week.' },
+    { d: gd(-5), k: 'opp', t: 'Edge monitoring for 5G sites created', x: 'RM 1,600,000 · Interested' },
+    { d: gd(-3), k: 'done', t: 'Done: Schedule the Won-project handover review', x: 'Completed by Tan Wei Ming' },
+  ];
+  /* Each customer's own history: everything that names its records, in date
+     order. One timeline per customer — the screens read them separately. */
+  may.timeline = [
+    { d: gd(-120), k: 'customer', t: 'Customer created: Maybank — DEMO', x: 'Added by Jason Lim' },
+    { d: gd(-40), k: 'opp', t: 'Opportunity created: Core banking data platform migration', x: 'RM 4,200,000 · Interested' },
+    { d: gd(-34), k: 'opp', t: 'Core banking data platform migration → Negotiation', x: 'RM 4,200,000 · 60%' },
+    { d: gd(-34), k: 'interaction', t: 'Data platform negotiation checkpoint', x: 'Commercials to be revised; SOW renewal paused until then.' },
+    { d: gd(-21), k: 'done', t: 'Done: Deliver the architecture assessment for the three data estates', x: 'Completed by ' + DT },
+    { d: gd(-12), k: 'opp', t: 'Real-time fraud detection pilot → Proposal', x: 'RM 1,800,000 · 35%' },
+    { d: gd(-12), k: 'interaction', t: 'Fraud detection POC scoping call', x: 'POC scoped; waiting on their data extract.' },
+  ];
+  tm.timeline = [
+    { d: gd(-200), k: 'customer', t: 'Customer created: Telekom Malaysia — DEMO', x: 'Added by Tan Wei Ming' },
+    { d: gd(-30), k: 'opp', t: 'Field force mobile backend → Won', x: 'RM 1,600,000 · our first win here' },
+    { d: gd(-30), k: 'interaction', t: 'Field force backend go-live review', x: 'Won and delivered; edge proposal invited.' },
+    { d: gd(-9), k: 'opp', t: 'Network OSS data consolidation → Qualified', x: 'RM 2,400,000 · 45%' },
+    { d: gd(-9), k: 'interaction', t: 'OSS consolidation design workshop', x: 'Solution design promised this week; cutover plan to follow.' },
+    { d: gd(-5), k: 'opp', t: 'Edge monitoring for 5G sites created', x: 'RM 1,600,000 · Interested' },
+  ];
+  sun.timeline = [
+    { d: gd(-90), k: 'customer', t: 'Customer created: Sunway — DEMO', x: 'Added by Tan Wei Ming' },
+    { d: gd(-18), k: 'opp', t: 'Property management platform modernisation → Proposal', x: 'RM 3,200,000 · 40%' },
+    { d: gd(-18), k: 'interaction', t: 'Property platform proposal walkthrough', x: 'POC for two townships agreed; CIO attendance to be secured.' },
+  ];
+  astro.timeline = [
+    { d: gd(-160), k: 'customer', t: 'Customer created: Astro — DEMO', x: 'Added by Jason Lim' },
+    { d: gd(-9), k: 'opp', t: 'Streaming platform CDN & storage re-architecture → Qualified', x: 'RM 2,600,000 · 30%' },
+    { d: gd(-9), k: 'interaction', t: 'CDN evaluation technical deep-dive', x: 'Their feedback expected this week.' },
+  ];
+
+  /* The roster the guest book reads names and titles from — the same four
+     people the seeded workspaces carry, so the screens look the same whether
+     you sign in or look around. */
+  const team = [
+    { id: 'u_teh', n: A, n2: A, role: 'admin', r: 'Senior Solution Architect', c: 'c_astro', f: '', last: '', st: 'active', updatedAt: NOW },
+    { id: 'u_manager', n: T, n2: T, role: 'manager', r: 'Head of Cloud Business', c: 'c_sun', f: '', last: '', st: 'active', updatedAt: NOW },
+    { id: 'u_bd', n: U, n2: U, role: 'bd', r: 'Account Manager', c: 'c_may', f: '', last: '', st: 'active', updatedAt: NOW },
+    { id: 'u_sa', n: P, n2: P, role: 'sa', r: 'Solution Architect', c: 'c_tm', f: '', last: '', st: 'active', updatedAt: NOW },
+  ];
+
+  /* The audit trail mirrors what the timeline already says — the guest cannot
+     open the version history, but the data shape must still be honest. */
+  const audit = timeline.map((t, i) => ({
+    id: 'ga' + i, tm: t.d, d: t.d, k: 'data', role: 'bd',
+    rec: t.t, what: t.t, who: 'Jason Lim', from: '-', to: t.x, updatedAt: NOW,
+  }));
+
+  return { customers: [may, tm, sun, astro], opps, steps, interactions, team, audit, files: [], watch: [] };
+}
+
+/* Loaded once, only by the guest posture. `enterApp(true)` is the single
+   caller; nothing else may touch this, because nothing else is guaranteed
+   to be sitting behind the no-session, no-save guards. */
+let guestBookIn = false;
+function loadGuestBook(){
+  if (guestBookIn) return;
+  guestBookIn = true;
+  const B = demoBook();
+  D.customers = B.customers;
+  D.opps = B.opps;
+  D.interactions = B.interactions;
+  D.steps = B.steps;
+  D.team = B.team;
+  D.audit = B.audit;
+  D.files = B.files;
+  D.watch = B.watch;
+  /* The guest wears nobody's name. The default `D.me` in this file is its
+     author; a guest reading under that name would be greeted as him and
+     scoped to his customers — two lies for the price of one login screen
+     that was never used. */
+  D.me = { name: '', initials: '', role: '' };
+  /* The same four stages the seeded workspaces carry, so a screen you saw as
+     a guest says the same words as the screen you see signed in. */
+  D.stages = ['Interested', 'Qualified', 'Proposal', 'Negotiation'];
+  /* The rail badge tells the truth about which book this is. The flag lives
+     in the session object, not the data, so it can never be saved into a
+     real workspace even by a bug in the guest's own (already-fenced) path. */
+  SY.demo = true;
+}
 
 function adopt(state){
   if (!state || typeof state !== 'object') return;
@@ -8222,6 +8667,11 @@ function render(){
   document.body.classList.toggle('dense', dense);
   drawWatermark();
   document.body.classList.toggle('picked', !!pickedPerson);
+  /* The identity chip follows every render, not just the sign-in moment: the
+     class that makes it a control depends on `view.s`, which is still 'login'
+     at the drawMe() the sign-in response fires — a chip that stays inert until
+     the next reload is a sign-out nobody can find. */
+  drawMe();
   document.getElementById('loginRoot').innerHTML = '';
   renderNav();
   const p = document.getElementById('page');
@@ -10434,6 +10884,11 @@ document.addEventListener('click', async (e) => {
   if (!e.target.closest('#tMenu') && !e.target.closest('#tourOpen')){
     document.getElementById('tMenu').classList.remove('on');
   }
+  /* the identity menu answers to the same rule: outside closes it, the chip
+     itself toggles it, and a session that ends closes it on the spot */
+  if (!e.target.closest('#meMenu') && !e.target.closest('#meBtn')){
+    closeMeMenu();
+  }
   const tstart = e.target.closest('[data-tour-start]');
   if (tstart){ startTour(tstart.dataset.tourStart); return; }
   const tdis = e.target.closest('[data-tour-dismiss]');
@@ -10835,8 +11290,21 @@ document.addEventListener('click', async (e) => {
     }
     if (a === 'changepw'){ submitChangePassword(); return; }
     if (a === 'changepwopen'){ openChangePassword(false); return; }
+    if (a === 'tourmenu'){ tourMenu(); return; }
     if (a === 'demo'){ enterApp(true); return; }
     if (a === 'endsession'){
+      /* A signed-in session ends on the server too, not just on this screen:
+         the cookie is the session, and clearing the URL while leaving the
+         cookie alive would hand the next person on this machine a sign-in
+         screen that silently signs itself back in on reload. A guest never
+         had a session to end, so no request is made for them. */
+      if (!guest){
+        try { fetch('/api/logout', { method: 'POST' }); } catch (err) { /* offline: the cookie dies with the server anyway */ }
+        closeMeMenu();
+      }
+      /* Either way the guest posture is over: a tab that remembers "look
+         around" past a sign-out is a door that reopens itself. */
+      try { sessionStorage.removeItem('cwb-guest'); } catch (err) { /* storage refused */ }
       /* Signing out has to clear the address, not merely leave it: the next
          person on this machine would otherwise open the sign-in screen with
          somebody else's customer still in the bar, and a reload after signing
@@ -11156,6 +11624,25 @@ function tourStop(){
 }
 
 document.getElementById('tourOpen').onclick = tourMenu;
+
+/* The identity chip opens the session menu — but only when there is a session
+   behind it. On the sign-in screen and in the guest posture the click does
+   nothing: a control that answers with nothing is honest; one that opens an
+   empty promise is not. */
+function closeMeMenu(){
+  const m = document.getElementById('meMenu');
+  const b = document.getElementById('meBtn');
+  if (m) m.classList.remove('on');
+  if (b) b.classList.remove('open');
+}
+document.getElementById('meBtn').onclick = (e) => {
+  const name = (D.me && D.me.name) || '';
+  if (!name || guest || view.s === 'login') return;
+  const m = document.getElementById('meMenu');
+  if (!m) return;
+  m.classList.toggle('on');
+  document.getElementById('meBtn').classList.toggle('open', m.classList.contains('on'));
+};
 document.getElementById('tClose').onclick = tourStop;
 document.getElementById('tNext').onclick = () => { clearTimeout(tour.timer); tourGoto(tour.i + 1); };
 document.getElementById('tBack').onclick = () => { clearTimeout(tour.timer); tourGoto(tour.i - 1); };
@@ -11234,7 +11721,16 @@ window.addEventListener('hashchange', () => {
     enterApp();
     fetchAiTasks();
   }
-  else render();
+  else {
+    /* A guest's reload is still a guest. The posture lives in this tab's
+       sessionStorage: closing the tab ends it, signing in replaces it, and a
+       reload should not throw somebody out of the sample workspace they were
+       halfway through reading. */
+    let wasGuest = false;
+    try { wasGuest = sessionStorage.getItem('cwb-guest') === '1'; } catch (e) { /* storage refused */ }
+    if (wasGuest) enterApp(true);
+    else render();
+  }
 })();
 </script>
 </body>
