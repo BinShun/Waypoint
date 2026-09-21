@@ -377,7 +377,8 @@ check('a comment never ships to the screen', commentLeak.length === 0,
    the guest's book. They are checked on the rendered DOM because that is
    where the user met them. */
 act('[data-go="opportunities"]'); await wait(300);
-const boardEdit = doc.querySelector('#page .opp-act button[data-act="ed"]');
+const boardEdit = doc.querySelector('#page .opp .acts button[data-act="ed"]')
+  || doc.querySelector('#page .opp-act button[data-act="ed"]');
 check('the board card carries an Edit behind the half-of-the-record rule',
   !!boardEdit, boardEdit ? 'the card is a door, not a wall' : 'no way into a card from the board');
 if (boardEdit){

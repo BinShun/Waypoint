@@ -451,7 +451,7 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 /* empty stage column: header + one quiet line, nothing taller */
 .col-empty{padding:0 2px;font-size:11.5px;color:var(--ink-3)}
 .opp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
-  padding:12px var(--s3);margin-bottom:var(--s2);box-shadow:var(--e1)}
+  padding:12px var(--s3);margin-bottom:var(--s2);box-shadow:var(--e1);position:relative}
 .opp:hover{border-color:var(--line-2)}
 .opp .t{font-size:13px;font-weight:600;letter-spacing:-.005em}
 .opp .m{font-size:11.5px;color:var(--ink-3);margin-top:2px}
@@ -465,6 +465,24 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 .opp .amt{font-size:15px;font-weight:600;letter-spacing:-.01em}
 /* the pen on the board card: one quiet row, same rule as the List's Edit */
 .opp-act{margin-top:9px;display:flex;gap:8px}
+/* W2 · the hover action layer (proposal §03): a resting record is
+   information only — the pen and the bin wait in the hover. Under three
+   actions the icons show directly, with no menu to unfold. Opacity (not
+   display) keeps the buttons in the accessibility tree and honest to
+   the pen's rule, and focus opens the layer for keyboard users. */
+.acts{position:absolute;display:flex;gap:3px;opacity:0;pointer-events:none;
+  transition:opacity .12s ease,transform .12s ease;z-index:4}
+.opp .acts{top:7px;right:8px;transform:translateY(-3px)}
+tr .acts{top:50%;right:8px;transform:translate(8px,-50%)}
+.opp:hover .acts,.opp .acts.force,tr:hover .acts,tr .acts.force
+  {opacity:1;pointer-events:auto}
+.opp:hover .acts,.opp .acts.force{transform:none}
+tr:hover .acts,tr .acts.force{transform:translate(0,-50%)}
+.ab{width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center;
+  border-radius:var(--r-xs);background:var(--surface);border:1px solid var(--line-2);
+  color:var(--ink-2);cursor:pointer;padding:0;box-shadow:var(--e1)}
+.ab:hover{color:var(--blue);border-color:var(--blue-200);background:var(--blue-50)}
+.ab.danger:hover{color:var(--risk);border-color:var(--risk-100);background:var(--risk-50)}
 /* an edit form opened from a board card sits in a ~230px column, so the two
    column grid it uses on the wide List collapses to one — a form that
    overflows its column would break the board it was opened from */
@@ -4848,9 +4866,8 @@ function screenOpportunities(){
             <td class="mono" style="text-align:right;white-space:nowrap">${money(Math.round(o.v * o.p / 100))}</td>
             <td class="tiny" style="white-space:nowrap">${o.close ? esc(o.close) + (toClose != null && toClose < 0 ? ` <span class="tag t-warn">overdue</span>` : '') : '<span class="muted">—</span>'}</td>
             <td class="tiny muted" style="white-space:nowrap" title="${esc(oppWhy(o))} — §13: the deal's own evidence">${oppAge(o)}d</td>
-            <td style="white-space:nowrap">
-              ${canEditKind(k) ? `<button class="btn sm" data-act="ed" data-ed="${k}">Edit</button>` : ''}
-              ${rmBar(k, o.t)}
+            <td style="white-space:nowrap;position:relative">
+              ${rmAsk === k ? rmBar(k, o.t) : `${rowActs(c, k)}`}
             </td>
           </tr>
           ${edFor === k ? `<tr><td colspan="10" style="padding:0">${edForm(k, oppFormValues(o))}</td></tr>` : ''}`;
@@ -4894,7 +4911,8 @@ function screenOpportunities(){
             <span class="tiny muted">${o.p}%</span>
           </div>
           <div class="tiny muted" style="margin-top:5px;line-height:1.45">${esc(oppWhy(o))}</div>
-          ${canEditKind(k) ? `<div class="opp-act"><button class="btn sm" data-act="ed" data-ed="${k}">Edit</button></div>` : ''}
+          ${rowActs(c, k)}
+          ${rmAsk === k ? `<div class="opp-act">${rmBar(k, o.t)}</div>` : ''}
         </div>
         ${edFor === k ? `<div class="col-ed">${edForm(k, oppFormValues(o))}</div>` : ''}`;
       }).join('') || `<div class="col-empty">No opportunities here yet.</div>`}
@@ -4925,6 +4943,29 @@ function screenOpportunities(){
   ${parked.length
     ? '<div class="grid g3">' + parked.map(parkedCard).join('') + '</div>'
     : '<div class="parked-empty">Nothing parked. Every opportunity is still on the path.</div>'}`;
+}
+
+/* W2 · the hover action layer (proposal §03). Every action here is one the
+   record already had — open its customer, edit it, remove it — carried by
+   the same half-of-the-record rule and the same two-step remove ask as
+   the buttons they replace. With fewer than three actions the icons show
+   directly (the proposal's rule), so no kebab menu exists to unfold; when
+   the remove ask is open the layer yields to the confirmation row. */
+function rowActs(c, k){
+  const pen = canEditKind(k);
+  const bin = can('del') && can('edit') && canEditKind(k);
+  if (!pen && !bin) return '';
+  return `<div class="acts">
+    <button class="ab" data-open="${esc(c.id)}" title="Open ${esc(c.name)} — the record this deal lives on">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M6 3.5H4A1.5 1.5 0 0 0 2.5 5v7A1.5 1.5 0 0 0 4 13.5h7A1.5 1.5 0 0 0 12.5 12v-2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9.5 2.5h4v4M13.2 2.8 7.5 8.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    ${pen ? `<button class="ab" data-act="ed" data-ed="${k}" title="Edit this opportunity">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="m10.8 2.7 2.5 2.5L5.6 12.9l-3.1.6.6-3.1 7.7-7.7Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+    </button>` : ''}
+    ${bin && rmAsk !== k ? `<button class="ab danger" data-act="rm" data-rm="${k}" title="Remove this opportunity — administrator only">
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2.8 4.2h10.4M6 4V2.8h4V4m-6.5 0 .6 9a1.4 1.4 0 0 0 1.4 1.3h3a1.4 1.4 0 0 0 1.4-1.3l.6-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>` : ''}
+  </div>`;
 }
 
 function parkedCard(o){
