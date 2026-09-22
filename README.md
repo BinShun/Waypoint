@@ -48,7 +48,7 @@ npm start            # http://localhost:8787 —— 服务器零依赖，无需 
 ├── Waypoint-v1.html      前端应用（单文件，全部 UI 与逻辑）
 ├── server/               零依赖 Node 服务器（静态服务 + API + AI 代理 + 加密）
 ├── dist/index.html       部署产物（前端副本，服务器的静态目录）
-├── scripts/              25 个回归套件 + 验收走查器 + 运维工具
+├── scripts/              27 个回归套件 + 验收走查器 + 运维工具
 ├── data/                 工作区数据（不进 git）
 ├── certs/                自签 https 证书（不进 git）
 └── .env                  模型端点凭据（可选，不进 git）
@@ -57,7 +57,7 @@ npm start            # http://localhost:8787 —— 服务器零依赖，无需 
 ## 测试与维护
 
 ```bash
-npm run verify:all       # 25 套件 / 1296 checks，全绿才允许交付
+npm run verify:all       # 27 套件 / 1389 checks，全绿才允许交付
 ```
 
 维护要点：
@@ -65,7 +65,21 @@ npm run verify:all       # 25 套件 / 1296 checks，全绿才允许交付
 - **改前端**：编辑 `Waypoint-v1.html` → `npm run artefact`（同步 `dist/index.html`）→ `npm run verify:all`
 - **改服务器**：编辑 `server/*.mjs` → `npm run verify:all`
 - **新增能力**：先在对应套件加断言（或新套件，并加入 `scripts/verify-all.mjs` 的 SUITES），再动实现——这是本项目「验证先行」的惯例
-- 每个套件可单独跑：`npm run verify:server`、`verify:copilot`、`verify:roles`……完整清单见 `package.json`
+- 每个套件可单独跑：`npm run verify:server`、`verify:copilot`、`verify:roles`、`verify:switch`……完整清单见 `package.json`
+
+## 接手与自主运维
+
+第一次接手这个仓库？按这个顺序读：
+
+1. **README**（本文）——跑起来、账号、AI 配置
+2. **WIKI.md**——业务模型与规则：一本客户一本书、名字即权界、AI 的八条边界
+3. **CURRENT_CAPABILITIES.md**——今天实际有什么能力（以回归套件背书）
+4. **OPERATIONS.md**——运维手册：日常任务（账号/备份/证书/发布）、变更流程、故障排查
+
+两条安全承诺值得先知道：
+
+- **身份切换零残留**：登出、换账号、进 Guest 模式，前一个身份的 AI 回答、表单、筛选全部清扫（套件 `verify:switch` 盯着全部切换矩阵，含「记住此设备」的 token 在登出时双侧吊销）
+- **confidential 客户**：对无权者完全隐身，其数据**永不发送给模型**（服务端强制）
 
 ## 环境变量速查
 
