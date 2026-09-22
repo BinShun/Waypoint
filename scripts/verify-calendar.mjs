@@ -182,7 +182,7 @@ const byText = (sel, t) => [...win.document.querySelectorAll(sel)].find(x => (x.
 /* ======================================================================= */
 console.log('\n— §19: a time view you can walk into, not a picture —');
 
-check('admin signs in', /Today|Customers/.test(s.text()), s.text().slice(0, 40));
+check('admin signs in', /Good (morning|afternoon|evening)|Today|Customers/.test(s.text()), s.text().slice(0, 40));
 check('the rail carries the Calendar', !!s.$('[data-go="calendar"]'));
 
 await s.click(s.$('[data-go="calendar"]'), 800);

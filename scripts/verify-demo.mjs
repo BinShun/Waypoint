@@ -260,7 +260,7 @@ async function open(origin) {
 }
 
 const s = await open(ORIGIN_A);
-check('the administrator reaches the workspace', /Today|Customers/.test(s.text()),
+check('the administrator reaches the workspace', /Good (morning|afternoon|evening)|Today|Customers/.test(s.text()),
   s.text().slice(0, 40));
 
 const badge = s.badge();

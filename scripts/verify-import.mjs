@@ -177,7 +177,7 @@ async function commit() {
 /* ======================================================================= */
 console.log('\n— §26: the import carries real relationships, or it stops —');
 
-check('admin signs in', /Today|Customers/.test(s.text()), s.text().slice(0, 40));
+check('admin signs in', /Good (morning|afternoon|evening)|Today|Customers/.test(s.text()), s.text().slice(0, 40));
 
 /* Open the door: Admin → People tab carries the Import button. */
 await s.click(s.$('[data-go="admin"]'), 900);

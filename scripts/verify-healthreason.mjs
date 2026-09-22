@@ -201,7 +201,7 @@ const byText = (sel, t) => [...win.document.querySelectorAll(sel)].find(x => (x.
 /* ======================================================================= */
 console.log('\n— §10/§13: the health word is never shown alone —');
 
-check('admin signs in', /Today|Customers/.test(s.text()), s.text().slice(0, 40));
+check('admin signs in', /Good (morning|afternoon|evening)|Today|Customers/.test(s.text()), s.text().slice(0, 40));
 
 /* ------------------------------------------- 1. the customers board (default) */
 await s.click(s.$('[data-go="customers"]'), 800);

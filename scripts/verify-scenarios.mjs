@@ -234,7 +234,7 @@ function todayPlus(n) {
 console.log('\n— SCENARIO 1 · BD: one account, start to finish —');
 
 const bd = await open('ahmad.faiz@global.tencent.com', 'enter');
-check('BD signs in', /Today|Customers/.test(bd.text()), bd.text().slice(0, 50));
+check('BD signs in', /Good (morning|afternoon|evening)|Today|Customers/.test(bd.text()), bd.text().slice(0, 50));
 
 /* 1 · a brand new customer, straight from the meeting */
 await bd.click(bd.$('[data-go="customers"]'), 700);
@@ -661,8 +661,8 @@ check('Manager reads the opportunity and its stage', /Retail platform migration/
 await mg.click(mg.$('[data-go="interactions"]'), 700);
 check('Manager reads the meeting', /Retail platform workshop/.test(mg.text()));
 await mg.click(mg.$('[data-go="today"]'), 700);
-check('Manager reads the risks: the overdue and the waiting-on counts are on Today',
-  /Overdue/.test(mg.text()) && /Waiting on/.test(mg.text()));
+check('Manager reads the risks: the overdue count and the needs-you list are on Today',
+  /Overdue/.test(mg.text()) && /Needs you today/.test(mg.text()));
 
 /* Not one control that writes — anywhere the Manager stands. */
 const writeControls = mg.$$('#page [data-act]').filter(b =>

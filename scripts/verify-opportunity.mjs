@@ -164,7 +164,7 @@ async function open(email) {
 console.log('\n— An opportunity, from the customer —');
 
 const s = await open('opp.admin@global.tencent.com');
-check('admin signs in', /Today|Customers/.test(s.text()), s.text().slice(0, 40));
+check('admin signs in', /Good (morning|afternoon|evening)|Today|Customers/.test(s.text()), s.text().slice(0, 40));
 
 /* Build a customer through the UI, so the test walks the same road a person
    does. Every control here is read out of the source, never guessed: the

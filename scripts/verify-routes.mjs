@@ -194,7 +194,7 @@ await wait(900);
     await wait(1800);
   }
 }
-check('an administrator signs in', /Today|Customers/.test(s.text()), s.text().slice(0, 40));
+check('an administrator signs in', /Good (morning|afternoon|evening)|Today|Customers/.test(s.text()), s.text().slice(0, 40));
 
 /* ========================================================================== */
 console.log('\n— the app writes where you are —');
@@ -441,7 +441,7 @@ console.log('\n— a URL is not a way around the role —');
         await wait2(1800);
       }
     }
-    check('a BD signs in to their own workspace', /Customers|Today/.test(body(bw)), body(bw).slice(0, 30));
+    check('a BD signs in to their own workspace', /Good (morning|afternoon|evening)|Customers|Today/.test(body(bw)), body(bw).slice(0, 30));
     check('and does not see the account they are not on', !/Somebody Else/.test(body(bw)));
 
     bw = mk2('#/customers/c1'); await wait2(1700);

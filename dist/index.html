@@ -312,30 +312,79 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
 .fig .l{font-size:12.5px;color:var(--ink-2);margin-top:4px;font-weight:500}
 .fig .n{font-size:11.5px;color:var(--ink-3);margin-top:2px}
 
-/* focus band — Today's headline. One number that owns the screen, the three
-   pipeline figures beside it, and a bar that splits the headline into
-   overdue / waiting on / no date. Replaces four equal cards: a day's work
-   is one number with a shape, not a quarter of a grid. */
-.fb{display:grid;grid-template-columns:auto 1fr;column-gap:var(--s6);row-gap:var(--s4);align-items:center}
-.fb-main{padding-right:var(--s6);border-right:1px solid var(--line)}
-.fb-v{font-family:var(--font-display);font-size:46px;font-weight:700;letter-spacing:-.03em;
-  line-height:1;font-variant-numeric:tabular-nums}
-.fb-l{font-size:13px;font-weight:600;color:var(--ink-2);margin-top:6px;white-space:nowrap}
-.fb-cells{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s5)}
-.fb-cells .fig{background:none;border:none;box-shadow:none;padding:0;border-radius:0}
-.fb-bar{grid-column:1 / -1}
-.fb-track{height:8px;border-radius:var(--r-chip);background:var(--surface-3);
-  overflow:hidden;display:flex}
-.fb-seg{height:100%}
-.fb-seg.r{background:var(--risk)}.fb-seg.w{background:var(--warn)}.fb-seg.n{background:var(--ink-0)}
-.fb-legend{display:flex;gap:var(--s5);margin-top:8px;flex-wrap:wrap}
-.fb-li{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--ink-2)}
-.fb-li .dot{width:7px;height:7px;flex:none}
-@media(max-width:1080px){
-  .fb{grid-template-columns:1fr}
-  .fb-main{border-right:none;border-bottom:1px solid var(--line);padding:0 0 var(--s4)}
-  .fb-v{font-size:36px}
-}
+/* KPI band — Today's headline row (proposal §04). One hero card owns the
+   screen: how many actions the day is owed, with its overdue count in the
+   crimson channel. Three quieter cards follow — overdue alone, the money
+   closing inside 45 days, and the pipeline. The old focus band folded all
+   of this into one card with a split bar; the redesign gives the north-star
+   number a card of its own instead of a quarter of the attention. */
+.kband{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
+  padding:14px 18px 13px;box-shadow:var(--e1)}
+.kpi.hero{background:var(--blue-25);border-color:var(--line-tinted)}
+.kpi .v{font-family:var(--font-display);font-size:27px;font-weight:700;letter-spacing:-.02em;
+  line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi.hero .v{font-size:33px}
+.kpi .l{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink-3);margin-bottom:6px}
+.kpi .d{font-size:11.5px;color:var(--ink-3);margin-top:3px;line-height:1.45}
+.kpi .d b{color:var(--ink-2);font-weight:600}
+.kpi .d .hot{color:var(--risk);font-weight:600}
+.kpi.hot .v{color:var(--risk)}
+@media(max-width:1080px){ .kband{grid-template-columns:1fr 1fr} }
+@media(max-width:760px){ .kband{grid-template-columns:1fr} }
+
+/* the briefing strip — one honest sentence about the day, rule-built from
+   the book, with the door to Copilot at its end. Violet is the AI channel;
+   the strip wears the channel without claiming a model wrote it. */
+.brief{display:flex;align-items:center;gap:12px;margin-top:16px;
+  background:linear-gradient(90deg,var(--violet-50),rgba(241,237,252,.35));
+  border:1px solid var(--violet-line);border-radius:var(--r-card);padding:12px 16px}
+.brief .b-pill{flex:none;font-size:10px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--violet);background:var(--surface);
+  border:1px solid var(--violet-line);border-radius:var(--r-chip);padding:3px 10px}
+.brief .b-t{min-width:0;flex:1;font-size:12.8px;color:var(--ink-2);line-height:1.55}
+.brief .b-t b{color:var(--ink);font-weight:600}
+.brief .b-more{flex:none;font-size:11px;color:var(--violet);font-weight:600;white-space:nowrap}
+
+/* the three columns (§04). Section titles carry their own why. */
+.tsec{font-size:14.5px;font-weight:700;letter-spacing:-.01em;margin:0 0 10px}
+.tsec .why{font-size:11.5px;font-weight:500;color:var(--ink-3);letter-spacing:0;margin-left:6px}
+/* We owe / They owe — the same next-step rows the model always held, now
+   grouped by whose move it is. The left border is the group's voice: amber
+   when the next move is ours, hairline when we are only waiting. */
+.owe-h{display:flex;align-items:baseline;gap:7px;padding:9px 16px;background:var(--surface-2);
+  border-bottom:1px solid var(--line);font-size:10px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--warn)}
+.owe-h.theirs{color:var(--ink-3)}
+.owe-h .n{font-family:var(--mono);font-weight:600}
+.owe-row{display:flex;gap:11px;align-items:center;padding:10px 14px 10px 13px;
+  border-bottom:1px solid var(--line);border-left:3px solid var(--warn);cursor:pointer}
+.owe-row.theirs{border-left-color:var(--line-strong);cursor:default}
+.owe-row:hover{background:var(--surface-2)}
+.owe-row .t{min-width:0;flex:1}
+.owe-row .t b{display:block;font-weight:600;font-size:12.5px;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.owe-row .t .m{font-size:11px;color:var(--ink-3);margin-top:1px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* risk radar — every card says why it is on the radar, in the words the
+   health system already owns (§10: the word is never shown without the
+   reason). The left border carries the severity channel. */
+.risk-item{border-left-width:3px;border-left-style:solid;border-radius:var(--r-xs);
+  padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+.risk-item.r{border-left-color:var(--risk)}
+.risk-item.w{border-left-color:var(--warn)}
+.risk-item.b{border-left-color:var(--blue-300)}
+.risk-item:hover{background:var(--surface-2)}
+.risk-item .rr-top{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.risk-item .rr-when{margin-left:auto;font-size:10.5px;color:var(--ink-3)}
+.risk-item b{display:block;font-size:12.5px;font-weight:600;color:var(--ink)}
+.risk-item .why2{font-size:11px;color:var(--ink-3);line-height:1.5;margin-top:2px}
+/* closing soon — the money calendar, one line per deal */
+.close-li{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line)}
+.close-li:last-child{border-bottom:none}
+.close-li .cd{font-size:10.5px;font-weight:600;color:var(--ink-3)}
+.close-li .cd.hot{color:var(--risk)}
 
 /* badges / chips */
 .tag{display:inline-flex;align-items:center;gap:5px;border-radius:var(--r-chip);
@@ -1092,6 +1141,7 @@ body.nowm .wm{display:none}
       </div>
     </header>
     <div class="page" id="page"></div>
+    <div id="drwHost"></div>
   </main>
   <button class="tour-fab" id="tourOpen" aria-label="Quick tour"
     title="Quick tour — walkthroughs over the real screens">?</button>
@@ -2297,33 +2347,94 @@ function screenToday(){
      to compare, so the undated ones fell through both and Today reported a
      quiet day while most of the real work sat undated in a customer file. */
   const noDate = D.steps.filter((s) => !stepIsDone(s) && stepDays(s) == null);
-  /* One row, drawn the same however it got here. The dot used to read `p`,
-     which was written as 'p1' once at creation and never altered again — so
-     every dot was the same amber and told you nothing. It now reads the date:
+  /* §04: the same rows the model always held, regrouped by whose move the
+     next step is. `from` has been on every step since the beginning; the
+     page just never asked. We owe is the day's work. They owe is a nudge
+     list — read once, left alone. */
+  const weOwe = overdue.concat(soon).filter(s => s.from !== 'customer');
+  const theyOwe = overdue.concat(soon).filter(s => s.from === 'customer');
+  const usOverdue = weOwe.filter(stepOverdue);
+  const dueWeek = weOwe.filter(s => !stepOverdue(s));
+  const stepCusts = new Set(overdue.concat(soon, noDate).map(s => s.c)).size;
+  const total = overdue.length + soon.length + noDate.length;
+
+  const allOpps = Object.values(D.opps);
+  const weighted = allOpps.reduce((a,o) => a + o.v * (o.p/100), 0);
+  const openV = allOpps.reduce((a,o) => a + o.v, 0);
+  /* Closing soon — open money with a close date inside 45 days, nearest
+     first. dayGap is today minus close, so a future close is negative. */
+  const closing = allOpps
+    .filter(o => D.stages.includes(o.stage) && o.close)
+    .filter(o => { const g = dayGap(o.close); return g <= 0 && g >= -45; })
+    .sort((a,b) => a.close.localeCompare(b.close)).slice(0, 4);
+  const closingV = allOpps
+    .filter(o => D.stages.includes(o.stage) && o.close)
+    .filter(o => { const g = dayGap(o.close); return g <= 0 && g >= -45; })
+    .reduce((a,o) => a + o.v, 0);
+
+  /* The briefing — one honest sentence about the day, built from the book
+     by rule. No model is involved and none is claimed; the violet channel
+     says where to ask when the sentence is not enough. */
+  const briefBits = [];
+  if (usOverdue.length) briefBits.push('<b>' + usOverdue.length + '</b> of our steps ' + (usOverdue.length === 1 ? 'is' : 'are') + ' overdue');
+  if (theyOwe.length) briefBits.push('<b>' + theyOwe.length + '</b> ' + (theyOwe.length === 1 ? 'step' : 'steps') + ' waiting on them');
+  const meetsToday = D.interactions.filter(m => m.d === todayISO());
+  if (meetsToday.length) briefBits.push('<b>' + meetsToday.length + '</b> interaction' + (meetsToday.length === 1 ? '' : 's') + ' today');
+  if (closing.length) briefBits.push('the nearest close is <b>' + esc(closing[0].t) + '</b> in ' + (-dayGap(closing[0].close)) + ' days');
+  const briefText = briefBits.length
+    ? briefBits.join(' · ') + '.'
+    : 'A quiet day — nothing overdue, nothing waiting on anybody.';
+
+  /* The risk radar. Every card says why it is on the radar, in the words
+     the health system already owns — §10's rule that the word is never
+     shown without its reason holds here too. Three ways on, in order of
+     severity: the health flag, a book with open money and no meeting ever
+     logged, and a book gone quiet while money is open. */
+  const radar = [];
+  visibleCustomers().forEach(c => {
+    const ops = oppsOf(c.id).filter(o => D.stages.includes(o.stage));
+    const last = D.interactions.filter(m => m.c === c.id).sort((a, b) => b.d.localeCompare(a.d))[0];
+    const days = last ? Math.max(0, dayGap(last.d)) : null;
+    if (c.health === 'At risk'){
+      radar.push({ c, sev:'r', pill:'t-risk', label:'At risk', when: last ? 'met ' + fmtDay(last.d) : 'never met',
+        why: healthWhy(c) });
+    } else if (ops.length && days === null){
+      radar.push({ c, sev:'b', pill:'t-grey', label:'Coverage gap', when: ops.length + ' open',
+        why: 'Open money, but no meeting has ever been logged — the relationship exists on paper only.' });
+    } else if (ops.length && days > 21){
+      radar.push({ c, sev:'w', pill:'t-warn', label:'Stalled ' + days + 'd', when: ops.length + ' open',
+        why: 'No contact for ' + days + ' days while ' + (ops.length === 1 ? 'an opportunity is' : ops.length + ' opportunities are') + ' open.' });
+    }
+  });
+  const sevRank = { r:0, w:1, b:2 };
+  radar.sort((a,b) => sevRank[a.sev] - sevRank[b.sev]);
+
+  const hr = new Date().getHours();
+  const hello = hr < 12 ? 'Good morning' : hr < 18 ? 'Good afternoon' : 'Good evening';
+  const meNameFull = (D.me && D.me.name) || '';
+  const meFirst = meNameFull ? (meNameFull.split(' ').slice(1).join(' ') || meNameFull) : '';
+
+  /* One row, drawn the same however it got here. The dot reads the date:
      red when it is late, amber when a day is set, grey when there is none. */
   const stepRowToday = (s) => {
     const c = cust(s.c);
     const late = stepOverdue(s);
     const d = stepDays(s);
-    return `<div class="row" style="padding:11px var(--s4);border-bottom:1px solid var(--line)">
-      <span class="dot ${late ? 'dot--risk' : d != null ? 'dot--warn' : 'dot--muted'}"></span>
-      <span class="tag ${s.from === 'customer' ? 't-blue' : 't-grey'}" style="flex:0 0 auto"
-        title="${s.from === 'customer' ? 'In their court — we are waiting on them' : 'In our court — we owe this'}">${s.from === 'customer' ? 'them' : 'us'}</span>
-      <div style="min-width:0;flex:1">
-        <div style="font-size:13px;font-weight:500">${esc(s.t)}</div>
-        <div class="tiny muted">${esc(c.name)} · ${esc(stepExec(s) || 'nobody named')}${stepTrack(s) && stepTrack(s) !== stepExec(s) ? ' · tracked by ' + esc(stepTrack(s)) : ''}</div>
+    return `<div class="owe-row${s.from === 'customer' ? ' theirs' : ''}" data-open="${esc(s.c)}" title="Open ${esc(c.name)}">
+      ${logo(c, 26)}
+      <div class="t">
+        <b>${esc(s.t)}</b>
+        <span class="m">${esc(c.name)} · ${esc(stepExec(s) || 'nobody named')}</span>
       </div>
       <span class="tag ${late ? 't-risk' : 't-grey'}">${esc(d == null ? 'no date' : stepWhen(s))}${late ? ' overdue' : ''}</span>
     </div>`;
   };
-  const weighted = Object.values(D.opps).reduce((a,o) => a + o.v * (o.p/100), 0);
-  const open = Object.values(D.opps).reduce((a,o) => a + o.v, 0);
 
   return `
   <div class="phead">
     <div>
-      <h1>Today</h1>
-      <p class="sub">${DAY_LONG[new Date().getDay()]}, ${fmtDay(todayISO())} · what needs you, in the order it needs you</p>
+      <h1>${hello}${meFirst ? ', ' + esc(meFirst) : ''}</h1>
+      <p class="sub">${DAY_LONG[new Date().getDay()]}, ${fmtDay(todayISO())} · here is the day, arranged by what it costs to ignore</p>
     </div>
     <div class="spacer"></div>
     ${can('log') ? '<button class="btn pri" data-act="capture">Capture</button>' : ''}
@@ -2333,27 +2444,32 @@ function screenToday(){
     <button class="btn sm" data-tour-dismiss="1">Not now</button>
   `}
 
-  <div class="card fb" data-tour="figs" style="margin-bottom:var(--s6)">
-    <div class="fb-main">
-      <div class="fb-v">${overdue.length + soon.length + noDate.length}</div>
-      <div class="fb-l">${overdue.length + soon.length + noDate.length === 1 ? 'step needs you' : 'steps need you'}</div>
+  <div class="brief">
+    <span class="b-pill">Briefing</span>
+    <span class="b-t">${briefText}</span>
+    <button class="b-more" data-act="copilot">Ask Copilot →</button>
+  </div>
+
+  <div class="kband" data-tour="figs" style="margin-top:14px">
+    <div class="kpi hero">
+      <div class="l">On you today</div>
+      <div class="v">${total} action${total === 1 ? '' : 's'}</div>
+      <div class="d">${usOverdue.length ? '<span class="hot">' + usOverdue.length + ' overdue</span> · ' : ''}${dueWeek.length + noDate.length} to schedule · across ${stepCusts} customer${stepCusts === 1 ? '' : 's'}</div>
     </div>
-    <div class="fb-cells">
-      <div class="fig"><div class="v">${cm(open)}</div><div class="l">Open pipeline</div><div class="n">${Object.keys(D.opps).length} opportunit${Object.keys(D.opps).length === 1 ? 'y' : 'ies'} · ${D.customers.length} customer${D.customers.length === 1 ? '' : 's'}</div></div>
-      <div class="fig"><div class="v">${cm(weighted)}</div><div class="l">Weighted</div><div class="n">Probability-adjusted</div></div>
-      <div class="fig"><div class="v${overdue.length ? ' urgent' : ''}">${overdue.length}</div><div class="l">Overdue</div><div class="n">Ours, past the date we set</div></div>
+    <div class="kpi${usOverdue.length ? ' hot' : ''}">
+      <div class="l">Overdue</div>
+      <div class="v">${usOverdue.length}</div>
+      <div class="d">ours, not theirs — past the date we set</div>
     </div>
-    <div class="fb-bar">
-      <div class="fb-track">
-        <div class="fb-seg r" style="flex:${overdue.length}"></div>
-        <div class="fb-seg w" style="flex:${soon.length}"></div>
-        <div class="fb-seg n" style="flex:${noDate.length}"></div>
-      </div>
-      <div class="fb-legend">
-        <span class="fb-li"><span class="dot dot--risk"></span>Overdue ${overdue.length}</span>
-        <span class="fb-li"><span class="dot dot--warn"></span>Waiting on ${soon.length}</span>
-        <span class="fb-li"><span class="dot dot--muted"></span>No date ${noDate.length}</span>
-      </div>
+    <div class="kpi">
+      <div class="l">Closing ≤ 45d</div>
+      <div class="v">${closingV ? cm(closingV) : '—'}</div>
+      <div class="d">${closing.length ? closing.length + ' deal' + (closing.length === 1 ? '' : 's') + ', nearest first' : 'nothing closes inside 45 days'}</div>
+    </div>
+    <div class="kpi">
+      <div class="l">Pipeline</div>
+      <div class="v">${cm(openV)}</div>
+      <div class="d">${allOpps.length} opportunit${allOpps.length === 1 ? 'y' : 'ies'} · weighted ${cm(weighted)}</div>
     </div>
   </div>
   ${taskAskBox('focusWeek', 'What should I focus on this week?',
@@ -2361,11 +2477,14 @@ function screenToday(){
     { action: 'focus-week' })}
   ${D.customers.length ? '' : firstUseCard()}
 
-  <div class="grid g2">
+  <div class="grid g3" style="margin-top:var(--s6)">
     <div>
-      <h2 data-tour="needs">What needs you today</h2>
-      <div class="card" style="padding:0">
-        ${overdue.concat(soon).map(stepRowToday).join('')}
+      <h2 class="tsec" data-tour="needs">Needs you today<span class="why">— next steps, grouped by who owes the move</span></h2>
+      <div class="card" style="padding:0;overflow:hidden">
+        ${weOwe.length ? `<div class="owe-h">We owe <span class="n">${weOwe.length}</span></div>` : ''}
+        ${weOwe.map(stepRowToday).join('')}
+        ${theyOwe.length ? `<div class="owe-h theirs">They owe — nudge only <span class="n">${theyOwe.length}</span></div>` : ''}
+        ${theyOwe.map(stepRowToday).join('')}
         ${noDate.length ? `
           <div class="row" style="padding:9px var(--s4);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
             <span class="tiny muted" style="font-weight:600">No date — ${noDate.length}</span>
@@ -2373,12 +2492,12 @@ function screenToday(){
             <span class="tiny muted">Give these a day and they can be chased</span>
           </div>
           ${noDate.map(stepRowToday).join('')}` : ''}
-        ${overdue.concat(soon).length + noDate.length ? '' : `<div class="empty" style="padding:var(--s5) var(--s4)">
+        ${total ? '' : `<div class="empty" style="padding:var(--s5) var(--s4)">
           Nothing overdue and nothing waiting on anybody.</div>`}
       </div>
     </div>
     <div>
-      <h2 data-tour="meet">Today’s interactions</h2>
+      <h2 class="tsec" data-tour="meet">Interactions<span class="why">— and what each one owes</span></h2>
       ${D.interactions.map(m => {
         const c = cust(m.c);
         return `<div class="card" style="margin-bottom:var(--s3)">
@@ -2392,7 +2511,33 @@ function screenToday(){
           </div>
         </div>`;
       }).join('')}
-      ${proactiveNudge()}
+      <h3 style="margin-top:var(--s5)">Closing soon<span class="why" style="font-size:11.5px;font-weight:500;color:var(--ink-3);margin-left:6px">— the money calendar</span></h3>
+      <div class="card" style="padding:11px 16px">
+        ${closing.length ? closing.map(o => {
+          const g = -dayGap(o.close);
+          return `<div class="close-li" data-drw="${esc(o.id)}" style="cursor:pointer" title="Open the record drawer">
+            ${stageTag(o.stage)}
+            <span style="font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(o.t)}</span>
+            <span class="mono" style="font-size:12px;font-weight:600">${money(o.v)}</span>
+            <span class="mono cd${g < 8 ? ' hot' : ''}">${g === 0 ? 'today' : g + 'd'}</span>
+          </div>`;
+        }).join('') : '<div class="tiny muted" style="padding:4px 0">No open deal closes inside 45 days.</div>'}
+      </div>
+    </div>
+    <div>
+      <h2 class="tsec">Risk radar<span class="why">— what the book is worried about</span></h2>
+      <div class="card" style="padding:0;overflow:hidden">
+        ${radar.length ? radar.slice(0, 5).map(r => `
+          <div class="risk-item ${r.sev}" data-open="${esc(r.c.id)}" title="Open ${esc(r.c.name)}">
+            <div class="rr-top">
+              <span class="tag ${r.pill}">${esc(r.label)}</span>
+              <span class="rr-when">${esc(r.when)}</span>
+            </div>
+            <b>${esc(r.c.name)}</b>
+            <div class="why2">${esc(r.why)}</div>
+          </div>`).join('')
+        : '<div class="empty" style="padding:var(--s5) var(--s4)">Nothing on the radar — no flagged customer, no quiet book with open money.</div>'}
+      </div>
       ${(() => {
         const may = can('log') && !!(aiState && aiState.configured && aiState.reachable);
         if (!may) return '';
@@ -2586,20 +2731,6 @@ function firstUseCard(){
 /* One nudge, computed. It used to name a customer and an amount that were
    typed in once; if that record was deleted the page threw. Now it is the
    customer you have left longest, and if there is none, there is no nudge. */
-function proactiveNudge(){
-  const ranked = visibleCustomers().map(c => {
-    const last = D.interactions.filter(m => m.c === c.id).sort((a, b) => b.d.localeCompare(a.d))[0];
-    const o = oppsOf(c.id).slice().sort((a, b) => oppAge(b) - oppAge(a))[0];
-    return { c, last, o, days: last ? Math.max(0, dayGap(last.d)) : null };
-  }).filter(x => x.days === null || x.days > 14).sort((a, b) => (b.days ?? 1e6) - (a.days ?? 1e6))[0];
-  if (!ranked) return '';
-  const { c, o, days } = ranked;
-  return `<div class="note" style="margin-top:var(--s4)">
-      <strong>Proactive — one nudge only.</strong> ${esc(c.name)}: ${days === null ? 'no meeting has ever been logged' : 'no contact in ' + days + ' days'}${o ? ' on an opportunity worth ' + cm(o.v) : ''}.
-      ${o ? 'It has been ' + oppAge(o) + ' days in ' + esc(o.stage) + '.' : ''}
-    </div>`;
-}
-
 function screenCustomers(){
   /* Scope first, then everything else. A BD never sees a customer they are
      not on — not greysed out, not in the count, not in the total. */
@@ -5106,7 +5237,9 @@ function oppScreenBody(){
    reader was in. The body above is untouched when no drawer is open, so the
    board's own assertions and edit forms behave exactly as before. */
 function screenOpportunities(){
-  return oppScreenBody() + drwMarkup();
+  /* the drawer markup moved to #drwHost (global layer, W4) — the screen
+     itself is just its body again */
+  return oppScreenBody();
 }
 
 /* The drawer's content: the same facts the record already carries — its stage
@@ -8948,7 +9081,7 @@ function syncBanner(){
    and an answer meant for the last one must not appear in it. */
 function addFormDraft(key){
   const vals = {};
-  for (const el of document.querySelectorAll('#page input[id], #page select[id], #page textarea[id]')) {
+  for (const el of document.querySelectorAll('#page input[id], #drwHost input[id], #page select[id], #drwHost select[id], #page textarea[id], #drwHost textarea[id]')) {
     vals[el.id] = el.value;
   }
   /* `open` is the form that was open when this snapshot was taken — see above. */
@@ -9051,6 +9184,13 @@ function render(keepScroll){
      §23's question is answered live where it is asked, and costs nothing
      on every other screen. */
   if (s === 'aitasks'){ fetchAiTasks(); ensureAiTasksPolling(); }
+  /* W4: the record drawer is a global layer now, not a fixture of the
+     Opportunities screen. Any screen may open it — Today's money calendar
+     does — so its host lives outside #page and is redrawn here, where every
+     render already passes. Empty when nothing is open, so no stale drawer
+     can follow you across a navigation. */
+  const drwHostEl = document.getElementById('drwHost');
+  if (drwHostEl) drwHostEl.innerHTML = drawer ? drwMarkup() : '';
   restoreAddFormDraft(draft);
   /* The edit form was just rebuilt, so the lost-reason field's visibility has
      to be decided again — the DOM does not remember it. After the restore, so
@@ -11629,6 +11769,7 @@ document.addEventListener('click', async (e) => {
     if (a === 'edpains'){ edFor = 'pains|' + ac.dataset.cid; render(); return; }
     if (a === 'edsave'){ saveEdit(ac.dataset.ed); return; }
     if (a === 'retry'){ syncSave(); render(); return; }
+    if (a === 'copilot'){ openPal(); return; }
     if (a === 'corgi'){
       try { localStorage.setItem('cwb-corgi', corgiOn() ? '0' : '1'); } catch (e) { /* file:// */ }
       render();
@@ -11804,14 +11945,14 @@ const TOURS = [
     steps:[
       { go:'today', sel:'#nav', d:4200, t:'Five places on the left. <b>Today</b> is where a day starts; the others are different doors into the same records — customers, the people inside them, the money, the interactions.' },
       { sel:'#cmdOpen', d:3600, t:'From anywhere, <b>⌘K</b>: ask a question or give an instruction in plain language. It is one box, not a chatbot in the corner.' },
-      { sel:'[data-tour="figs"]', d:4400, t:'One headline — how many steps need you today — split underneath into <b>overdue</b>, <b>waiting on</b> and <b>no date</b>. Beside it, <b>open pipeline</b> is what is on the table; <b>weighted</b> is the same money adjusted by probability — the one you forecast with.' },
+      { sel:'[data-tour="figs"]', d:4400, t:'The day in four cards. <b>On you today</b> is the headline — every action owed, with its overdue count in red. <b>Overdue</b> counts only ours. <b>Closing inside 45 days</b> is the money calendar; <b>pipeline</b> is what is on the table, and <b>weighted</b> is the same money adjusted by probability — the one you forecast with.' },
       { sel:'[data-tour="needs"]', d:4000, t:'What needs you, in the order it needs you. Red is <b>overdue — a date we set</b>. Grey is <b>waiting on</b>, which is somebody else’s date.' },
       { sel:'[data-tour="meet"]', d:3800, t:'Today’s interactions with who is actually in the room. One click and you walk in briefed instead of guessing.' }
     ]},
 
   { id:'day', name:'Read your day', blurb:'Two money numbers, two clocks',
     steps:[
-      { go:'today', sel:'[data-tour="figs"]', d:4400, t:'Read the band: the big number is the day, and the bar splits it into <b>overdue</b>, <b>waiting on</b> and <b>no date</b>. If weighted drops while open stays flat, your pipeline is getting less likely, not smaller.' },
+      { go:'today', sel:'[data-tour="figs"]', d:4400, t:'Read the band: <b>on you today</b> is the day, <b>overdue</b> counts only the moves that are ours, and the money cards split what is closing from what is open. If weighted drops while open stays flat, your pipeline is getting less likely, not smaller.' },
       { sel:'[data-tour="needs"]', d:4600, t:'The distinction that saves a day: <b>overdue is ours</b> — we set the date and passed it. <b>Waiting on</b> is in the customer’s court; chasing it today just makes noise.' },
       { sel:'[data-tour="meet"]', d:3600, t:'Before you walk in, the brief is one click away.' },
       { before:() => openPrepare(), sel:'#capVeil .sheet', d:5200, t:'It assembles itself from the record: where the deal stands, who is in the room and how they feel, what we owe them, what happened last time. Regenerated each time — never stored.' },
