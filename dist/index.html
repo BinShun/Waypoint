@@ -565,13 +565,31 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 .afield>textarea{min-height:96px;line-height:1.55;resize:vertical}
 
 /* command palette */
-.pal{position:fixed;top:16vh;left:50%;transform:translateX(-50%);width:min(620px,92vw);
-  background:var(--surface);border-radius:var(--r-card);box-shadow:var(--e3);z-index:80;display:none;overflow:hidden}
-.pal.on{display:block}
-.pal-i{width:100%;border:none;outline:none;padding:var(--s4) var(--s5);font-size:15px;
+/* W6 — the Copilot dock. It used to be a centred palette: a dialog that
+   replaced the page the moment you asked anything. Now it slides in from the
+   right — the page stays where it was, the work stays visible, and the dock
+   rides beside it. ⌘K and the bar's button open the same door; esc closes it. */
+.pal{position:fixed;top:0;right:0;bottom:0;width:min(460px,94vw);z-index:80;
+  display:flex;flex-direction:column;background:var(--surface);
+  border-left:1px solid var(--line-2);box-shadow:var(--e3);overflow:hidden;
+  transform:translateX(18px);opacity:0;pointer-events:none;
+  transition:transform .16s ease,opacity .16s ease}
+.pal.on{transform:none;opacity:1;pointer-events:auto}
+.pal-h{display:flex;align-items:center;gap:9px;padding:12px var(--s4);
   border-bottom:1px solid var(--line)}
-.pal-b{max-height:52vh;overflow-y:auto;padding:var(--s3) var(--s3) var(--s4)}
-.pal-a{padding:var(--s4) var(--s5)}
+.pal-h .ai-face{flex:none}
+.pal-h .m-ai{height:34px;width:auto;flex:none}
+.pal-h-t{min-width:0;display:flex;flex-direction:column;gap:1px}
+.pal-h-t b{font-size:13.5px;letter-spacing:-.005em}
+.pal-h-t .tiny{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pal-i{width:100%;border:none;outline:none;padding:var(--s3) var(--s4);font-size:14.5px;
+  border-bottom:1px solid var(--line);flex:none}
+.pal-b{flex:1;overflow-y:auto;padding:var(--s3) var(--s3) var(--s4);min-height:0}
+.pal-a{padding:var(--s3) var(--s4) var(--s4);border-top:1px solid var(--line);
+  max-height:56%;overflow-y:auto;flex:none}
+.pal-a:empty{border-top:none;padding:0;max-height:0}
+.pal-foot{flex:none;padding:7px var(--s4);border-top:1px solid var(--line);
+  font-size:10.5px;color:var(--ink-3);background:var(--surface-2)}
 .pal-q{display:flex;gap:9px;align-items:center;padding:8px var(--s3);border-radius:var(--r-ctl);
   font-size:13px;color:var(--ink-2);width:100%;text-align:left;border:none;background:none}
 .pal-q:hover{background:var(--surface-3)}
@@ -1297,11 +1315,23 @@ body.nowm .wm{display:none}
   </div>
 </div>
 
-<!-- command palette -->
+<!-- the Copilot dock (W6) — the page stays where it was, this rides beside it -->
 <div class="pal" id="pal">
+  <div class="pal-h">
+    <span class="ai-face" id="palFace"></span>
+    <div class="pal-h-t">
+      <b>Copilot</b>
+      <span class="tiny muted" id="palScope">scoped to your book</span>
+    </div>
+    <div class="spacer"></div>
+    <button class="drw-x" data-pal-x title="Close (esc)">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
   <input class="pal-i" id="palI" placeholder="Ask a question, or tell Waypoint what to do…" />
   <div class="pal-b" id="palB"></div>
   <div class="pal-a" id="palA"></div>
+  <div class="pal-foot">Answers only include what your role is allowed to see — every claim names the records behind it.</div>
 </div>
 
 <!-- guided walkthrough — steps through the real screens, no mock-ups -->
@@ -2384,8 +2414,12 @@ function corgiToggleRow(){
    drawn here, on every nav draw — the same rule the rail switch obeys: an
    off theme means an empty span, never a leftover corgi nobody asked for. */
 function paintAiFace(){
+  /* the bar chip and the dock head share the one face — a theme switch
+     repaints both, because neither survives as a boot-time injection */
   const face = document.getElementById('aiFace');
   if (face) face.innerHTML = mascot('box', 'm-ai');
+  const dockFace = document.getElementById('palFace');
+  if (dockFace) dockFace.innerHTML = mascot('box', 'm-ai');
 }
 
 function loginScreen(){
@@ -10035,10 +10069,28 @@ const QUERIES = [
   { q: 'Prepare me for my next meeting', h: 'Assembles the brief' }
 ];
 
+/* W6 — the scope is written on the face of the dock: where you opened it is
+   what it answers about, and the count of customers your role can see is the
+   honest size of the world it reads from. verify:copilot-scope is the 106
+   checks standing behind that sentence. */
+function palScopeText(){
+  const n = visibleCustomers().length;
+  if (view.s === 'customer'){
+    const c = cust(view.id);
+    return c ? `scoped to ${c.name} · ${n} customer${n === 1 ? '' : 's'} in scope`
+             : `scoped to your book · ${n} customers in scope`;
+  }
+  if (view.s === 'opportunities' || view.s === 'today')
+    return `scoped to your work · ${n} customer${n === 1 ? '' : 's'} in scope`;
+  return `scoped to the whole book · ${n} customer${n === 1 ? '' : 's'} in scope`;
+}
+
 function openPal(){
   document.getElementById('pal').classList.add('on');
   const i = document.getElementById('palI');
   i.value = ''; i.focus();
+  const sc = document.getElementById('palScope');
+  if (sc) sc.textContent = palScopeText();
   drawPal();
 }
 
@@ -10077,6 +10129,26 @@ function searchAll(q){
 }
 function closePal(){ document.getElementById('pal').classList.remove('on'); }
 
+/* W6 — the suggestions come first, and they come from where you are: open
+   the dock on a customer and the first question names that customer. The
+   static four stay as the fallback for screens with no context of their own. */
+function contextQueries(){
+  if (view.s === 'customer'){
+    const c = cust(view.id);
+    if (c) return [
+      { q:`What should I do next on ${c.name}?`, h:'From this customer\u2019s own records' },
+      { q:'What am I waiting for?', h:'Deterministic query — no model needed' },
+      { q:'Prepare me for my next meeting', h:'Assembles the brief' },
+      { q:'Show me every recorded pain point', h:'Cross-record retrieval' }];
+  }
+  if (view.s === 'opportunities') return [
+    { q:'Which opportunities have not progressed recently?', h:'Deterministic query' },
+    { q:'What am I waiting for?', h:'Deterministic query — no model needed' },
+    { q:'Show me every recorded pain point', h:'Cross-record retrieval' },
+    { q:'Prepare me for my next meeting', h:'Assembles the brief' }];
+  return QUERIES;
+}
+
 function drawPal(){
   const q = (document.getElementById('palI') || {}).value || '';
   const hits = searchAll(q);
@@ -10095,6 +10167,7 @@ function drawPal(){
     document.querySelectorAll('[data-hit]').forEach(b => b.onclick = () => hits[+b.dataset.hit].go());
     return;
   }
+  const suggestions = contextQueries();
   document.getElementById('palB').innerHTML =
     `<div class="artline" style="padding:var(--s2) var(--s3) var(--s3)">
        ${ART.copilot}
@@ -10104,9 +10177,9 @@ function drawPal(){
        </div>
      </div>
      <div class="tiny muted" style="padding:2px var(--s3) 6px">Try</div>` +
-    QUERIES.map((x,i) => `<button class="pal-q" data-q="${i}">${esc(x.q)}<div class="spacer"></div><span class="tiny muted">${esc(x.h)}</span></button>`).join('');
+    suggestions.map((x,i) => `<button class="pal-q" data-q="${i}">${esc(x.q)}<div class="spacer"></div><span class="tiny muted">${esc(x.h)}</span></button>`).join('');
   document.getElementById('palA').innerHTML = '';
-  document.querySelectorAll('[data-q]').forEach(b => b.onclick = () => answer(QUERIES[+b.dataset.q].q));
+  document.querySelectorAll('[data-q]').forEach(b => b.onclick = () => answer(suggestions[+b.dataset.q].q));
 }
 
 /* #73 — a newer question must never be overwritten by an older one's late
@@ -11657,6 +11730,9 @@ document.addEventListener('click', async (e) => {
     drawInteractions();
     return;
   }
+
+  /* W6 — the dock's close button: the same door the esc key answers to. */
+  if (e.target.closest('[data-pal-x]')){ closePal(); return; }
 
   /* W5 — the six-question rail: a question scrolls its section into view. The
      scroll listener (bound once at boot) keeps the highlight honest. */
