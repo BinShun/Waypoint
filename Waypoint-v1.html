@@ -285,8 +285,6 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
 .bf-chipx{border:none;background:none;color:var(--ink-3);cursor:pointer;font-size:14px;
   line-height:1;padding:0 3px;border-radius:50%}
 .bf-chipx:hover{color:var(--risk)}
-.bf-body{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:var(--s5);align-items:start}
-.bf-body-main,.bf-body-side{display:flex;flex-direction:column;gap:var(--s4);min-width:0}
 .bf-sec{padding:var(--s5)}
 .bf-sec + .bf-sec{border-top:1px solid var(--line)}
 /* watchCard — flush card shell, wrapped header row, and the collapsed
@@ -297,12 +295,8 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
 .bf-sec-head h3{margin:0}
 .wkw-empty{padding:var(--s3) var(--s4)}
 .wkw-empty h3{margin:0}
-.bf-outside{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:var(--s5);
-  align-items:start;margin-top:var(--s5)}
-.bf-outside > .card{margin-bottom:0}
 @media(max-width:1080px){
   .bf-hero{grid-template-columns:1fr;gap:var(--s5)}
-  .bf-body,.bf-outside{grid-template-columns:1fr}
 }
 /* --- W5 · the six questions — the customer page reads as answers, not tabs ---
    The page is ordered by the questions a person actually asks, the question is
@@ -2933,7 +2927,7 @@ function screenCustomers(){
       <div><h1>Customers</h1><p class="sub">One row per customer, carrying enough to act without opening it</p></div>
       <div class="spacer"></div>
       <div class="seg">
-        <button data-cv="board">Board</button>
+        <button data-cv="board">Cards</button>
         <button class="on" data-cv="list">List</button>
         <button data-cv="table">Table</button>
       </div>
@@ -2995,7 +2989,7 @@ function screenCustomers(){
       <div><h1>Customers</h1><p class="sub">The dense table — managers live here</p></div>
       <div class="spacer"></div>
       <div class="seg">
-        <button data-cv="board">Board</button>
+        <button data-cv="board">Cards</button>
         <button data-cv="list">List</button>
         <button class="on" data-cv="table">Table</button>
       </div>
@@ -3050,7 +3044,7 @@ function screenCustomers(){
       : (rows.length + ' of ' + vis.length + (vis.length === 1 ? ' customer shown' : ' customers match'))}</p></div>
     <div class="spacer"></div>
     <div class="seg">
-      <button class="on" data-cv="board">Board</button>
+      <button class="on" data-cv="board">Cards</button>
       <button data-cv="list">List</button>
       <button data-cv="table">Table</button>
     </div>
