@@ -37,7 +37,7 @@
   /* canvas & surfaces. --bg is Meridian's paper: the quiet work surface
      cards float on (proposal §02). */
   --bg:#F6F7F9; --surface:#FFFFFF; --surface-2:#F6F8FA; --surface-3:#EFF2F6;
-  --surface-brand:#F3F7FD; --surface-dark:#0A111D;
+  --surface-brand:#F3F7FD;
   /* brand blue ramp. `--blue` stays: it is the single entry point 42 existing
      rules already read from, and `--blue-500` likewise for its two. */
   --blue:#2456E6;
@@ -64,8 +64,16 @@
   --ink-on-dark:#A9BCD8; --ink-on-dark-2:#8FA6C8;
   /* line */
   --line:#E3E8EF; --line-2:#CDD5E0; --line-strong:#B6C0CE; --line-tinted:#D5E2F7;
-  /* rail */
-  --rail-bg:#F4F6F9; --rail-line:#E3E8EF; --rail-ink:#333C4E; --rail-ink-dim:#717E91;
+  /* rail — the ink sea (Meridian §02). The rail and the sign-in hero are the
+     only two surfaces allowed to go dark: chrome that frames work, never a
+     surface that carries it. The old flat --rail-bg is gone with the gradient
+     that replaced it; bright is the lit end of the text ramp, faint the
+     dimmest, and the flag gold names the one warm word on the sample tag —
+     a label tone, not the warning amber. */
+  --rail-ink:#C7D6EC; --rail-ink-dim:#7C93B8;
+  --sea-900:#081226; --sea-800:#0C1B36;
+  --sea-text-dim:#7C93B8; --sea-line:#22406E;
+  --sea-bright:#EAF1FB; --sea-faint:#51678C; --flag-gold:#F0C97D;
   /* The radius ladder, smallest to largest: a hairline round on a micro
      control (--r-xs), a small panel or tile (--r-sm), an interactive control
      (--r-ctl, Meridian's 8), a card or floating surface (--r-card, 12), a
@@ -115,44 +123,78 @@ input,select,textarea{font-family:inherit;font-size:inherit;color:inherit}
    cannot fit inside it then has to be dealt with on its own terms (wrap,
    scroll, or ellipsis) instead of quietly widening the world. */
 main{min-width:0}
-.rail{background:var(--rail-bg);border-right:1px solid var(--rail-line);
+.rail{background:linear-gradient(178deg,var(--sea-800) 0%,var(--sea-900) 88%);
+  border-right:1px solid var(--sea-line);
   padding:var(--s5) var(--s3);position:sticky;top:0;height:100vh;overflow-y:auto;
   /* flex column so the theme switch in .rail-foot can pin to the bottom
      with margin-top:auto when the nav runs short */
   display:flex;flex-direction:column}
 .rail::-webkit-scrollbar{width:8px}
-.rail::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:4px}
-.brand{display:flex;align-items:center;gap:10px;padding:0 var(--s2) var(--s5)}
+.rail::-webkit-scrollbar-thumb{background:var(--sea-line);border-radius:4px}
+.rail::-webkit-scrollbar-track{background:transparent}
+.brand{display:flex;align-items:center;gap:10px;padding:0 var(--s2) var(--s5);
+  border-bottom:1px solid var(--sea-line);margin-bottom:var(--s4)}
 .brand-m{width:28px;height:28px;border-radius:var(--r-sm);background:linear-gradient(160deg,var(--blue-500),var(--blue-700));
   display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;letter-spacing:-.02em;
-  box-shadow:0 4px 10px rgba(21,84,192,.45)}
+  box-shadow:0 4px 10px rgba(36,86,230,.45)}
 /* A stray dot here made the selector `..brand-t`, which matches nothing, so
    the wordmark rendered in the browser's default sans at body weight — the
    one piece of typography that names the product was the one piece that was
    never styled. */
-.brand-t{font-family:var(--font-display);font-size:14.5px;font-weight:700;letter-spacing:-.01em;color:var(--ink)}
+.brand-t{font-family:var(--font-display);font-size:14.5px;font-weight:700;letter-spacing:-.01em;color:var(--sea-bright)}
+.brand-t small{display:block;font-family:var(--font);font-size:9px;font-weight:500;
+  letter-spacing:.06em;text-transform:uppercase;color:var(--sea-text-dim);margin-top:1px}
+/* The group label sits one step dimmer than a nav item — a whisper that
+   sorts, not a heading that shouts. */
 .grp{font-size:10px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;
-  color:var(--rail-ink-dim);padding:var(--s4) var(--s2) var(--s2)}
-.nav{display:flex;align-items:center;gap:10px;padding:9px var(--s2);border-radius:var(--r-ctl);
-  color:var(--rail-ink);font-size:13.5px;font-weight:500;border:none;background:none;width:100%;
+  color:var(--sea-faint);padding:var(--s4) var(--s2) var(--s2)}
+.nav{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-ctl);
+  color:var(--rail-ink);font-size:12.8px;font-weight:500;border:none;background:none;width:100%;
   text-align:left;margin-bottom:1px;transition:background .12s,color .12s,box-shadow .12s}
-.nav:hover{background:rgba(0,0,0,.04);color:var(--ink)}
-.nav.on{background:var(--surface);color:var(--blue);font-weight:600;box-shadow:0 2px 6px rgba(16,24,40,.04)}
-.nav .g{width:16px;height:16px;flex:0 0 16px;opacity:.8}
-.nav .c{margin-left:auto;font-size:11px;font-weight:600;color:var(--rail-ink-dim);font-variant-numeric:tabular-nums}
-.nav.on .c{color:var(--blue-200)}
+.nav:hover{background:rgba(127,169,232,.10);color:var(--sea-bright)}
+/* Active reads as a lit channel on dark water: a meridian wash from the left
+   edge plus a 2.5px inset bar — the old light-card treatment would have
+   floated on top of the sea instead of glowing from inside it. */
+.nav.on{background:linear-gradient(90deg,rgba(36,86,230,.28),rgba(36,86,230,.10));
+  color:var(--sea-bright);font-weight:600;box-shadow:inset 2.5px 0 0 var(--blue)}
+.nav .g{width:16px;height:16px;flex:0 0 16px;opacity:.75}
+.nav.on .g{opacity:1}
+/* A count is a fact about the scope you hold, so it rides in a pill that
+   reads even at a glance — plain digits on dark drift into the label. */
+.nav .c{margin-left:auto;font-size:10px;font-weight:600;
+  font-variant-numeric:tabular-nums;background:rgba(127,169,232,.14);
+  border:1px solid rgba(127,169,232,.22);padding:1px 7px;border-radius:var(--r-chip);
+  color:var(--ink-on-dark-2)}
+.nav.on .c{background:var(--blue);border-color:var(--blue);color:#fff}
 
 /* ----------------------------------------------------------------- topbar */
 .top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.9);
   backdrop-filter:saturate(180%) blur(16px);border-bottom:1px solid var(--line);
   display:flex;align-items:center;gap:var(--s3);padding:var(--s3) var(--s6);
   box-shadow:0 1px 4px rgba(16,24,40,.02)}
-.cmd{display:flex;align-items:center;gap:9px;flex:1;max-width:520px;
+.cmd{display:flex;align-items:center;gap:9px;flex:1;max-width:520px;min-width:0;
   background:var(--surface-3);border:1px solid transparent;border-radius:var(--r-ctl);
-  padding:7px var(--s3);color:var(--ink-3);font-size:13px;transition:.15s ease-out}
+  padding:7px var(--s3);color:var(--ink-3);font-size:13px;transition:.15s ease-out;
+  white-space:nowrap;overflow:hidden}
 .cmd:hover{border-color:var(--line-2);background:var(--surface)}
 .cmd .kbd{margin-left:auto;font-size:10.5px;font-weight:600;color:var(--ink-0);
-  border:1px solid var(--line-2);border-radius:4px;padding:1px 5px}
+  border:1px solid var(--line-2);border-radius:4px;padding:1px 5px;flex:none}
+/* The connection pill: one honest sentence about the data server, wearing
+   the same quiet shape as a chip. It lives between the ask box and the AI
+   button so the three facts of the bar read left to right — what you can
+   ask, whether the data is live, and who is helping. */
+.st{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-2);
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-chip);
+  padding:5.5px 13px;flex:none}
+/* The Copilot door. Violet is the AI channel across the product — the pill
+   in the palette, the ask boxes, and now the button that opens them. The
+   corgi face inside is injected at boot and obeys the theme switch like
+   every other mascot. */
+.ai-btn{display:flex;align-items:center;gap:8px;flex:none;font-size:12px;font-weight:600;
+  color:var(--violet);background:var(--violet-50);border:1px solid var(--violet-line);
+  border-radius:var(--r-ctl);padding:6px 14px;cursor:pointer;font-family:inherit}
+.ai-btn:hover{background:var(--violet-line)}
+.ai-btn .m-ai{height:19px;width:auto;flex:none}
 .me{margin-left:auto;display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-2)}
 /* The identity chip is a door, not a label: a person who signed in has to be
    able to end the session from where their name already is. It only behaves
@@ -669,10 +711,11 @@ tr.exp > td{background:var(--surface-2)}
 #loginRoot:empty{display:none}
 body.onlogin #app{display:none}
 .lg{display:grid;grid-template-columns:1.05fr .95fr;min-height:100vh;background:var(--surface)}
-.lg-hero{position:relative;overflow:hidden;background:var(--surface-dark);color:#fff;
+.lg-hero{position:relative;overflow:hidden;color:#fff;
+  background:linear-gradient(178deg,var(--sea-800) 0%,var(--sea-900) 88%);
   display:flex;flex-direction:column;padding:var(--s7) var(--s6) var(--s6)}
 .lg-hero::before{content:"";position:absolute;inset:0;
-  background:radial-gradient(880px 520px at 20% 16%,rgba(42,107,224,.34),transparent 62%),
+  background:radial-gradient(880px 520px at 20% 16%,rgba(36,86,230,.34),transparent 62%),
              radial-gradient(700px 440px at 88% 84%,rgba(75,91,214,.24),transparent 60%)}
 .lg-hero::after{content:"";position:absolute;inset:0;opacity:.55;
   background-image:radial-gradient(rgba(255,255,255,.13) 1px,transparent 1px);
@@ -680,8 +723,8 @@ body.onlogin #app{display:none}
   mask-image:radial-gradient(720px 520px at 32% 42%,#000,transparent)}
 .lg-hero>*{position:relative;z-index:1}
 .lg-brand{display:flex;align-items:center;gap:11px}
-.lg-tile{width:36px;height:36px;border-radius:var(--r-sm);background:#fff;color:var(--blue);
-  display:grid;place-items:center;box-shadow:0 8px 22px rgba(0,0,0,.32)}
+.lg-tile{width:36px;height:36px;border-radius:var(--r-sm);background:linear-gradient(150deg,var(--blue-500),var(--blue-700));
+  color:#fff;display:grid;place-items:center;box-shadow:0 8px 22px rgba(4,14,34,.5)}
 .lg-word{font-size:16.5px;font-weight:600;letter-spacing:-.012em}
 .lg-word i{font-style:normal;color:var(--ink-on-dark-2);font-weight:500}
 .lg-net{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;margin:var(--s5) 0}
@@ -755,7 +798,12 @@ body.onlogin #app{display:none}
   .top{padding:10px var(--s4);gap:var(--s2)}
   .top .cmd{max-width:none;font-size:12.5px;padding:6px var(--s2)}
   .top .cmd .kbd{display:none}
-  .me .conn{display:none}
+  /* The pill's sentence is the first casualty of a narrow bar; the LED
+     alone still says live-or-not, and the full text returns with width. */
+  .st{padding:5.5px 9px}
+  .st .conn{display:none}
+  .ai-btn{padding:6px 10px}
+  .ai-btn .m-ai{display:none}
   .page{padding:var(--s4) var(--s4) var(--s8);max-width:none}
   h1{font-size:22px}
   .phead{flex-wrap:wrap;align-items:flex-start;gap:var(--s2)}
@@ -967,19 +1015,23 @@ body.nowm .wm{display:none}
    a flex column (see the shell block) so margin-top:auto pins this down. */
 .rail-foot{margin-top:auto;padding-top:var(--s4)}
 /* The workspace-level "this is sample data" badge, under the theme switch.
-   Neutral grey, and that is a decision rather than a default: amber in this
-   product means "this needs you" (the sync note, the risk chips), and a book
-   of sample figures is not asking anybody for anything — it is stating a fact
-   about itself. Small and uppercase so it reads as a label on the rail rather
-   than as a headline somebody has to act on. */
-.sample-tag{display:inline-flex;align-items:center;margin:7px var(--s2) 0;
-  padding:3px 8px;border-radius:var(--r-chip);border:1px solid var(--rail-line);
-  background:rgba(16,24,40,.045);color:var(--rail-ink-dim);
-  font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+   It keeps its neutral voice — amber in this product means "this needs you"
+   (the sync note, the risk chips), and a book of sample figures is not
+   asking anybody for anything; it is stating a fact about itself. On the
+   dark rail the fact gets the proposal's flag treatment: a dashed card,
+   the diamond, and one gold word. The gold is a label tone, not the
+   warning amber — far enough from it that nobody reads an alarm. */
+.sample-tag{display:flex;align-items:flex-start;gap:8px;margin:10px 6px 0;
+  padding:9px 10px;border-radius:var(--r-sm);border:1px dashed var(--sea-line);
+  background:rgba(18,41,77,.45);color:var(--sea-text-dim)}
+.sample-tag .sf-i{font-size:15px;line-height:1;flex:none;color:var(--sea-text-dim)}
+.sample-tag .sf-t{display:block;font-size:10px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--flag-gold)}
+.sample-tag .sf-d{display:block;font-size:9.5px;line-height:1.5;color:var(--sea-text-dim)}
 .ctheme{display:flex;align-items:center;gap:8px;width:100%;border:none;background:none;
   padding:7px var(--s2);border-radius:var(--r-ctl);color:var(--rail-ink-dim);
   font-size:12px;font-weight:500}
-.ctheme:hover{background:rgba(16,24,40,.06);color:var(--rail-ink)}
+.ctheme:hover{background:rgba(127,169,232,.10);color:var(--rail-ink)}
 .ctheme img{height:26px;width:auto;flex:none}
 .ctheme .sw{width:26px;height:15px;border-radius:var(--r-chip);background:var(--fig-track);position:relative;
   margin-left:auto;flex:none;transition:background .15s}
@@ -1010,7 +1062,7 @@ body.nowm .wm{display:none}
           <circle cx="12" cy="9" r="2.3" fill="currentColor"/>
         </svg>
       </div>
-      <div class="brand-t">Waypoint</div>
+      <div class="brand-t">Waypoint<small>The relationship ledger</small></div>
     </div>
     <div id="nav"></div>
     <div class="rail-foot" id="railFoot"></div>
@@ -1023,12 +1075,17 @@ body.nowm .wm{display:none}
       </button>
       <button class="cmd" id="cmdOpen">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.6" stroke="currentColor" stroke-width="1.5"/><path d="M10.6 10.6L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-        Ask, or tell it what to do
+        Search customers, people, opportunities…
         <span class="kbd">⌘K</span>
       </button>
-      <div class="me" id="meBtn" title="Your session">
-        <span class="tiny muted conn" id="connState"></span>
+      <div class="st" id="connPill" title="Data server connection">
         <span class="dot dot--ok" id="connDot"></span>
+        <span class="tiny muted conn" id="connState"></span>
+      </div>
+      <button class="ai-btn" id="aiBtn" title="Copilot — ask it to find, draft or analyse">
+        <span class="ai-face" id="aiFace"></span><span>Copilot</span>
+      </button>
+      <div class="me" id="meBtn" title="Your session">
         <div class="av" id="meAv">–</div>
         <span id="meName"></span>
         <svg class="me-caret" width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1885,6 +1942,7 @@ function renderNav(){
      looks for where to go; a tour is a place to go. */
   const foot = document.getElementById('railFoot');
   if (foot) foot.innerHTML = tourRailRow() + corgiToggleRow() + sampleBadge();
+  paintAiFace();
 }
 
 /* Same list as the corner float opens — one function, two doors, no drift. */
@@ -1902,9 +1960,11 @@ function tourRailRow(){
    is the server's, and only a workspace the seeder wrote ever carries it. */
 function sampleBadge(){
   if (!SY.demo || D.hideDemoBadge) return '';
-  return '<span class="sample-tag" data-tour="sampletag"'
+  return '<div class="sample-tag" data-tour="sampletag"'
     + ' title="This workspace was seeded as a sample. The accounts, the deals and the figures in it are not real.">'
-    + 'Sample data</span>';
+    + '<span class="sf-i" aria-hidden="true">◈</span>'
+    + '<span><span class="sf-t">Sample data</span>'
+    + '<span class="sf-d">Workspace is a demo book — nothing here is a real customer</span></span></div>';
 }
 
 /* When you are looking through somebody else's eyes, say so on every screen.
@@ -2137,13 +2197,21 @@ function corgiToggleRow(){
     (on ? mascot('butt') : '') + '<span>Corgi theme</span><i class="sw"></i></button>';
 }
 
+/* The Copilot face in the bar. It lives in static markup but its picture is
+   drawn here, on every nav draw — the same rule the rail switch obeys: an
+   off theme means an empty span, never a leftover corgi nobody asked for. */
+function paintAiFace(){
+  const face = document.getElementById('aiFace');
+  if (face) face.innerHTML = mascot('box', 'm-ai');
+}
+
 function loginScreen(){
   return `
   <div class="lg">
     <section class="lg-hero">
       <div class="lg-brand">
         <div class="lg-tile">${LG_MARK}</div>
-        <div class="lg-word">Waypoint <i>· customer workbench</i></div>
+        <div class="lg-word">Waypoint <i>· the relationship ledger</i></div>
       </div>
       <div class="lg-net">${loginNet()}</div>
       <div class="lg-copy">
@@ -7920,11 +7988,15 @@ function connTone(){
 
 function paintConn(){
   const el = document.getElementById('connState'), dot = document.getElementById('connDot');
+  const pill = document.getElementById('connPill');
   if (!el) return;
   /* No session, nothing to report. A guest is looking at somebody else's book
      and cannot write to it, so a promise about saving is a promise about
-     nothing. */
-  if (guest){ el.textContent = ''; if (dot) dot.style.display = 'none'; return; }
+     nothing. The pill itself goes too — an empty capsule is a shape that
+     asks "what is missing here?", which is the opposite of its job. */
+  if (guest){ el.textContent = ''; if (dot) dot.style.display = 'none';
+    if (pill) pill.style.display = 'none'; return; }
+  if (pill) pill.style.display = '';
   if (dot) dot.style.display = '';
   const s = connTone();
   el.textContent = s.text;
@@ -11654,6 +11726,11 @@ document.addEventListener('click', async (e) => {
 });
 
 document.getElementById('cmdOpen').onclick = openPal;
+/* The AI door in the bar opens the same palette as ⌘K — one entry point,
+   two handles. The face itself is painted by paintAiFace() on every nav
+   draw, so the theme switch always reaches it. */
+document.getElementById('aiBtn').onclick = openPal;
+paintAiFace();
 document.getElementById('palI').addEventListener('input', (e) => { drawPal(); });
 document.getElementById('palI').addEventListener('keydown', (e) => {
   if (e.key === 'Enter'){

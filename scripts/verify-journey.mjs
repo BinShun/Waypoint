@@ -524,7 +524,7 @@ const ad = await open('tehbinshun@global.tencent.com');
    and pass on alternate runs with no code change between them. So wait for
    the app to actually arrive — and see `waitForScreen`, which polls on a timer
    that is cleared, rather than on a loop that keeps a JSDOM window alive. */
-await waitForScreen(ad, () => /Ask, or tell it|Today/.test(ad.text()), 6000);
+await waitForScreen(ad, () => /Search customers, people|Today/.test(ad.text()), 6000);
 await ad.click(ad.$('[data-go="admin"]'), 900);
 check('Admin can see the Admin screen', /Admin/.test(ad.text()),
   ad.text().replace(/\s+/g, ' ').slice(0, 60));
