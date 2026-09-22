@@ -495,6 +495,76 @@ tr:hover .acts,tr .acts.force{transform:translate(0,-50%)}
 .parked-empty{background:var(--surface-2);border:1px solid var(--line);
   border-radius:var(--r-ctl);padding:9px var(--s4);font-size:12.5px;color:var(--ink-3)}
 
+/* --- W2b §03 列表↔详情三级 — the drawer, the split pin, the peek ------------ */
+/* B — the record drawer: 62% over a dimmed page. The list underneath is never
+   rebuilt by opening it, so its scroll, its filters and its expanded rows are
+   exactly where the reader left them. */
+.drw-veil{position:fixed;inset:0;background:rgba(16,24,40,.30);z-index:60;
+  opacity:0;pointer-events:none;transition:opacity .16s ease}
+/* The body class is `open-drw`, never `drw`: a body class token equal to the
+   element class would make the BODY match the base `.drw` rule — the whole
+   page going fixed and invisible is not a drawer, it is a white screen. */
+body.open-drw .drw-veil{opacity:1;pointer-events:auto}
+.drw{position:fixed;top:0;right:0;bottom:0;width:min(62vw,900px);min-width:460px;
+  background:var(--surface);border-left:1px solid var(--line-2);box-shadow:var(--e3);
+  z-index:61;display:flex;flex-direction:column;
+  transform:translateX(18px);opacity:0;pointer-events:none;
+  transition:transform .16s ease,opacity .16s ease}
+body.open-drw .drw{transform:none;opacity:1;pointer-events:auto}
+.drw[data-fresh]{animation:drwin .18s ease}
+@keyframes drwin{from{transform:translateX(18px);opacity:0}to{transform:none;opacity:1}}
+.drw-h{display:flex;align-items:center;gap:8px;padding:10px var(--s4);
+  border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto}
+.crumb{font-size:12px;color:var(--ink-3);min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.crumb i{font-style:normal;color:var(--ink-0);padding:0 2px}
+.crumb b{color:var(--ink-1);font-weight:600}
+.drw-hint{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-0);
+  white-space:nowrap}
+.drw-pin{width:26px;height:26px;flex:0 0 26px;display:grid;place-items:center;
+  border:1px solid var(--line-2);border-radius:var(--r-xs);background:var(--surface);
+  color:var(--ink-3);cursor:pointer}
+.drw-pin:hover{color:var(--blue);border-color:var(--blue-200);background:var(--blue-50)}
+.drw-pin.on{color:#fff;background:var(--blue);border-color:var(--blue)}
+.drw-x{width:26px;height:26px;flex:0 0 26px;display:grid;place-items:center;
+  border:1px solid var(--line-2);border-radius:var(--r-xs);background:var(--surface);
+  color:var(--ink-3);cursor:pointer}
+.drw-x:hover{color:var(--ink-1);border-color:var(--line-strong)}
+.drw-b{flex:1;overflow-y:auto;padding:var(--s4) var(--s5) var(--s6)}
+/* C — the split pin: the same drawer element becomes a fixed right column, the
+   page cedes 62% and the list lives in what is left. No veil — the two halves
+   are peers now. */
+body.split .drw-veil{display:none}
+body.split .drw{transform:none;opacity:1;pointer-events:auto;box-shadow:var(--e2)}
+body.split #page{margin-right:min(62vw,900px)}
+@media (max-width:1100px){
+  /* 窄屏回退 drawer 形态（提案 §03 C）: the pinned column widens over the page
+     and the veil comes back, so nothing is squeezed into 38%. */
+  body.split #page{margin-right:0}
+  body.split .drw{width:min(86vw,720px);min-width:0}
+  body.split .drw-veil{display:block;opacity:1;pointer-events:auto}
+}
+@media (max-width:760px){
+  /* a phone cannot give 62% to anything: the drawer takes the screen */
+  .drw{width:100vw;min-width:0}
+  body.split .drw{width:100vw}
+  body.split #page{margin-right:0}
+}
+/* A — the peek chevron on a list row: the summary opens under the row, the
+   table never reflows away from under the reader's eye */
+.opp.lnk{cursor:pointer}
+.xv{width:20px;height:20px;flex:0 0 20px;display:inline-grid;place-items:center;
+  border:1px solid transparent;border-radius:var(--r-xs);background:none;
+  color:var(--ink-0);cursor:pointer;margin-right:6px;vertical-align:middle}
+.xv:hover{color:var(--blue);border-color:var(--blue-200);background:var(--blue-50)}
+.xv .tw{display:inline-block;transition:transform .12s ease;font-size:11px;line-height:1}
+tr.exp .xv .tw{transform:rotate(90deg)}
+tr.exp > td{background:var(--surface-2)}
+.exp-sum{padding:2px 0 6px;font-size:12.5px;color:var(--ink-2);line-height:1.55}
+.exp-sum .t{font-weight:600;color:var(--ink-1)}
+.exp-sum .m{color:var(--ink-3);font-size:11.5px}
+
+
 /* misc */
 .empty{text-align:center;padding:var(--s7) var(--s5);color:var(--ink-3);font-size:13px}
 .hr{height:1px;background:var(--line);margin:var(--s5) 0}
@@ -2569,14 +2639,30 @@ function screenCustomers(){
     <div class="card" style="padding:0;overflow-x:auto">
       <table>
         <tr><th>Customer</th><th>Industry</th><th>Stance</th><th>Health</th><th>People</th><th>Opportunities</th><th>Open value</th><th>Owner</th><th>Last meeting</th></tr>
-        ${rows.map(({c,ops,val}) => `<tr class="lnk" data-open="${c.id}">
-          <td><div class="row" style="gap:9px">${logo(c, 20)}<strong>${esc(c.name)}</strong></div></td><td>${esc(c.industry)}</td>
+        ${rows.map(({c,ops,val}) => {
+          /* W2b §03 A: the peek — next step and last touch under the row. The
+             row itself stays a door to the full record (the suites and the
+             deep tabs live there); the chevron is the glance that spares a
+             page turn. */
+          const ek = 'exp|cust|' + c.id;
+          const peek = inlineExp.has(ek);
+          const os = (D.steps || []).filter(s => s.c === c.id && !stepIsDone(s));
+          const last = (c.timeline || []).filter(t => TL_IS_INTERACTION(t.k))
+            .sort((a, b) => String(b.d).localeCompare(String(a.d)))[0];
+          return `<tr class="lnk${peek ? ' exp' : ''}" data-open="${c.id}">
+          <td><button class="xv" data-exp="${ek}" title="Peek — the next step and the last touch, right here"
+            aria-expanded="${peek}"><span class="tw">›</span></button><div class="row" style="gap:9px;display:inline-flex">${logo(c, 20)}<strong>${esc(c.name)}</strong></div></td><td>${esc(c.industry)}</td>
           <td>${stanceTag(c.stance)}</td><td>${healthTag(c.health, healthWhy(c))}
             <div class="tiny muted" title="§10: the health word is never shown without its reason" style="margin-top:3px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(healthWhy(c))}</div></td>
           <td class="mono">${c.contacts.length}</td><td class="mono">${ops.length}</td>
           <td class="mono">${ops.length ? money(val) : '—'}</td>
           <td>${esc(c.owner)}</td><td class="mono">${c.timeline.length ? esc(c.timeline[0].d) : '—'}</td>
-        </tr>`).join('')}
+        </tr>
+        ${peek ? `<tr class="exp-row"><td colspan="9"><div class="exp-sum">
+          <div><span class="t">Next step</span> · ${os.length ? `${esc(os[0].t)} <span class="m">— ${esc(stepWhen(os[0]))}${stepOverdue(os[0]) ? ', overdue' : ''}${os.length > 1 ? ` · +${os.length - 1} more` : ''}</span>` : '<span class="m">none open</span>'}</div>
+          <div><span class="t">Last touch</span> · ${last ? `${esc(last.d)} — ${esc(last.t)}` : '<span class="m">no interaction recorded</span>'}</div>
+        </div></td></tr>` : ''}`;
+        }).join('')}
       </table>
     </div>`;
   }
@@ -4819,7 +4905,7 @@ function peopleBar(){
   </div>`;
 }
 
-function screenOpportunities(){
+function oppScreenBody(){
   /* §12: the board must not be the ONLY way to manage opportunities. A board
      answers "where is everything"; it cannot answer "show me CelcomDigi's two
      deals worth over RM 1m whose close date is this quarter", because that is
@@ -4856,8 +4942,10 @@ function screenOpportunities(){
              `stageTag`'s question to answer, and it answers it once. */
           const toClose = o.close ? -dayGap(o.close) : null;
           const k = rmKey.opp(c, o);
-          return `<tr>
-            <td><strong>${esc(o.t)}</strong></td>
+          const peek = inlineExp.has('exp|' + k);
+          return `<tr class="lnk${peek ? ' exp' : ''}" data-drw="${esc(o.id)}" title="Open the record drawer — esc closes it, the pin keeps it side by side">
+            <td><button class="xv" data-exp="exp|${k}" title="Peek — the next step and the last touch, right here"
+              aria-expanded="${peek}"><span class="tw">›</span></button><strong>${esc(o.t)}</strong></td>
             <td>${esc(c.name)}</td>
             <td>${stageTag(o.stage)}</td>
             <td>${o.owner ? `<span style="white-space:nowrap">${esc(o.owner)}</span>` : '<span class="muted">unowned</span>'}</td>
@@ -4870,6 +4958,7 @@ function screenOpportunities(){
               ${rmAsk === k ? rmBar(k, o.t) : `${rowActs(c, k)}`}
             </td>
           </tr>
+          ${peek ? `<tr class="exp-row"><td colspan="10">${oppPeek(c, o)}</td></tr>` : ''}
           ${edFor === k ? `<tr><td colspan="10" style="padding:0">${edForm(k, oppFormValues(o))}</td></tr>` : ''}`;
         }).join('') || `<tr><td colspan="10"><div class="col-empty">No opportunities yet.</div></td></tr>`}</tbody>
       </table>
@@ -4894,7 +4983,7 @@ function screenOpportunities(){
            number. The card is where the deal is; the pen travels with it now
            (behind the same `canEditKind` half-of-the-record rule as everywhere
            else). */
-        return `<div class="opp">
+        return `<div class="opp lnk" data-drw="${esc(o.id)}" title="Open the record drawer — esc closes it, the pin keeps it side by side">
           <div class="opp-h">
             ${logo(c, 26)}
             <div class="opp-id">
@@ -4943,6 +5032,117 @@ function screenOpportunities(){
   ${parked.length
     ? '<div class="grid g3">' + parked.map(parkedCard).join('') + '</div>'
     : '<div class="parked-empty">Nothing parked. Every opportunity is still on the path.</div>'}`;
+}
+
+/* W2b §03 B/C — the record drawer rides on whichever view (board or list) the
+   reader was in. The body above is untouched when no drawer is open, so the
+   board's own assertions and edit forms behave exactly as before. */
+function screenOpportunities(){
+  return oppScreenBody() + drwMarkup();
+}
+
+/* The drawer's content: the same facts the record already carries — its stage
+   rail, its description and solution, its next steps, the last touch on the
+   account, the products riding on it — plus the actions it already answered
+   to, behind the same permission functions. Nothing here invents a fact: a
+   line with nothing behind it renders as the honest dash the rest of the app
+   uses. */
+function drwMarkup(){
+  if (!drawer || drawer.kind !== 'opp') return '';
+  const o = D.opps[drawer.id];
+  if (!o){ drawer = null; return ''; }
+  const c = cust(o.c);
+  const k = rmKey.opp(c, o);
+  const toClose = o.close ? -dayGap(o.close) : null;
+  /* 下一步 + 最近一次互动 — the peek recipe (§03 A), at drawer depth */
+  const os = (D.steps || []).filter(s => s.o === o.id && !stepIsDone(s));
+  const last = (D.interactions || []).filter(m => m.c === c.id)
+    .sort((a, b) => String(b.d).localeCompare(String(a.d)))[0];
+  const aiOn = !!(aiState && aiState.configured && aiState.reachable);
+  const items = (o.items || []).map(pid => {
+    const p = (D.products || []).find(x => x.id === pid);
+    return `<span class="tag t-grey">${esc(p ? p.n : 'retired product')}</span>`;
+  }).join(' ');
+  return `
+  <div class="drw-veil" data-drw-x title="Close the drawer"></div>
+  <aside class="drw"${drwFresh ? ' data-fresh' : ''} role="dialog" aria-label="${esc(o.t)}">
+    <div class="drw-h">
+      <button class="drw-x" data-drw-x title="Close (esc)">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="crumb">Opportunities <i>/</i> <a class="lk" data-open="${esc(c.id)}" title="Open ${esc(c.name)} — the full record">${esc(c.name)}</a> <i>/</i> <b>${esc(o.t)}</b></span>
+      <span class="drw-hint">esc · 📌 pin</span>
+      <button class="drw-pin${splitPin ? ' on' : ''}" data-drw-pin title="${splitPin ? 'Unpin — back to the drawer' : 'Pin as split — list and record side by side. A ⌘-click on a row does the same.'}"><span style="font-size:12px;line-height:1">📌</span></button>
+    </div>
+    <div class="drw-b">
+      <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+        ${stageTag(o.stage)}
+        <span class="tiny muted">${oppAge(o)}d in stage</span>
+        <span class="tiny muted">${o.p}%</span>
+        <span class="tiny muted">${o.close ? 'closes ' + esc(o.close) + (toClose != null && toClose < 0 ? ' · <span class="tag t-warn">overdue</span>' : '') : 'no close date'}</span>
+      </div>
+      <h1 style="font-size:19px;margin:var(--s2) 0 2px">${esc(o.t)}</h1>
+      <p class="sub" style="margin-bottom:var(--s3)">${esc(c.name)} · our owner ${esc(o.owner || 'unowned')} · <span class="mono">${money(o.v)}</span></p>
+      <div class="rail-dots" style="margin:0 0 4px">
+        ${D.stages.map((s, i) => `<i class="${i <= stageIdx(o.stage) ? 'on ' + stageCls(s) : ''}" title="${esc(s)}"></i>`).join('')}
+      </div>
+      <p class="tiny muted" style="margin:0 0 var(--s3)">stage rail — ${D.stages.map(s => s === o.stage ? `<b>${esc(s)} (here)</b>` : esc(s)).join(' → ')}</p>
+      ${o.desc ? `<div class="kv" style="margin-bottom:var(--s3)"><span class="k">The work</span><span>${esc(o.desc)}</span>
+        ${o.soln ? `<span class="k">Our answer</span><span>${esc(o.soln)}</span>` : ''}
+        ${o.blockers ? `<span class="k">Blocker</span><span>${esc(o.blockers)}</span>` : ''}</div>` : ''}
+      ${os.length ? `<div class="grp-h" style="margin-top:var(--s4)">Next steps<span class="n">${os.length}</span></div>` : ''}
+      ${os.map(s => `
+        <div class="row" style="padding:7px 0;border-bottom:1px solid var(--line);gap:8px">
+          <span class="tag ${s.from === 'customer' ? 't-blue' : 't-grey'}" style="flex:0 0 auto">${s.from === 'customer' ? 'them' : 'us'}</span>
+          <span style="font-size:13px;flex:1;min-width:0">${esc(s.t)}</span>
+          <span class="tag ${stepOverdue(s) ? 't-risk' : 't-grey'}">${esc(stepWhen(s))}${stepOverdue(s) ? ' overdue' : ''}</span>
+          ${can('log') ? `<button class="mini" data-act="stepdone" data-sid="${esc(s.id)}"
+            title="Mark this done — recorded on the timeline with your name">Done</button>` : ''}
+        </div>`).join('')}
+      <div class="grp-h" style="margin-top:var(--s4)">Last touch<span class="why">— the account's most recent interaction</span></div>
+      ${last ? `<div class="card" style="padding:10px var(--s3)">
+        <div class="row" style="gap:8px;align-items:baseline">
+          <span class="tiny muted" style="flex:0 0 auto">${esc(last.d)}</span>
+          <span style="font-size:13px;font-weight:500">${esc(last.t)}</span>
+        </div>
+        ${last.out ? `<p class="tiny" style="margin:4px 0 0;color:var(--ink-2)">${esc(last.out)}</p>` : '<p class="tiny muted" style="margin:4px 0 0">Not written up yet.</p>'}
+      </div>` : '<p class="tiny muted" style="margin:0">No interaction with this account yet.</p>'}
+      ${items ? `<div class="row" style="gap:5px;flex-wrap:wrap;margin-top:var(--s3)">${items}</div>` : ''}
+      ${aiOn ? `<div class="ai-cluster">`
+        + taskAskBox('analyzeOpp-' + esc(o.id), 'Analyze',
+          'The facts from your records, then the model\'s reading of them.',
+          { action: 'analyze-opp', targetId: o.id,
+            question: 'What are the current risks and what should I do next?' },
+          [{ label: 'What should I do next?', question: 'What should I do next on this opportunity?' },
+           { label: 'Find risks', question: 'Find the risks on this opportunity.' },
+           { label: 'Find missing information', question: 'What information is missing on this opportunity?' }])
+        + `</div>` : ''}
+      <div class="row" style="margin-top:var(--s4);gap:8px">
+        <button class="btn sm ai" data-act="diff" data-id="${o.id}">Update from a meeting</button>
+        <div class="spacer"></div>
+        ${rmBar(k, o.t)}
+        ${canEditKind(k) ? `<button class="btn sm" data-act="ed" data-ed="${k}">Edit</button>` : ''}
+      </div>
+      ${edFor === k ? edForm(k, oppFormValues(o)) : ''}
+    </div>
+  </aside>`;
+}
+
+/* A — the row's peek summary: 下一步 + 最近一次互动, the two facts a reader
+   scans for when ruling a row in or out. Read-only, permission-free by
+   design: it shows only what the list itself already showed. */
+function oppPeek(c, o){
+  const os = (D.steps || []).filter(s => s.o === o.id && !stepIsDone(s));
+  const last = (D.interactions || []).filter(m => m.c === c.id)
+    .sort((a, b) => String(b.d).localeCompare(String(a.d)))[0];
+  return `<div class="exp-sum">
+    ${os.length
+      ? `<div><span class="t">Next step</span> · ${esc(os[0].t)} <span class="m">— ${esc(stepWhen(os[0]))}${stepOverdue(os[0]) ? ', overdue' : ''}${os.length > 1 ? ` · +${os.length - 1} more on the record` : ''}</span></div>`
+      : `<div><span class="t">Next step</span> · <span class="m">none open</span></div>`}
+    ${last
+      ? `<div><span class="t">Last touch</span> · ${esc(last.d)} — ${esc(last.t)} <span class="m">${last.out ? '· ' + esc(last.out) : ''}</span></div>`
+      : `<div><span class="t">Last touch</span> · <span class="m">no interaction recorded</span></div>`}
+  </div>`;
 }
 
 /* W2 · the hover action layer (proposal §03). Every action here is one the
@@ -8122,6 +8322,25 @@ function saveAdd(){
    dialog - a dialog cannot tell you which row you are about to lose. */
 let rmAsk = null;
 
+/* --- W2b §03 列表↔详情三级 -------------------------------------------------
+   drawer    the open record panel: { kind:'opp', id } or null. B — the default
+             form: click a row (or a board card) and the record slides in over
+             a dimmed list that never moves.
+   splitPin  C — the drawer pinned as a fixed right column (list 38% / record
+             62% on screen together). esc unpins first, then closes.
+   inlineExp A — keys of rows currently peeked: the row's own summary line
+             under it, without leaving the list or moving the scroll.
+   scrollMem where each list screen was scrolled when the reader left it, so
+             coming back from a full-page record puts them back where they
+             were. Filters and expand state already survive renders as globals;
+             scroll was the one thing a redraw could not remember. */
+let drawer = null;
+let splitPin = false;
+let drwFresh = false;             /* true only on the render that opened it — drives the slide-in */
+const inlineExp = new Set();
+const scrollMem = {};
+
+
 const rmKey = {
   person: (c, p) => 'person|' + c.id + '|' + p.n,
   system: (c, a) => 'system|' + c.id + '|' + a.n,
@@ -8695,7 +8914,10 @@ function restoreAddFormDraft(draft){
   }
 }
 
-function render(){
+/* `keepScroll` — W2b §03 返回原位: a drawer open/close, an inline expand or a
+   pin is the same screen with more on it, so the redraw must not fling the
+   reader back to the top. Navigation keeps the old behaviour. */
+function render(keepScroll){
   scheduleSync();
   /* The address bar follows the app. It is safe for this to run on every
      render, including the one a `hashchange` caused: `syncRoute` compares the
@@ -8776,7 +8998,12 @@ function render(){
      it here means every screen agrees with the line that says whether the work
      survives — including the first one, before any save has been attempted. */
   paintConn();
-  window.scrollTo(0,0);
+  /* W2b §03: the drawer and the split pin are body classes, so they are
+     reconciled here — the single place every render passes through — and a
+     drawer that survives a redraw (an edit saved inside it) keeps its pose. */
+  document.body.classList.toggle('open-drw', !!(drawer && !splitPin));
+  document.body.classList.toggle('split', !!(drawer && splitPin));
+  if (!keepScroll) window.scrollTo(0,0);
 }
 
 /* "Why we lost" is only a question when the deal is lost. The stage select and
@@ -10945,7 +11172,18 @@ document.addEventListener('click', async (e) => {
   if (tdis){ markTourSeen(); render(); return; }
 
   const go = e.target.closest('[data-go]');
-  if (go){ view = { s: go.dataset.go, id: null, tab: 'brief', cview: 'board' }; render(); return; }
+  if (go){
+    /* W2b §03 返回原位: leaving a screen remembers where it was scrolled;
+       arriving at one the reader has seen before puts them back there. The
+       drawer cannot survive a navigation — its record belongs to the list
+       behind it. */
+    scrollMem[view.s + (view.id ? '/' + view.id : '')] = window.scrollY;
+    const dest = go.dataset.go;
+    drawer = null; splitPin = false;
+    view = { s: dest, id: null, tab: 'brief', cview: 'board' }; render();
+    if (scrollMem[dest] != null) window.scrollTo(0, scrollMem[dest]);
+    return;
+  }
 
   const mg = e.target.closest('[data-mg]');
   if (mg){
@@ -10956,7 +11194,15 @@ document.addEventListener('click', async (e) => {
   }
 
   const op = e.target.closest('[data-open]');
-  if (op){ view = { s: 'customer', id: op.dataset.open, tab: 'brief', cview: 'board' }; render(); return; }
+  if (op && !e.target.closest('[data-exp]')){
+    /* Opening a full record is a navigation (W2b): the drawer's crumb link and
+       the row's Open icon both land here, and a drawer left open over a
+       different customer's page would be a lie on legs.
+       The peek chevron is the one click the row must not swallow: it means
+       "show me the summary here", not "take me somewhere". */
+    drawer = null; splitPin = false;
+    view = { s: 'customer', id: op.dataset.open, tab: 'brief', cview: 'board' }; render(); return;
+  }
 
   /* A calendar entry is a door, not a picture (§19): it opens the account
      the record belongs to, on the tab that holds the record. */
@@ -11298,13 +11544,17 @@ document.addEventListener('click', async (e) => {
     if (a === 'rm'){ rmAsk = ac.dataset.rm; render(); return; }
     if (a === 'rmno'){ rmAsk = null; render(); return; }
     if (a === 'rmyes'){ doRemove(ac.dataset.rm); return; }
-    if (a === 'ed'){ edFor = ac.dataset.ed; render(); return; }
+    /* W2b: when the pen is asked for from inside the drawer, the form opens in
+       the drawer — the same screen with more on it, so the scroll must stay.
+       From a row or a card the old behaviour stands (the redraw brings the
+       form into view). */
+    if (a === 'ed'){ edFor = ac.dataset.ed; render(!!drawer); return; }
+    if (a === 'edno'){ edFor = null; render(!!drawer); return; }
     /* The customer record itself, not a row inside it. These carry their own
        action so that `data-ed` keeps meaning exactly one thing — a row key. */
     if (a === 'edcust'){ edFor = 'cust|' + ac.dataset.cid; render(); return; }
     if (a === 'edbrief'){ edFor = 'brief|' + ac.dataset.cid; render(); return; }
     if (a === 'edpains'){ edFor = 'pains|' + ac.dataset.cid; render(); return; }
-    if (a === 'edno'){ edFor = null; render(); return; }
     if (a === 'edsave'){ saveEdit(ac.dataset.ed); return; }
     if (a === 'retry'){ syncSave(); render(); return; }
     if (a === 'corgi'){
@@ -11373,6 +11623,33 @@ document.addEventListener('click', async (e) => {
     }
     return;
   }
+  /* --- W2b §03 列表↔详情三级 — the drawer, the split pin, the peek -------- */
+  /* These sit after every record-level handler on purpose: a click on the Edit
+     inside a row belongs to the Edit, not to the row. Reaching this far down
+     means nothing actionable inside the row wanted the click, so the row
+     itself may speak. */
+  const dx = e.target.closest('[data-drw-x]');
+  if (dx){ drawer = null; splitPin = false; render(true); drwFresh = false; return; }
+  const dp = e.target.closest('[data-drw-pin]');
+  if (dp){ splitPin = !splitPin; render(true); return; }
+  const exp = e.target.closest('[data-exp]');
+  if (exp){
+    const k = exp.dataset.exp;
+    if (inlineExp.has(k)) inlineExp.delete(k); else inlineExp.add(k);
+    render(true); return;
+  }
+  const dw = e.target.closest('[data-drw]');
+  if (dw){
+    /* A second click on the row already open closes the drawer again — the
+       same toggle the peek chevron answers to. */
+    if (drawer && drawer.kind === 'opp' && drawer.id === dw.dataset.drw && !splitPin){
+      drawer = null; render(true); return;
+    }
+    if (e.metaKey || e.ctrlKey) splitPin = true;   /* ⌘-click pins (§03 C) */
+    drwFresh = true;
+    drawer = { kind: 'opp', id: dw.dataset.drw };
+    render(true); drwFresh = false; return;
+  }
   if (e.target.id === 'capClose') closeCapture();
 });
 
@@ -11421,7 +11698,14 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); openPal(); }
-  if (e.key === 'Escape'){ closePal(); closeCapture(); }
+  /* W2b §03: esc unwinds depth in order — unpin the split, then close the
+     drawer, then whatever the palette was doing. Two presses always land you
+     back on the plain list. */
+  if (e.key === 'Escape'){
+    if (splitPin){ splitPin = false; render(true); return; }
+    if (drawer){ drawer = null; render(true); return; }
+    closePal(); closeCapture();
+  }
 });
 document.getElementById('pal').addEventListener('click', (e) => { if (e.target.id === 'pal') closePal(); });
 
