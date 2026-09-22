@@ -3476,6 +3476,18 @@ const handler = async (req, res, secure) => {
            browser holds and that would keep the window shut forever. */
         founders.delete(s.token);
       }
+      /* "Keep me signed in" is the same promise as the session, made to the
+         same person. A sign-out that left the remembered device alive would
+         let the next reload on this machine exchange the token for a fresh
+         cookie and walk straight back in — the door was closed in front of
+         the user and reopened behind them. The client hands the token over
+         so the server can end it; a body that names no token changes nothing
+         (older clients just clear the cookie). */
+      try {
+        const body = JSON.parse(await readBody(req) || '{}');
+        const dt = String(body.deviceToken || '');
+        if (dt) sessions.delete(dt);
+      } catch { /* no body, or not JSON — nothing remembered to revoke */ }
       send(res, 200, { ok: true }, cors, { 'Set-Cookie': cookieHeader('', secure) });
       return;
     }
