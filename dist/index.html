@@ -529,31 +529,64 @@ input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-5
 
 /* stage columns */
 .board{display:flex;gap:var(--s3);align-items:flex-start;flex-wrap:wrap}
-/* A stage with nothing in it still gets named — you need to see where a card
-   will land — but it stops renting the same width as a live column. The class
-   is `.col-none`, NOT `.empty`: that name is the page-level empty state
-   (centred, heavily padded) and it hijacks any column that borrows it. */
-.col{flex:1 1 230px;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-card);padding:var(--s3)}
+/* W4b — the header IS the funnel. A stage with nothing in it still gets
+   named — you need to see where a card will land — but it stops renting
+   the same width as a live column. The class is `.col-none`, NOT `.empty`:
+   that name is the page-level empty state (centred, heavily padded) and it
+   hijacks any column that borrows it. The column itself carries no paint:
+   the header is a card, the records are cards, the lane between them is
+   the page — three surfaces would read as a fourth. */
+.col{flex:1 1 230px;min-width:0}
 .col-none{flex:0 1 150px;min-width:130px}
-.col-h{display:flex;align-items:baseline;gap:7px;margin-bottom:var(--s3);padding:0 2px}
-.col-h .n{font-size:13px;font-weight:600}
-.col-h .c{font-size:11.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
-.col-t{margin-left:auto;font-size:12px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.col-h{display:flex;align-items:center;gap:8px;background:var(--surface);
+  border:1px solid var(--line);border-top:3px solid var(--line-2);
+  border-radius:var(--r-sm);padding:9px 12px;margin-bottom:10px;box-shadow:var(--e1)}
+.col-h .dot{width:8px;height:8px;border-radius:3px;background:var(--line-2);flex:none}
+.col-h .n{font-size:12.5px;font-weight:600;letter-spacing:-.005em}
+.col-h .c{margin-left:auto;font-size:11.5px;font-weight:600;color:var(--ink-2);
+  font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+.col-h.s1{border-top-color:var(--stage-1)} .col-h.s1 .dot{background:var(--stage-1)}
+.col-h.s2{border-top-color:var(--stage-2)} .col-h.s2 .dot{background:var(--stage-2)}
+.col-h.s3{border-top-color:var(--stage-3)} .col-h.s3 .dot{background:var(--stage-3)}
+.col-h.s4{border-top-color:var(--stage-4)} .col-h.s4 .dot{background:var(--stage-4)}
 /* empty stage column: header + one quiet line, nothing taller */
 .col-empty{padding:0 2px;font-size:11.5px;color:var(--ink-3)}
-.opp{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);
+/* W4b — the card carries its stage on its structure (the 3px left rule),
+   and its judgement in three layers: who it is with, what it is worth and
+   how likely, and the one line that says what happens next. The evidence
+   line stays (§13): a board that hides why a deal is flagged is a board
+   that has to be trusted instead of read. */
+.opp{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line-2);
+  border-radius:var(--r-sm);
   padding:12px var(--s3);margin-bottom:var(--s2);box-shadow:var(--e1);position:relative}
+.opp.s1{border-left-color:var(--stage-1)} .opp.s2{border-left-color:var(--stage-2)}
+.opp.s3{border-left-color:var(--stage-3)} .opp.s4{border-left-color:var(--stage-4)}
 .opp:hover{border-color:var(--line-2)}
-.opp .t{font-size:13px;font-weight:600;letter-spacing:-.005em}
+.opp .t{font-size:13px;font-weight:600;letter-spacing:-.005em;line-height:1.35;margin-top:7px}
 .opp .m{font-size:11.5px;color:var(--ink-3);margin-top:2px}
-.opp .f{display:flex;align-items:center;gap:7px;margin-top:9px}
-/* opportunity card assets: mark + identity, owner chip, anchored money */
-.opp-h{display:flex;align-items:flex-start;gap:8px}
-.opp-id{flex:1;min-width:0}
-.opp-own{display:inline-flex;align-items:center;gap:6px;margin-top:8px;
-  font-size:11px;font-weight:600;color:var(--ink-2);line-height:1}
-.opp-own .av{width:18px;height:18px;font-size:9px;flex:0 0 18px}
+/* opportunity card assets: the customer line, the anchored money */
+.opp-h{display:flex;align-items:center;gap:8px}
+.opp-cust{font-size:11.5px;color:var(--ink-3);min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.opp .f{display:flex;align-items:baseline;gap:7px;margin-top:9px}
 .opp .amt{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.opp .f .p{font-family:var(--mono);font-size:11.5px;color:var(--ink-3)}
+/* the next line: dashed rule, then the step and its colour of urgency.
+   An overdue step is the loudest thing on the card after the money. */
+.opp-next{border-top:1px dashed var(--line-2);margin-top:9px;padding-top:7px;
+  font-size:11.5px;color:var(--ink-2);line-height:1.45;
+  display:flex;gap:6px;align-items:baseline;min-width:0}
+.opp-next .nx-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.opp-next .nx-w{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--ink-3);flex:none}
+.opp-next.hot .nx-w{color:var(--risk)}
+.opp-why{font-size:11px;color:var(--ink-3);line-height:1.45;margin-top:4px}
+/* the stalled corner badge: amber, top right, above the fold of the card —
+   the hover action layer (z-index 4) covers it when the pen is out, which
+   is the right order: a card being worked on is no longer being scanned */
+.stall{position:absolute;top:8px;right:8px;display:inline-flex;align-items:center;gap:4px;
+  background:var(--warn-50);border:1px solid var(--warn-100);color:var(--warn);
+  font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 6px;
+  border-radius:var(--r-chip);z-index:1}
 /* the pen on the board card: one quiet row, same rule as the List's Edit */
 .opp-act{margin-top:9px;display:flex;gap:8px}
 /* W2 · the hover action layer (proposal §03): a resting record is
@@ -582,9 +615,31 @@ tr:hover .acts,tr .acts.force{transform:translate(0,-50%)}
 .rail-dots{display:flex;gap:3px;margin-top:9px}
 .rail-dots i{width:22px;height:6px;border-radius:var(--r-chip);background:var(--line-2)}
 .rail-dots i.on{background:var(--blue)}
-/* parked empty state: one slim row, not a full card */
-.parked-empty{background:var(--surface-2);border:1px solid var(--line);
-  border-radius:var(--r-ctl);padding:9px var(--s4);font-size:12.5px;color:var(--ink-3)}
+/* W4b — the parked strip: one row under the board, not a second grid. A
+   parked deal is a result, not a position, so it gets a line of prose with
+   a verdict pill — and the pen waits in the hover, same as everywhere. */
+.parked-strip{display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
+  padding:13px 18px;box-shadow:var(--e1);margin-top:var(--s7)}
+.parked-strip .ps-l{font-size:11px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--ink-3);flex:none}
+.parked-strip .ps-l .why{font-weight:500;letter-spacing:0;text-transform:none;margin-left:5px}
+.ps-items{display:flex;gap:6px 18px;flex-wrap:wrap;margin-left:auto;align-items:center}
+.ps-item{display:inline-flex;gap:8px;align-items:center;position:relative;
+  padding:3px 5px;border-radius:var(--r-xs);font-size:12px;color:var(--ink-2);
+  cursor:pointer;min-width:0}
+.ps-item:hover{background:var(--surface-2)}
+.ps-item .ps-t{font-weight:600;color:var(--ink);max-width:220px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.ps-item .ps-v{font-family:var(--mono);font-size:12px;font-weight:600;flex:none}
+.ps-item .ps-w{color:var(--ink-3);font-size:11px;flex:none}
+.ps-none{font-size:12px;color:var(--ink-3)}
+/* the closing countdown in the List's Close column: type, then a colour of
+   urgency — crimson once the date is behind you, amber inside a fortnight,
+   quiet otherwise. The date itself never changes colour; the count does. */
+.due{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--ink-3);margin-left:5px}
+.due.late{color:var(--risk)}
+.due.near{color:var(--warn)}
 
 /* --- W2b §03 列表↔详情三级 — the drawer, the split pin, the peek ------------ */
 /* B — the record drawer: 62% over a dimmed page. The list underneath is never
@@ -989,10 +1044,27 @@ body.nowm .wm{display:none}
 .stage-pill.s2{background:var(--stage-2-t);color:var(--stage-2-ink)}
 .stage-pill.s3{background:var(--stage-3-t);color:var(--stage-3-ink)}
 .stage-pill.s4{background:var(--stage-4-t);color:var(--stage-4-ink)}
-.col-pill{width:20px;height:6px;border-radius:var(--r-chip);display:inline-block;
-  flex:0 0 auto;align-self:center}
-.col-pill.s1{background:var(--stage-1)} .col-pill.s2{background:var(--stage-2)}
-.col-pill.s3{background:var(--stage-3)} .col-pill.s4{background:var(--stage-4)}
+/* W4b — the waypoint track: the drawer's stage rail. Four waypoints joined
+   by a line; the ones behind the deal are lit in the deal's own stage
+   colour, the one it stands on glows, the road ahead stays unpainted. The
+   name of the app is the metaphor, so the metaphor is drawn once, here. */
+.wp-track{display:flex;align-items:flex-start;margin:0 0 var(--s3)}
+.wp{display:flex;flex-direction:column;align-items:center;gap:5px;
+  min-width:56px;position:relative;z-index:1;flex:none}
+.wp i{width:11px;height:11px;border-radius:50%;border:2.5px solid var(--line-2);
+  background:var(--surface);box-sizing:border-box;flex:none}
+.wp b{font-size:10.5px;font-weight:500;color:var(--ink-3);white-space:nowrap;
+  letter-spacing:.01em;max-width:88px;overflow:hidden;text-overflow:ellipsis}
+.wp.past.s1 i,.wp.now.s1 i{border-color:var(--stage-1);background:var(--stage-1)}
+.wp.past.s2 i,.wp.now.s2 i{border-color:var(--stage-2);background:var(--stage-2)}
+.wp.past.s3 i,.wp.now.s3 i{border-color:var(--stage-3);background:var(--stage-3)}
+.wp.past.s4 i,.wp.now.s4 i{border-color:var(--stage-4);background:var(--stage-4)}
+.wp.now i{width:14px;height:14px;box-shadow:0 0 0 4px var(--blue-25)}
+.wp.now b{color:var(--ink);font-weight:700}
+.wp-seg{flex:1 1 24px;height:2.5px;background:var(--line-2);margin-top:4px;
+  border-radius:2px;min-width:14px}
+.wp-seg.past.s1{background:var(--stage-1)} .wp-seg.past.s2{background:var(--stage-2)}
+.wp-seg.past.s3{background:var(--stage-3)} .wp-seg.past.s4{background:var(--stage-4)}
 .rail-dots i.on.s1{background:var(--stage-1)} .rail-dots i.on.s2{background:var(--stage-2)}
 .rail-dots i.on.s3{background:var(--stage-3)} .rail-dots i.on.s4{background:var(--stage-4)}
 /* ── surface variants ───────────────────────────────────────────────────────
@@ -5151,7 +5223,9 @@ function oppScreenBody(){
             <td class="mono" style="text-align:right;white-space:nowrap">${money(o.v)}</td>
             <td class="tiny muted" style="text-align:right;white-space:nowrap">${o.p}%</td>
             <td class="mono" style="text-align:right;white-space:nowrap">${money(Math.round(o.v * o.p / 100))}</td>
-            <td class="tiny" style="white-space:nowrap">${o.close ? esc(o.close) + (toClose != null && toClose < 0 ? ` <span class="tag t-warn">overdue</span>` : '') : '<span class="muted">—</span>'}</td>
+            <td class="tiny" style="white-space:nowrap">${o.close
+            ? esc(o.close) + `<span class="due${toClose != null && toClose < 0 ? ' late' : toClose != null && toClose < 15 ? ' near' : ''}">${toClose < 0 ? (-toClose) + 'd late' : toClose === 0 ? 'today' : toClose + 'd'}</span>`
+            : '<span class="muted">—</span>'}</td>
             <td class="tiny muted" style="white-space:nowrap" title="${esc(oppWhy(o))} — §13: the deal's own evidence">${oppAge(o)}d</td>
             <td style="white-space:nowrap;position:relative">
               ${rmAsk === k ? rmBar(k, o.t) : `${rowActs(c, k)}`}
@@ -5168,37 +5242,46 @@ function oppScreenBody(){
   const cols = D.stages.map((s, i) => {
     const list = Object.values(D.opps).filter(o => o.stage === s && inScope(o.c)).sort((a,b) => oppAge(b) - oppAge(a));
     const tot = list.reduce((a,o) => a + o.v, 0);
+    /* W4b — the header is the funnel: count and money, in the stage's own
+       colour, on a card that stands on the page like the records under it.
+       An empty column still names the stage — you need to see where a card
+       will land — it just stops renting the width of a live one. */
     return `<div class="col${list.length ? '' : ' col-none'}">
-      <div class="col-h"><span class="col-pill ${stageCls(s)}"></span><span class="n">${s}</span><span class="c">${list.length}</span>
-        <span class="col-t">${list.length ? cm(tot) : ''}</span></div>
+      <div class="col-h ${stageCls(s)}"><i class="dot"></i><span class="n">${s}</span>
+        <span class="c">${list.length}${list.length ? ' · ' + cm(tot) : ''}</span></div>
       ${list.map(o => {
         const c = cust(o.c);
-        /* dayGap() is (today − close); a future close is negative, so −dayGap = days until it closes. */
-        const toClose = o.close ? -dayGap(o.close) : null;
         const k = rmKey.opp(c, o);
-        /* The board used to be a wall you could only look at: the List view has
-           had an Edit since the beginning, but the card a person actually works
-           from had none — no way in, no way to move a deal, no way to fix a
-           number. The card is where the deal is; the pen travels with it now
-           (behind the same `canEditKind` half-of-the-record rule as everywhere
-           else). */
-        return `<div class="opp lnk" data-drw="${esc(o.id)}" title="Open the record drawer — esc closes it, the pin keeps it side by side">
+        /* The card carries its stage on its left rule and its judgement in
+           three layers: who it is with, what it is worth and how likely,
+           and the one line that says what happens next. The evidence line
+           stays under it (§13) — a flagged deal that hides why is asking
+           to be trusted instead of read.
+           The pen travels with the card (behind the same `canEditKind`
+           half-of-the-record rule as everywhere else), and the stalled
+           corner badge answers `age`, which the server owns. */
+        const nx = (D.steps || []).filter(x => x.o === o.id && !stepIsDone(x))[0];
+        /* the stalled badge asks `oppAge(o)`, never the stale `o.age` field —
+           the server owns that clock (verify-truth), the field is fiction */
+        const stalled = oppAge(o) > 30;
+        return `<div class="opp lnk ${stageCls(o.stage)}" data-drw="${esc(o.id)}" title="Open the record drawer — esc closes it, the pin keeps it side by side">
           <div class="opp-h">
-            ${logo(c, 26)}
-            <div class="opp-id">
-              <div class="t">${esc(o.t)}</div>
-              <div class="m">${esc(c.name)}</div>
-            </div>
+            ${logo(c, 22)}
+            <span class="opp-cust">${esc(c.name)}</span>
+            ${stalled ? `<span class="stall" title="In stage ${oppAge(o)}d — a deal that has not moved is waiting for somebody to move it">${oppAge(o)}d</span>` : ''}
           </div>
-          ${o.owner ? `<div class="opp-own"><span class="av">${esc(initials(o.owner))}</span>${esc(o.owner)}</div>` : ''}
+          <div class="t">${esc(o.t)}</div>
           <div class="f">
             <span class="mono amt">${money(o.v)}</span>
-            ${toClose === 0 ? '<span class="tag t-warn">⏳ Closes today</span>'
-              : o.age > 30 ? `<span class="tag t-warn">${oppAge(o)}d in stage</span>` : ''}
-            <div class="spacer"></div>
-            <span class="tiny muted">${o.p}%</span>
+            <span class="p">${o.p}%</span>
           </div>
-          <div class="tiny muted" style="margin-top:5px;line-height:1.45">${esc(oppWhy(o))}</div>
+          ${nx
+            ? `<div class="opp-next${stepOverdue(nx) ? ' hot' : ''}">
+                <span class="nx-t">Next · ${esc(nx.t)}</span>
+                <span class="nx-w">${esc(stepWhen(nx))}${stepOverdue(nx) ? ' overdue' : ''}</span>
+              </div>`
+            : `<div class="opp-next"><span class="nx-t" style="color:var(--ink-3)">no open step</span></div>`}
+          <div class="opp-why">${esc(oppWhy(o))}</div>
           ${rowActs(c, k)}
           ${rmAsk === k ? `<div class="opp-act">${rmBar(k, o.t)}</div>` : ''}
         </div>
@@ -5207,9 +5290,11 @@ function oppScreenBody(){
     </div>`;
   }).join('');
 
-  /* Parked = everything not on the board: won, lost, deliberately paused. It is
-     drawn, not just counted, because a won opportunity is the whole point of the
-     work — and a number nobody can open is a number nobody trusts. */
+  /* Parked = everything not on the board: won, lost, deliberately paused.
+     It is drawn, not just counted, because a won opportunity is the whole
+     point of the work — and a number nobody can open is a number nobody
+     trusts. W4b: one strip under the board, a line of prose with a verdict
+     pill, not a second grid competing with the path above it. */
   const all = Object.values(D.opps).filter(o => inScope(o.c));
   const open = all.filter(o => D.stages.includes(o.stage));
   const parked = all.filter(o => !D.stages.includes(o.stage));
@@ -5226,11 +5311,24 @@ function oppScreenBody(){
   </div>
   ${addBarFor('opportunities', { only:'form', pickCustomer:true })}
   <div class="board" data-tour="board">${cols}</div>
-  <h2 style="margin-top:var(--s7)">Parked</h2>
-  <p class="sub" style="margin-bottom:var(--s3)">Won, lost or deliberately paused — not a position on the path</p>
-  ${parked.length
-    ? '<div class="grid g3">' + parked.map(parkedCard).join('') + '</div>'
-    : '<div class="parked-empty">Nothing parked. Every opportunity is still on the path.</div>'}`;
+  <div class="parked-strip">
+    <span class="ps-l">Parked<span class="why">— won, lost, or paused. Not a position on the path.</span></span>
+    <div class="ps-items">${
+      parked.length
+        ? parked.map(o => {
+            const c = cust(o.c);
+            const k = rmKey.opp(c, o);
+            return `<span class="ps-item" data-drw="${esc(o.id)}" title="Open the record drawer — esc closes it, the pin keeps it side by side${o.stage === 'Lost' && o.lost ? '; lost because: ' + esc(o.lost) : ''}">
+              <span class="tag ${o.stage === 'Won' ? 't-ok' : o.stage === 'Lost' ? 't-risk' : 't-grey'}">${esc(o.stage)}</span>
+              <span class="ps-t">${esc(o.t)}</span>
+              <span class="ps-v">${money(o.v)}</span>
+              <span class="ps-w">${o.close ? esc(o.close) : '—'}</span>
+              ${rmAsk === k ? rmBar(k, o.t) : rowActs(c, k)}
+            </span>`;
+          }).join('')
+        : '<span class="ps-none">Nothing parked — every opportunity is still on the path.</span>'
+    }</div>
+  </div>`;
 }
 
 /* W2b §03 B/C — the record drawer rides on whichever view (board or list) the
@@ -5284,13 +5382,19 @@ function drwMarkup(){
       </div>
       <h1 style="font-size:19px;margin:var(--s2) 0 2px">${esc(o.t)}</h1>
       <p class="sub" style="margin-bottom:var(--s3)">${esc(c.name)} · our owner ${esc(o.owner || 'unowned')} · <span class="mono">${money(o.v)}</span></p>
-      <div class="rail-dots" style="margin:0 0 4px">
-        ${D.stages.map((s, i) => `<i class="${i <= stageIdx(o.stage) ? 'on ' + stageCls(s) : ''}" title="${esc(s)}"></i>`).join('')}
+      <div class="wp-track" role="img" aria-label="The stage path — this deal stands at ${esc(o.stage)}, waypoint ${Math.max(stageIdx(o.stage), 0) + 1} of ${D.stages.length}">
+        ${D.stages.map((s, i) => {
+          const cur = stageIdx(o.stage);
+          const cls = i < cur ? 'past' : i === cur ? 'now' : '';
+          return `<span class="wp ${cls} ${stageCls(s)}" title="${esc(s)}${i === cur ? ' — the deal stands here' : ''}"><i></i><b>${esc(s)}</b></span>`
+            + (i < D.stages.length - 1 ? `<span class="wp-seg${i < cur ? ' past' : ''} ${stageCls(o.stage)}"></span>` : '');
+        }).join('')}
       </div>
-      <p class="tiny muted" style="margin:0 0 var(--s3)">stage rail — ${D.stages.map(s => s === o.stage ? `<b>${esc(s)} (here)</b>` : esc(s)).join(' → ')}</p>
-      ${o.desc ? `<div class="kv" style="margin-bottom:var(--s3)"><span class="k">The work</span><span>${esc(o.desc)}</span>
+      ${(o.desc || o.soln || o.blockers || (o.stage === 'Lost' && o.lost)) ? `<div class="kv" style="margin-bottom:var(--s3)">
+        ${o.desc ? `<span class="k">The work</span><span>${esc(o.desc)}</span>` : ''}
         ${o.soln ? `<span class="k">Our answer</span><span>${esc(o.soln)}</span>` : ''}
-        ${o.blockers ? `<span class="k">Blocker</span><span>${esc(o.blockers)}</span>` : ''}</div>` : ''}
+        ${o.blockers ? `<span class="k">Blocker</span><span>${esc(o.blockers)}</span>` : ''}
+        ${o.stage === 'Lost' && o.lost ? `<span class="k">Lost because</span><span>${esc(o.lost)}</span>` : ''}</div>` : ''}
       ${os.length ? `<div class="grp-h" style="margin-top:var(--s4)">Next steps<span class="n">${os.length}</span></div>` : ''}
       ${os.map(s => `
         <div class="row" style="padding:7px 0;border-bottom:1px solid var(--line);gap:8px">
@@ -5366,34 +5470,6 @@ function rowActs(c, k){
     ${bin && rmAsk !== k ? `<button class="ab danger" data-act="rm" data-rm="${k}" title="Remove this opportunity — administrator only">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><path d="M2.8 4.2h10.4M6 4V2.8h4V4m-6.5 0 .6 9a1.4 1.4 0 0 0 1.4 1.3h3a1.4 1.4 0 0 0 1.4-1.3l.6-9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>` : ''}
-  </div>`;
-}
-
-function parkedCard(o){
-  const c = cust(o.c);
-  const k = rmKey.opp(c, o);
-  /* The stage below is deliberately not `stageTag`: a parked opportunity is
-     off the path on purpose, and what matters about it is the outcome, not a
-     position along the ramp. Won is green and Lost is red because those are
-     results; the ramp stays for the four stages a deal walks through. */
-  return `<div class="card">
-    <div class="row" style="align-items:flex-start;margin-bottom:var(--s2)">
-      ${logo(c, 20)}
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13.5px;font-weight:600">${esc(o.t)}</div>
-        <div class="tiny muted">${esc(c.name)}</div>
-      </div>
-      <span class="tag ${o.stage === 'Won' ? 't-ok' : o.stage === 'Lost' ? 't-risk' : 't-grey'}">${esc(o.stage)}</span>
-    </div>
-    <div class="row">
-      <span class="mono" style="font-size:13px;font-weight:600">${money(o.v)}</span>
-      <span class="tiny muted">${o.p}% · ${oppAge(o)}d</span>
-      <div class="spacer"></div>
-      ${canEditKind(k) ? `<button class="btn sm" data-act="ed" data-ed="${k}">Edit</button>` : ''}
-      ${rmBar(k, o.t)}
-    </div>
-    ${o.stage === 'Lost' && o.lost ? `<div class="tiny" style="margin-top:6px">Lost because: ${esc(o.lost)}</div>` : ''}
-    ${edFor === k ? edForm(k, oppFormValues(o)) : ''}
   </div>`;
 }
 
@@ -11981,9 +12057,9 @@ const TOURS = [
 
   { id:'opp', name:'Progress and risk', blurb:'The board, and what “stuck” means',
     steps:[
-      { go:'opportunities', sel:'[data-tour="board"]', d:4600, t:'Four stages and a parked column. Every card carries the three facts that decide what you do next: <b>value</b>, <b>days in stage</b>, <b>probability</b>.' },
-      { sel:'.rail-dots', d:4200, t:'The rail shows how far along it is. Age in stage is the risk: a deal that has not moved is not “in progress” — it is waiting for somebody to move it.' },
-      { before:() => openWhy(tourOpp()), sel:'#capVeil .sheet', d:5600, t:'<b>“Why is it stuck?”</b> Detection is a query and costs nothing. Only the paragraph is the model, and it is written from the evidence underneath — which lines were computed and which were said.' },
+      { go:'opportunities', sel:'[data-tour="board"]', d:4600, t:'Four columns that add up: each header is the <b>funnel</b> — count and money in the stage\'s own colour. Every card carries the <b>money</b>, the <b>odds</b> and the <b>next step</b>, and the pen waits in the hover. Won, lost and paused live in the strip below — results, not positions.' },
+      { before:() => { drawer = { kind:'opp', id: tourOpp() }; render(true); }, sel:'.wp-track', d:4200, t:'Open a card and the record shows its <b>waypoints</b> — the stages behind it, the one it stands on, the road ahead. Age in stage is the risk: a deal that has not moved is not “in progress” — it is waiting for somebody to move it.' },
+      { before:() => { drawer = null; render(true); openWhy(tourOpp()); }, sel:'#capVeil .sheet', d:5600, t:'<b>“Why is it stuck?”</b> Detection is a query and costs nothing. Only the paragraph is the model, and it is written from the evidence underneath — which lines were computed and which were said.' },
       { go:'insights', sel:'#page .grid.g3 .card', d:4400, t:'The same computed fact shows up on Insights, where the whole book is judged by the same rules.' },
       { before:() => { asRole = 'admin'; adminTab = 'ai'; view.s = 'admin'; render(); }, sel:'[data-tour="model"]', d:4200, t:'And if you change your mind about the model, it is a <b>setting</b>. Swap the endpoint, replace the key, nothing ships — and the swap is written on the audit trail.' }
     ]},
