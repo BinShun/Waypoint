@@ -304,6 +304,67 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
   .bf-hero{grid-template-columns:1fr;gap:var(--s5)}
   .bf-body,.bf-outside{grid-template-columns:1fr}
 }
+/* --- W5 · the six questions — the customer page reads as answers, not tabs ---
+   The page is ordered by the questions a person actually asks, the question is
+   the section header as a conclusion, and the rail on the left follows the
+   scroll so the reader always knows which question they are inside. */
+.six{display:grid;grid-template-columns:186px minmax(0,1fr);gap:var(--s6);align-items:start}
+.six-nav{position:sticky;top:76px;display:flex;flex-direction:column;gap:1px}
+.six-nav .sn-h{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-3);padding:0 10px;margin-bottom:6px}
+.six-nav button{display:flex;gap:8px;align-items:baseline;text-align:left;border:none;
+  background:none;cursor:pointer;padding:6px 10px;border-radius:var(--r-xs);
+  font-size:12.5px;color:var(--ink-2);line-height:1.35}
+.six-nav button:hover{background:var(--surface-2);color:var(--ink)}
+.six-nav button.on{background:var(--blue-50);color:var(--blue-700);font-weight:600}
+.six-nav .sn-n{font-family:var(--mono);font-size:10px;color:var(--ink-3);flex:none;width:14px}
+.six-nav button.on .sn-n{color:var(--blue)}
+.six-q{margin-bottom:var(--s7);scroll-margin-top:84px}
+.six-q:last-child{margin-bottom:var(--s4)}
+.six-q > .sq-h{display:flex;align-items:baseline;gap:9px;margin-bottom:var(--s4);
+  padding-bottom:7px;border-bottom:1px solid var(--line)}
+.six-q > .sq-h .q{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--blue);flex:none}
+.six-q > .sq-h h2{margin:0;font-size:16.5px;letter-spacing:-.01em}
+.six-q > .sq-h .sq-why{font-size:12px;color:var(--ink-3);font-weight:400}
+.six-body{display:flex;flex-direction:column;gap:var(--s4);min-width:0}
+@media(max-width:1080px){
+  .six{grid-template-columns:1fr}
+  .six-nav{position:static;flex-direction:row;flex-wrap:wrap;gap:4px}
+  .six-nav .sn-h{display:none}
+}
+/* Q3 — the deals, one row each, the stage on a left rule like the board */
+.dm-row{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);
+  border:1px solid var(--line);border-left:3px solid var(--line-2);border-radius:var(--r-sm);
+  margin-bottom:7px;cursor:pointer;box-shadow:var(--e1)}
+.dm-row:hover{border-color:var(--line-2)}
+.dm-row.s1{border-left-color:var(--stage-1)} .dm-row.s2{border-left-color:var(--stage-2)}
+.dm-row.s3{border-left-color:var(--stage-3)} .dm-row.s4{border-left-color:var(--stage-4)}
+.dm-row .dm-t{font-size:13px;font-weight:600;min-width:0;flex:1;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.dm-row .dm-v{font-family:var(--mono);font-size:12.5px;font-weight:600;flex:none}
+.dm-row .dm-p{font-family:var(--mono);font-size:11px;color:var(--ink-3);flex:none;width:34px;text-align:right}
+.dm-row .dm-c{font-size:11px;color:var(--ink-3);flex:none;width:64px;text-align:right}
+.dm-row .dm-c.hot{color:var(--risk);font-weight:600}
+/* Q4 — the two courts. Whose move it is has been in the data since the first
+   step was written; here it becomes the structure of the section. */
+.nm-cols{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4);align-items:start}
+.nm-col > .nm-h{display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);margin-bottom:9px}
+.nm-row{display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line)}
+.nm-row:last-child{border-bottom:none}
+.nm-row .nm-t{font-size:12.5px;flex:1;min-width:0;line-height:1.4}
+.nm-row .nm-w{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--ink-3);flex:none}
+.nm-row.late .nm-w{color:var(--risk)}
+@media(max-width:900px){ .nm-cols{grid-template-columns:1fr} }
+/* Q5 / the timeline axis — the month is the chapter, the kind is a dot on
+   the spine, and a year of work scans as a rhythm instead of a wall of chips */
+.tl-row{display:flex;gap:10px;align-items:flex-start}
+.tl-spine{display:flex;flex-direction:column;align-items:center;flex:0 0 14px;align-self:stretch}
+.tl-dot{width:9px;height:9px;border-radius:50%;background:var(--line-2);margin-top:4px;flex:none;
+  box-shadow:0 0 0 3px var(--surface)}
+.tl-dot.blue{background:var(--blue)} .tl-dot.warn{background:var(--warn)}
+.tl-dot.ok{background:var(--ok)}   .tl-dot.grey{background:var(--ink-3)}
+.tl-line{width:1.5px;flex:1;background:var(--line);min-height:14px}
 
 /* figures */
 .fig{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
@@ -4349,40 +4410,152 @@ const teamCanEdit = (c) => can('edit') &&
    OUTSIDE   what changed without us. Uneven widths on purpose: a news row
              carries a headline, a source, a reason and a link; a watch row
              carries a headline and a source. */
+/* W5 — the six questions. The page used to be two grids of cards; now it is
+   the questions a person asks about an account, in the order they ask them,
+   each section headed by the question itself. The rail on the left follows
+   the scroll. Nothing here is new data: every block is a function that
+   already drew this customer — they are re-ordered, not re-invented. */
+const SIX_QS = [
+  { id:'who',       nav:'Who is this customer' },
+  { id:'happening', nav:'What\u2019s happening' },
+  { id:'deals',     nav:'Which deals matter' },
+  { id:'next',      nav:'What\u2019s next' },
+  { id:'past',      nav:'What happened' },
+  { id:'mine',      nav:'What needs me' }
+];
+const sqHead = (n, q, why) => `
+  <div class="sq-h"><span class="q">Q${n}</span><h2>${q}</h2><span class="sq-why">${why}</span></div>`;
+
 function tabBrief(c, ops){
   const open = ops.filter(o => D.stages.includes(o.stage));
   const rest = ops.length - open.length;
+  const q = (id, n, title, why, body) => `
+    <section class="six-q" id="sq-${id}">${sqHead(n, title, why)}
+      <div class="six-body">${body}</div>
+    </section>`;
   return `
-  ${briefIdentity(c, open, rest)}
-  <div class="bf-body">
-    <div class="bf-body-main">
-      ${actionsCard(c)}
-      ${taskAskBox('custBrief-' + esc(c.id), 'Brief Customer',
-        'A briefing from your own records — the facts, then what the model reads in them.',
-        { action: 'brief-customer', targetId: c.id,
-          question: 'Give me a quick briefing and tell me what needs attention.' },
-        [{ label: 'What needs attention?', question: 'What needs attention on this account?' },
-         { label: 'Prepare for next meeting', question: 'Prepare me for the next meeting with this customer.' }])}
-      ${lastMeetCard(c)}
-      ${can('log') && aiReady(c) ? `<div class="card">
-        <div class="row" style="margin-bottom:var(--s2)">
-          <h3 style="margin:0">Notes that never became a meeting</h3>
-        </div>
-        <p class="tiny" style="margin:0 0 var(--s2);color:var(--ink-2)">A call summary in your inbox, a hallway conversation, ten lines from a site visit —
-          paste them and the model reads out the action items, the pain points and any opportunity they hint at.
-          You keep what is true, and the raw text is never stored.</p>
-        <button class="btn sm ai" data-act="notes" data-cid="${esc(c.id)}"
-          title="Paste any notes on this customer - the model proposes the actions, pains and hints, and you accept or drop each one.">Paste notes about this customer</button>
-      </div>` : ''}
+  <div class="six">
+    <nav class="six-nav" aria-label="The six questions">
+      <span class="sn-h">Six questions</span>
+      ${SIX_QS.map((x, i) => `<button data-sq="${x.id}"><span class="sn-n">Q${i + 1}</span>${esc(x.nav)}</button>`).join('')}
+    </nav>
+    <div>
+      ${q('who', 1, 'Who is this customer', '— the company, the record, and where we stand',
+        briefIdentity(c, open, rest) + standCard(c, ops))}
+      ${q('happening', 2, 'What\u2019s happening', '— the last touch, the outside signals, and what the model reads in this account',
+        taskAskBox('custBrief-' + esc(c.id), 'Brief Customer',
+          'A briefing from your own records — the facts, then what the model reads in them.',
+          { action: 'brief-customer', targetId: c.id,
+            question: 'Give me a quick briefing and tell me what needs attention.' },
+          [{ label: 'What needs attention?', question: 'What needs attention on this account?' },
+           { label: 'Prepare for next meeting', question: 'Prepare me for the next meeting with this customer.' }])
+        + lastMeetCard(c) + watchCard(c) + newsCard(c))}
+      ${q('deals', 3, 'Which deals matter', '— largest first, the stage on the left rule',
+        dealsMatter(c, ops))}
+      ${q('next', 4, 'What\u2019s next', '— whose court is the ball in',
+        nextMoves(c))}
+      ${q('past', 5, 'What happened', '— the recent history, the newest first; the dot\u2019s colour is the kind of event',
+        recentHistory(c))}
+      ${q('mine', 6, 'What needs me', '— every open action with its two names, and a pen for a new one',
+        actionsCard(c) + (can('log') && aiReady(c) ? `<div class="card">
+          <div class="row" style="margin-bottom:var(--s2)">
+            <h3 style="margin:0">Notes that never became a meeting</h3>
+          </div>
+          <p class="tiny" style="margin:0 0 var(--s2);color:var(--ink-2)">A call summary in your inbox, a hallway conversation, ten lines from a site visit —
+            paste them and the model reads out the action items, the pain points and any opportunity they hint at.
+            You keep what is true, and the raw text is never stored.</p>
+          <button class="btn sm ai" data-act="notes" data-cid="${esc(c.id)}"
+            title="Paste any notes on this customer - the model proposes the actions, pains and hints, and you accept or drop each one.">Paste notes about this customer</button>
+        </div>` : ''))}
     </div>
-    <div class="bf-body-side">
-      ${standCard(c, ops)}
-    </div>
-  </div>
-  <div class="bf-outside">
-    ${watchCard(c)}
-    ${newsCard(c)}
   </div>`;
+}
+
+/* Q3 — the deals, largest first. A row carries the stage on a left rule (the
+   board's language), the money and the odds in mono, and the close date with
+   its colour of urgency. The drawer opens from the row. */
+function dealsMatter(c, ops){
+  const open = ops.filter(o => D.stages.includes(o.stage)).sort((a, b) => b.v - a.v);
+  const rest = ops.length - open.length;
+  if (!ops.length) return `<div class="card" style="padding:var(--s5)">
+    <span class="tiny muted">No opportunity on this account yet. The first one starts on the Opportunities tab.</span></div>`;
+  return `<div>
+    ${open.map(o => {
+      const toClose = o.close ? -dayGap(o.close) : null;
+      return `<div class="dm-row ${stageCls(o.stage)}" data-drw="${esc(o.id)}"
+        title="Open the record drawer — esc closes it, the pin keeps it side by side">
+        <span class="dm-t">${esc(o.t)}</span>
+        <span class="dm-v">${money(o.v)}</span>
+        <span class="dm-p">${o.p}%</span>
+        <span class="dm-c${toClose != null && toClose < 0 ? ' hot' : ''}">${toClose == null ? '—'
+          : toClose < 0 ? (-toClose) + 'd late' : toClose === 0 ? 'today' : toClose + 'd'}</span>
+      </div>`;
+    }).join('')}
+    ${rest ? `<div class="tiny muted" style="margin-top:5px">${rest} parked or won — the full record is on the Opportunities tab.</div>` : ''}
+  </div>`;
+}
+
+/* Q4 — the two courts. `from` has been on every step since the first one was
+   written; here it becomes the structure. Our move on the left, theirs on the
+   right, the overdue read in crimson, and the pen (Done) travels with the row
+   behind the same rule as everywhere else. */
+function nextMoves(c){
+  const open = (D.steps || []).filter(s => s.c === c.id && !stepIsDone(s));
+  const ours = open.filter(s => s.from !== 'customer');
+  const theirs = open.filter(s => s.from === 'customer');
+  const row = (s) => {
+    const late = stepOverdue(s);
+    return `<div class="nm-row${late ? ' late' : ''}">
+      <span class="nm-t">${esc(s.t)}${stepRoleLine(s)}</span>
+      <span class="nm-w">${esc(stepWhen(s))}${late ? ' overdue' : ''}</span>
+      ${can('log') ? `<button class="mini" data-act="stepdone" data-sid="${esc(s.id)}"
+        title="Mark this done — recorded on the timeline with your name">Done</button>` : ''}
+    </div>`;
+  };
+  const col = (label, tag, list, empty) => `<div class="nm-col">
+    <div class="nm-h"><span class="tag ${tag}">${label}</span><span>${list.length}</span></div>
+    ${list.length ? list.map(row).join('') : `<div class="tiny muted" style="padding:4px 0">${empty}</div>`}
+  </div>`;
+  return `<div class="nm-cols">
+    ${col('Our move', 't-grey', ours, 'Nothing on our side — the ball is in their court.')}
+    ${col('Their move', 't-blue', theirs, 'Nothing on their side — the ball is in ours.')}
+  </div>`;
+}
+
+/* Q5 — the recent history, drawn on a spine. The dot's colour is the kind of
+   event (the same mapping the Timeline uses), the line carries the eye down
+   the month. Six events, then the door to the full Timeline. */
+const tlDotCls = (k) => ({ 't-blue':'blue', 't-warn':'warn', 't-ok':'ok', 't-grey':'grey' }[tlKindClass(k)] || 'grey');
+
+function recentHistory(c){
+  const ev = (c.timeline || []).slice().sort((a, b) => String(b.d).localeCompare(String(a.d))).slice(0, 6);
+  if (!ev.length) return `<div class="card" style="padding:var(--s5)">
+    <span class="tiny muted">Nothing has happened on this account yet. The first thing logged here becomes the start of its history.</span></div>`;
+  return `<div>
+    ${ev.map(t => `<div class="tl-row">
+      <span class="tl-spine"><span class="tl-dot ${tlDotCls(t.k)}"></span><span class="tl-line"></span></span>
+      <span class="pr-main" style="padding-bottom:10px;min-width:0">
+        <span class="pr-n" style="font-weight:500">${esc(tlTitle(t.t))}
+          <span class="tiny muted" style="font-weight:400">· ${esc(fmtDay(t.d))}</span></span>
+        ${t.x ? `<span class="pr-t">${esc(t.x)}</span>` : ''}
+      </span>
+    </div>`).join('')}
+    <button class="btn sm" data-tab="timeline" style="margin-top:4px">Open the full Timeline →</button>
+  </div>`;
+}
+
+/* The rail's highlight follows the scroll: one listener, bound once at boot,
+   asking on each frame which question the reader is inside. Clicking a
+   question scrolls to it (the delegation lives with the other clicks). */
+function sixNavMark(){
+  const nav = document.querySelector('.six-nav');
+  if (!nav) return;
+  const secs = Array.from(document.querySelectorAll('.six-q'));
+  if (!secs.length) return;
+  /* section ids carry the `sq-` prefix; the buttons carry the bare question */
+  let cur = secs[0].id.slice(3);
+  for (const s of secs){ if (s.getBoundingClientRect().top < 150) cur = s.id.slice(3); }
+  nav.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.sq === cur));
 }
 
 /* The model's draft sits in the identity band because it is who they are,
@@ -5026,7 +5199,8 @@ function tabTimeline(c){
       return `<button class="mg ${open ? 'open' : ''}" data-tl="${k}">
           <span class="tw">›</span><span class="l">${fmtMon(k)}</span><span class="n">${list.length}</span>
         </button>
-        ${open ? list.map(t => { const room = tlRoom(c, t); return `<div class="pr">
+        ${open ? list.map(t => { const room = tlRoom(c, t); return `<div class="pr tl-row">
+          <span class="tl-spine"><span class="tl-dot ${tlDotCls(t.k)}" title="${esc(tlKindLabel(t.k))}"></span><span class="tl-line"></span></span>
           <span class="pr-m" style="width:72px;flex:0 0 72px">${fmtDay(t.d)}</span>
           <span class="tag ${tlKindClass(t.k)}" style="flex:0 0 auto">${tlKindLabel(t.k)}</span>
           <span class="pr-main">
@@ -9286,6 +9460,9 @@ function render(keepScroll){
      it here means every screen agrees with the line that says whether the work
      survives — including the first one, before any save has been attempted. */
   paintConn();
+  /* W5 — the six-question rail starts with the first question lit, before any
+     scroll has happened to mark it. */
+  sixNavMark();
   /* W2b §03: the drawer and the split pin are body classes, so they are
      reconciled here — the single place every render passes through — and a
      drawer that survives a redraw (an edit saved inside it) keeps its pose. */
@@ -11481,6 +11658,15 @@ document.addEventListener('click', async (e) => {
     return;
   }
 
+  /* W5 — the six-question rail: a question scrolls its section into view. The
+     scroll listener (bound once at boot) keeps the highlight honest. */
+  const sq = e.target.closest('[data-sq]');
+  if (sq){
+    const el = document.getElementById('sq-' + sq.dataset.sq);
+    if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
+    return;
+  }
+
   const op = e.target.closest('[data-open]');
   if (op && !e.target.closest('[data-exp]')){
     /* Opening a full record is a navigation (W2b): the drawer's crumb link and
@@ -11948,6 +12134,10 @@ document.getElementById('cmdOpen').onclick = openPal;
    draw, so the theme switch always reaches it. */
 document.getElementById('aiBtn').onclick = openPal;
 paintAiFace();
+/* W5 — the six-question rail's highlight follows the scroll. One passive
+   listener for the life of the page; it costs two queries and six rects per
+   frame only when the customer page is the one on screen. */
+window.addEventListener('scroll', () => requestAnimationFrame(sixNavMark), { passive:true });
 document.getElementById('palI').addEventListener('input', (e) => { drawPal(); });
 document.getElementById('palI').addEventListener('keydown', (e) => {
   if (e.key === 'Enter'){
