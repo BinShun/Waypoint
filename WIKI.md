@@ -101,7 +101,7 @@ Waypoint 的 AI 是**被按压才说话的助手**，不是自主 agent。边界
 ## 回归验证
 
 ```bash
-npm run verify:all    # 27 套件 / 1389 checks
+npm run verify:all    # 28 套件 / 1420 checks
 ```
 
 每个业务承诺都有对应套件盯着（权限、账本、AI 边界、防重、原子性、身份切换零残留……）。改任何东西之前，建议先看 `scripts/verify-all.mjs` 里的套件清单——那也是这个应用的行为规格。

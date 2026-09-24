@@ -48,7 +48,7 @@ npm start            # http://localhost:8787 —— 服务器零依赖，无需 
 ├── Waypoint-v1.html      前端应用（单文件，全部 UI 与逻辑）
 ├── server/               零依赖 Node 服务器（静态服务 + API + AI 代理 + 加密）
 ├── dist/index.html       部署产物（前端副本，服务器的静态目录）
-├── scripts/              27 个回归套件 + 验收走查器 + 运维工具
+├── scripts/              28 个回归套件 + 验收走查器 + 运维工具
 ├── data/                 工作区数据（不进 git）
 ├── certs/                自签 https 证书（不进 git）
 └── .env                  模型端点凭据（可选，不进 git）
@@ -57,7 +57,7 @@ npm start            # http://localhost:8787 —— 服务器零依赖，无需 
 ## 测试与维护
 
 ```bash
-npm run verify:all       # 27 套件 / 1389 checks，全绿才允许交付
+npm run verify:all       # 28 套件 / 1420 checks，全绿才允许交付
 ```
 
 维护要点：

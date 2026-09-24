@@ -246,6 +246,14 @@ check('every save was still accepted', puts.every((p) => p.status === 200), puts
 act('[data-go="customers"]'); await wait(200);
 act('[data-open="c1"]'); await wait(250);
 act('[data-tab="people"]'); await wait(250);
+/* A person nobody has classified is a to-do, not a bug — but the page used to
+   print the bare string `undefined` for them: the grouping header, the person
+   card and the text handed to the AI layer all read BAND_WHY['Influences'],
+   which is not a key of that table. The honest word is "Not classified yet",
+   and the page must never say `undefined` anywhere a person is drawn. */
+check('an unclassified person never renders the bare string "undefined"',
+  !/>undefined\b/i.test((doc.getElementById('page') || {}).innerHTML || ''),
+  ((doc.getElementById('page') || {}).innerHTML || '').match(/.{0,40}undefined.{0,20}/i)?.[0] || 'clean');
 const row = doc.querySelector('#page [data-sel]');
 if (row) { row.click(); await wait(250); }
 /* The customer header has its own Edit; the per-record one carries data-ed. */
@@ -485,13 +493,17 @@ check('the failed save offers a retry', !!label('Retry now'));
    the risk edge and nothing else changes. Called straight on the window
    because the state that produces each one has just been destroyed above. */
 window.eval("toast('The model could not be reached.', null, 'err')");
-let lastToast = [...doc.querySelectorAll('body > div')].pop();
+/* Toasts live in `#toastHost` — a live region that exists from the first
+   paint, so a screen reader can hear "Not saved" — rather than being appended
+   straight to <body>. The message is looked up by its class, which is what
+   identifies it, instead of by its position in the body's children. */
+let lastToast = [...doc.querySelectorAll('#toastHost .toast, body > .toast')].pop();
 check('an error toast carries the risk edge',
   /var\(--risk\)/.test(lastToast?.getAttribute('style') || ''),
   (lastToast?.getAttribute('style') || '').slice(60, 140));
 lastToast?.remove();
 window.eval("toast('Customer created.')");
-lastToast = [...doc.querySelectorAll('body > div')].pop();
+lastToast = [...doc.querySelectorAll('#toastHost .toast, body > .toast')].pop();
 check('a success toast stays quiet',
   !/var\(--risk\)/.test(lastToast?.getAttribute('style') || ''));
 lastToast?.remove();

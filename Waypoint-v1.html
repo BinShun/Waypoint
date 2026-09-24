@@ -52,6 +52,11 @@
   --warn:#9A6207; --warn-50:#FDF2E3; --warn-100:#F0DDB4;
   --risk:#B4232A; --risk-600:#A61E24; --risk-50:#FCEAEA; --risk-100:#F2C6C9;
   --violet:#4B5BD6; --violet-600:#3A47B8; --violet-50:#F1EDFC; --violet-line:#E0D7F8;
+  /* Semantic aliases — new rules read what a colour MEANS, not the hex that
+     paints it. The ink ramp stays the physical ramp; these are the names a
+     screen should reach for. */
+  --text-1:var(--ink); --text-2:var(--ink-2); --text-3:var(--ink-3);
+  --info:var(--blue); --ai:var(--violet);
   /* stage ramp — one hue, deepening. The pipeline reads as a channel getting
      deeper, not as four unrelated colours. */
   --stage-1:var(--blue-300); --stage-1-t:var(--blue-50); --stage-1-ink:#1D4FA8;
@@ -155,8 +160,9 @@ main{min-width:0}
 /* Active reads as a lit channel on dark water: a meridian wash from the left
    edge plus a 2.5px inset bar — the old light-card treatment would have
    floated on top of the sea instead of glowing from inside it. */
-.nav.on{background:linear-gradient(90deg,rgba(36,86,230,.28),rgba(36,86,230,.10));
-  color:var(--sea-bright);font-weight:600;box-shadow:inset 2.5px 0 0 var(--blue)}
+.nav.on{background:linear-gradient(90deg,rgba(36,86,230,.38),rgba(36,86,230,.12));
+  color:var(--sea-bright);font-weight:600;box-shadow:inset 3px 0 0 var(--blue-300),
+  inset 3px 0 8px rgba(127,169,232,.5)}
 .nav .g{width:16px;height:16px;flex:0 0 16px;opacity:.75}
 .nav.on .g{opacity:1}
 /* A count is a fact about the scope you hold, so it rides in a pill that
@@ -183,6 +189,9 @@ main{min-width:0}
    the same quiet shape as a chip. It lives between the ask box and the AI
    button so the three facts of the bar read left to right — what you can
    ask, whether the data is live, and who is helping. */
+/* The short form of the same word. It exists so a narrow bar can keep a word
+   on the save state instead of only its colour; see the 880px block. */
+.conn-s{display:none}
 .st{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-2);
   background:var(--surface);border:1px solid var(--line);border-radius:var(--r-chip);
   padding:5.5px 13px;flex:none}
@@ -190,8 +199,10 @@ main{min-width:0}
    in the palette, the ask boxes, and now the button that opens them. The
    corgi face inside is injected at boot and obeys the theme switch like
    every other mascot. */
+/* The one violet surface on the chrome: AI is the only non-blue accent in the
+   bar, so "this is the model" reads at a glance. --ai is the semantic name. */
 .ai-btn{display:flex;align-items:center;gap:8px;flex:none;font-size:12px;font-weight:600;
-  color:var(--violet);background:var(--violet-50);border:1px solid var(--violet-line);
+  color:var(--ai);background:var(--violet-50);border:1px solid var(--violet-line);
   border-radius:var(--r-ctl);padding:6px 14px;cursor:pointer;font-family:inherit}
 .ai-btn:hover{background:var(--violet-line)}
 .ai-btn .m-ai{height:19px;width:auto;flex:none}
@@ -226,7 +237,7 @@ main{min-width:0}
 h1{font-family:var(--font-display);font-size:27px;line-height:1.12;letter-spacing:-.025em;font-weight:700;margin:0}
 h2{font-family:var(--font-display);font-size:17px;font-weight:700;margin:0 0 var(--s3);letter-spacing:-.015em}
 h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
-.sub{color:var(--ink-3);font-size:12.5px;margin:2px 0 0}
+.sub{color:var(--ink-3);font-size:12.5px;margin:2px 0 0;line-height:1.5}
 .spacer{flex:1}
 
 /* ----------------------------------------------------------------- primitives */
@@ -243,16 +254,25 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
 .btn.ai:hover{background:var(--violet-50);border-color:var(--violet);color:var(--violet-600)}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
   padding:var(--s4);box-shadow:var(--e1)}
-.grid{display:grid;gap:var(--s4)}
-.g4{grid-template-columns:repeat(4,1fr)}
-.g3{grid-template-columns:repeat(3,1fr)}
-.g2{grid-template-columns:repeat(2,1fr)}
+.grid{display:grid;gap:var(--s4);align-items:start}
+/* minmax(0,…) is not decoration: a grid track's floor is its content's
+   min-content size, so one unbreakable row (a money figure, a long title)
+   pushes the track wider than its share and the whole page scrolls
+   sideways. The zero floor hands the width back to the grid. */
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+/* Today at a glance: one main queue, one narrow rail. */
+.today-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:var(--s5);margin-top:var(--s6);align-items:start}
+.today-main,.today-rail{min-width:0}
+.today-rail{display:flex;flex-direction:column}
+@media(max-width:980px){.today-grid{grid-template-columns:1fr}}
 @media(max-width:1080px){.g4{grid-template-columns:repeat(2,1fr)}.g3,.g2{grid-template-columns:1fr}}
 .row{display:flex;align-items:center;gap:var(--s2)}
 .muted{color:var(--ink-3)}
 /* A number or a sentence that needs you now. Overdue is not decoration. */
 .urgent{color:var(--risk)}
-.tiny{font-size:11.5px}
+.tiny{font-size:12px;line-height:1.45}
 .mono{font-variant-numeric:tabular-nums;font-family:var(--font-mono)}
 
 /* ---- Brief tab -----------------------------------------------------------
@@ -262,7 +282,9 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
    page the wide column; the outside band is uneven because a news row
    carries more than a watch row does.
    Sizes are set by what each block holds, not by a shared grid. */
-.bf-hero{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(0,1fr);gap:var(--s7);
+/* The quick-facts column keeps a floor (150px): squeezed below that, its
+   values broke mid-word and a domain read one character per line. */
+.bf-hero{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(150px,1fr);gap:var(--s7);
   padding:var(--s1) 0 var(--s6);border-bottom:1px solid var(--line);margin-bottom:var(--s5)}
 .bf-col{min-width:0}
 /* T1: a title inside a card is a line of the content, not a headline in
@@ -279,7 +301,11 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
   line-height:1.06;font-variant-numeric:tabular-nums}
 .bf-kv{display:grid;grid-template-columns:74px minmax(0,1fr);gap:10px var(--s3);align-items:baseline}
 .bf-kv .k{font-size:11.5px;color:var(--ink-3)}
-.bf-kv .v{font-size:13px;font-weight:500;color:var(--ink);min-width:0;overflow-wrap:anywhere}
+.bf-kv .v{font-size:13px;font-weight:500;color:var(--ink);min-width:0;overflow-wrap:break-word}
+/* anywhere used to inherit into the chip and break its label a character at
+   a time; break-word only splits when a word genuinely cannot fit, and the
+   site chip truncates with its full address on hover (the title carries it). */
+.bf-kv .lk{white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .bf-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-2);
   border:1px solid var(--line);border-radius:var(--r-chip);padding:3px 5px 3px 3px;font-size:12px}
 .bf-chipx{border:none;background:none;color:var(--ink-3);cursor:pointer;font-size:14px;
@@ -316,10 +342,23 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
 .six-q{margin-bottom:var(--s7);scroll-margin-top:84px}
 .six-q:last-child{margin-bottom:var(--s4)}
 .six-q > .sq-h{display:flex;align-items:baseline;gap:9px;margin-bottom:var(--s4);
-  padding-bottom:7px;border-bottom:1px solid var(--line)}
+  padding-bottom:7px;border-bottom:1px solid var(--line);
+  width:100%;background:none;border-left:none;border-right:none;border-top:none;
+  cursor:pointer;text-align:left;font:inherit;color:inherit}
+.six-q > .sq-h:hover h2{color:var(--blue-700)}
+.six-q > .sq-h .tw{display:inline-block;flex:none;font-size:11px;line-height:1;color:var(--ink-0);
+  transition:transform .15s ease-out}
+.six-q > .sq-h[aria-expanded="true"] .tw{transform:rotate(90deg)}
+.six-q.sq-shut > .sq-h{margin-bottom:0;opacity:.72}
+.six-q.sq-shut > .sq-h:hover{opacity:1}
 .six-q > .sq-h .q{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--blue);flex:none}
 .six-q > .sq-h h2{margin:0;font-size:16.5px;letter-spacing:-.01em}
 .six-q > .sq-h .sq-why{font-size:12px;color:var(--ink-3);font-weight:400}
+.six-nav button.sq-off{opacity:.45}
+/* Q1 side by side: the facts of the company and the judgement on it, one
+   glance. Collapses under 980 — a phone reads them stacked, as before. */
+.brief-2col{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:var(--s4);align-items:start}
+@media(max-width:980px){.brief-2col{grid-template-columns:1fr}}
 .six-body{display:flex;flex-direction:column;gap:var(--s4);min-width:0}
 @media(max-width:1080px){
   .six{grid-template-columns:1fr}
@@ -373,21 +412,36 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
    closing inside 45 days, and the pipeline. The old focus band folded all
    of this into one card with a split bar; the redesign gives the north-star
    number a card of its own instead of a quarter of the attention. */
-.kband{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;gap:12px}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
-  padding:14px 18px 13px;box-shadow:var(--e1)}
-.kpi.hero{background:var(--blue-25);border-color:var(--line-tinted)}
+/* The numbers band: ONE panel, four columns, hairline dividers. Four separate
+   white cards made the day's headline read as four unrelated widgets; one
+   band reads as one sentence about the day. */
+.kband{display:grid;grid-template-columns:minmax(0,1.5fr) repeat(3,minmax(0,1fr));gap:0;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-card);
+  box-shadow:var(--e1);overflow:hidden}
+/* A KPI's number says how to feel about it: money in the brand blue, an
+   overdue count in red (the existing .hot), the rest in ink. */
+.kpi.info .v{color:var(--info)}
+.kpi{background:none;border:none;border-radius:0;box-shadow:none;
+  padding:14px 18px 13px;border-left:1px solid var(--line)}
+.kpi:first-child{border-left:none}
+.kpi.hero{background:var(--blue-25)}
 .kpi .v{font-family:var(--font-display);font-size:27px;font-weight:700;letter-spacing:-.02em;
   line-height:1.1;font-variant-numeric:tabular-nums}
 .kpi.hero .v{font-size:33px}
 .kpi .l{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--ink-3);margin-bottom:6px}
-.kpi .d{font-size:11.5px;color:var(--ink-3);margin-top:3px;line-height:1.45}
-.kpi .d b{color:var(--ink-2);font-weight:600}
+  color:var(--text-3);margin-bottom:6px}
+.kpi .d{font-size:11.5px;color:var(--text-3);margin-top:3px;line-height:1.45}
+.kpi .d b{color:var(--text-2);font-weight:600}
 .kpi .d .hot{color:var(--risk);font-weight:600}
 .kpi.hot .v{color:var(--risk)}
-@media(max-width:1080px){ .kband{grid-template-columns:1fr 1fr} }
-@media(max-width:760px){ .kband{grid-template-columns:1fr} }
+/* The dividers follow the grid: left rules only between columns, a top rule
+   only between rows — never a rule against the panel's own edge. */
+@media(max-width:1080px){ .kband{grid-template-columns:1fr 1fr}
+  .kpi:nth-child(odd){border-left:none}
+  .kpi:nth-child(n+3){border-top:1px solid var(--line)} }
+@media(max-width:760px){ .kband{grid-template-columns:1fr}
+  .kpi{border-left:none;border-top:1px solid var(--line)}
+  .kpi:first-child{border-top:none} }
 
 /* the briefing strip — one honest sentence about the day, rule-built from
    the book, with the door to Copilot at its end. Violet is the AI channel;
@@ -398,13 +452,23 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
 .brief .b-pill{flex:none;font-size:10px;font-weight:700;letter-spacing:.1em;
   text-transform:uppercase;color:var(--violet);background:var(--surface);
   border:1px solid var(--violet-line);border-radius:var(--r-chip);padding:3px 10px}
-.brief .b-t{min-width:0;flex:1;font-size:12.8px;color:var(--ink-2);line-height:1.55}
-.brief .b-t b{color:var(--ink);font-weight:600}
+.brief .b-t{min-width:0;flex:1;font-size:12.8px;color:var(--text-2);line-height:1.55}
+.brief .b-t b{color:var(--text-1);font-weight:600}
 .brief .b-more{flex:none;font-size:11px;color:var(--violet);font-weight:600;white-space:nowrap}
+/* On a phone the strip stops being a row: pill on top, the sentence takes
+   the full width under it, the door goes last. */
+@media(max-width:760px){.brief{flex-wrap:wrap}.brief .b-t{flex:1 1 100%;order:3}}
 
 /* the three columns (§04). Section titles carry their own why. */
-.tsec{font-size:14.5px;font-weight:700;letter-spacing:-.01em;margin:0 0 10px}
-.tsec .why{font-size:11.5px;font-weight:500;color:var(--ink-3);letter-spacing:0;margin-left:6px}
+.tsec{font-size:15.5px;font-weight:650;letter-spacing:-.01em;margin:0 0 10px}
+/* The overline label: a group's name said small, loud and above the line.
+   It is the outside-the-card sibling of .grp-h — for stand-alone section
+   labels (a rail column, a stacked band), where a full heading would shout
+   and body text would whisper. The ladder a page reads by:
+   27 page title / 15.5 section / 13 body / 12 meta / 10.5 overline. */
+.ovl{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--text-3);margin:0 0 8px}
+.tsec .why{font-size:11.5px;font-weight:500;color:var(--text-3);letter-spacing:0;margin-left:6px}
 /* We owe / They owe — the same next-step rows the model always held, now
    grouped by whose move it is. The left border is the group's voice: amber
    when the next move is ours, hairline when we are only waiting. */
@@ -454,6 +518,11 @@ h3{font-size:13.5px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.005em}
 .t-ok{background:var(--ok-50);color:var(--ok);border-color:var(--ok-100)}
 .t-grey{background:var(--surface-3);color:var(--ink-2);border-color:var(--line)}
 .t-violet{background:var(--violet-50);color:var(--violet);border-color:var(--violet-line)}
+/* A status tag carries a dot: the colour registers before the word is read —
+   the difference between scanning a column of states and reading one. Only
+   the functional states get one; a neutral tag stays a word. */
+.t-ok::before,.t-warn::before,.t-risk::before,.t-with::before,.t-against::before,.t-blue::before{
+  content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
 .dot{width:6px;height:6px;border-radius:50%;display:inline-block}
 /* A dot says one word — saved, offline, overdue, on track, no date. The
    word was painted in thirteen style attributes; now it is a class, so the
@@ -480,12 +549,34 @@ th{text-align:left;font-weight:600;font-size:11px;letter-spacing:.05em;text-tran
   color:var(--ink-3);padding:0 12px 8px;border-bottom:1px solid var(--line-2)}
 td{padding:11px 12px;border-bottom:1px solid var(--line);color:var(--ink-2)}
 tr.lnk td{cursor:pointer}
+/* The dense table scrolls inside its own frame, so its header can stick at
+   every window width: 150 rows down, the column names are still on screen.
+   (Sticky against the window would lose to the card's overflow-x — the card
+   would become the scroll container and the header would scroll away with
+   the page. The frame IS the container, so top:0 just works.) */
+.ctbl-wrap{max-height:calc(100vh - 200px);overflow:auto}
+.ctbl thead th{position:sticky;top:0;z-index:3;background:var(--surface);
+  box-shadow:0 1px 0 var(--line-2);padding-top:10px}
+.ctbl th[data-csort]{cursor:pointer;user-select:none;white-space:nowrap}
+.ctbl th[data-csort]:hover{color:var(--ink)}
+.ctbl th.on{color:var(--ink)}
 /* A row you can click gets a trace of the brand, not just a grey wash — the
    hover is the only affordance telling you it is clickable. */
 tr.lnk:hover td{background:var(--blue-25)}
 
 /* tabs */
 .tabs{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:var(--s5)}
+/* The record's own chrome: one line for the door back, the name and its
+   badges, and the actions; the tab row (with the find box) sticks under the
+   top bar so a long record never strands you away from its doors. 61px is
+   the top bar's height. */
+.cd-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:var(--s2)}
+.cd-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-width:0}
+.cd-title h1{margin:0;font-size:19px}
+.cd-tabs{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;position:sticky;top:61px;
+  background:var(--bg);padding-top:6px;margin-bottom:var(--s4);z-index:15}
+.cd-find{width:300px;max-width:100%;margin-left:auto;margin-bottom:5px}
+@media(max-width:760px){.cd-find{width:100%;margin-left:0}}
 .tab{padding:9px 14px;font-size:13.5px;color:var(--ink-3);border:none;background:none;
   border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500}
 .tab:hover{color:var(--ink)}
@@ -548,6 +639,21 @@ textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-50)}
 input:focus{border-color:var(--blue)!important;box-shadow:0 0 0 3px var(--blue-50);outline:none}
 .search:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-50)}
 .search input:focus{box-shadow:none}
+/* A select is not an input, so the rule above never reached it: every dropdown
+   in the product swallowed its own focus ring (`outline:none` on `.afield>
+   select`) and gave nothing back. Tabbing into one was invisible. */
+.afield>select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-50)}
+/* Where the keyboard is, on every control that has no ring of its own. The
+   product is dense with buttons that are only an icon — nav, close, chevrons,
+   the chevron that opens a row — and a person working by keyboard had nothing
+   to tell them where they were. `:focus-visible` is the right ask: it says
+   "keyboard" and not "clicked", so a mouse user still sees nothing change.
+   Two dark surfaces get the light ring; the brand blue is invisible on them. */
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px;border-radius:var(--r-xs)}
+.rail :focus-visible,.lg :focus-visible{outline-color:var(--rail-ink)}
+/* The palette's search field is the width of the dock, so an offset ring would
+   hang off its edge; it sits inside instead. */
+.pal-i:focus-visible{outline-offset:-2px}
 /* add-form field: a label so nothing has to be guessed from a placeholder,
    wide fields take the whole row so long text is readable while typing */
 .afield{display:flex;flex-direction:column;gap:5px;flex:1;min-width:210px;text-align:left}
@@ -750,6 +856,12 @@ body.open-drw .drw{transform:none;opacity:1;pointer-events:auto}
   color:var(--ink-3);cursor:pointer}
 .drw-x:hover{color:var(--ink-1);border-color:var(--line-strong)}
 .drw-b{flex:1;overflow-y:auto;padding:var(--s4) var(--s5) var(--s6)}
+/* The customer-tab "back to the list" button has no meaning inside the
+   drawer — the drawer's own X is the way out. */
+.drw .pd-back{display:none}
+/* A people card is a door now: it should lift like one. */
+.pcard{transition:box-shadow .12s, border-color .12s}
+.pcard:hover{box-shadow:var(--e2);border-color:var(--line-2)}
 /* C — the split pin: the same drawer element becomes a fixed right column, the
    page cedes 62% and the list lives in what is left. No veil — the two halves
    are peers now. */
@@ -796,6 +908,12 @@ tr.exp > td{background:var(--surface-2)}
 /* month group — collapsed by default, current month open */
 .mg{display:flex;align-items:center;gap:9px;width:100%;border:none;background:none;
   padding:var(--s4) var(--s1) var(--s2);text-align:left}
+/* The month header stays put while its stream scrolls — in a hundred-row
+   history you always know which month you are reading. 61px is the top bar;
+   inside a customer record the tab row sits above it, so the header waits
+   below that instead. */
+.flow .mg{position:sticky;top:61px;z-index:5;background:var(--bg)}
+.cd-tabs ~ .flow .mg{top:105px}
 .mg .l{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3)}
 .mg .n{font-size:11px;font-weight:600;color:var(--ink-0);font-variant-numeric:tabular-nums}
 .mg .tw{font-size:11px;color:var(--ink-0);transition:transform .15s ease-out}
@@ -803,7 +921,11 @@ tr.exp > td{background:var(--surface-2)}
 .mg:hover .l{color:var(--ink)}
 .search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line-2);
   border-radius:var(--r-ctl);padding:7px var(--s3);width:280px}
-.search input{border:none;outline:none;background:none;flex:1;font-size:13px}
+/* min-width:0 — an input refuses to shrink below its intrinsic width unless
+   told otherwise, and when the label around it is squeezed (a 390px phone)
+   the input kept its full width and ran on underneath the dropdown beside it,
+   its placeholder cut mid-word by the select drawn on top of it. */
+.search input{border:none;outline:none;background:none;flex:1;min-width:0;font-size:13px}
 .search input::placeholder{color:var(--ink-0)}
 .pick{border:1px solid var(--line-2);background:var(--surface);border-radius:var(--r-ctl);
   padding:6px 10px;font-size:13px;max-width:240px}
@@ -975,10 +1097,16 @@ body.onlogin #app{display:none}
   .top{padding:10px var(--s4);gap:var(--s2)}
   .top .cmd{max-width:none;font-size:12.5px;padding:6px var(--s2)}
   .top .cmd .kbd{display:none}
-  /* The pill's sentence is the first casualty of a narrow bar; the LED
-     alone still says live-or-not, and the full text returns with width. */
+  /* The pill's sentence is the first casualty of a narrow bar: the long form
+     goes, the short form arrives, and the LED says live-or-not either way.
+     Hiding the sentence outright used to be acceptable because the pill only
+     ever said "Saved" or "Offline" — both of which the light already says. It
+     stopped being acceptable when the pill learned to say that a merge kept a
+     colleague's version or that a field was put back, because the light has no
+     word for either. */
   .st{padding:5.5px 9px}
   .st .conn{display:none}
+  .st .conn-s{display:inline}
   .ai-btn{padding:6px 10px}
   .ai-btn .m-ai{display:none}
   .page{padding:var(--s5) var(--s4) var(--s8);max-width:none}
@@ -1038,8 +1166,34 @@ body.onlogin #app{display:none}
 .pr{display:flex;align-items:center;gap:var(--s3);width:100%;border:none;background:none;
   padding:11px var(--s4);border-bottom:1px solid var(--line);text-align:left}
 .pr:hover{background:var(--surface-2)}
-.pr.on{background:var(--blue-100);box-shadow:inset 2px 0 0 var(--blue)}
+.pr.on{background:var(--blue-25);box-shadow:inset 3px 0 0 var(--blue)}
 .pr-main{flex:1;min-width:0}
+/* The flow form: a list of things that happened, not a box of objects.
+   Audit trails, timelines, recent history — no card, no shadow, hairlines
+   only, a denser row. The page now reads in two shapes: cards for objects
+   you act on, sheets for streams you read. (Watch keeps its card on
+   purpose — it carries a stats strip and an add form. A stream with a
+   steering wheel is a panel.) */
+/* NOTE: the class is `.flow`, NOT `.sheet` — `.sheet` is already the capture
+   dialog's hidden panel (opacity:0 until .veil.on), and reusing the name made
+   three whole screens paint nothing at all. Name collisions are invisible in
+   code review and catastrophic on screen. */
+.flow{display:block}
+.flow .pr{padding:9px 2px}
+.flow .pr:first-child{padding-top:2px}
+/* A strip that lands in a flow loses its card-header band: flat, quiet,
+   a meta line above the stream rather than a lid on a box. */
+.flow .strip{border:none;border-bottom:1px solid var(--line);border-radius:0;
+  background:none;padding:2px 2px 9px}
+/* Row actions in a dense stream sit at half strength until the row is the
+   reader's — hover or keyboard focus brings them to full. Quieter list,
+   same reach. Scoped to flows and the watch panel: a products row's Assign
+   is a primary act, not furniture, and stays at full strength. */
+.flow .pr .btn,[data-tour="watch"] .pr .btn{transition:opacity .12s}
+.flow .pr .btn:not(:focus-visible),[data-tour="watch"] .pr .btn:not(:focus-visible){opacity:.6}
+.flow .pr:hover .btn,.flow .pr:focus-within .btn,.flow .pr .btn:focus-visible,
+[data-tour="watch"] .pr:hover .btn,[data-tour="watch"] .pr:focus-within .btn,
+[data-tour="watch"] .pr .btn:focus-visible{opacity:1}
 .pr-n{display:block;font-size:13.5px;font-weight:600;color:var(--ink)}
 .pr-t{display:block;font-size:12px;color:var(--ink-3);margin-top:1px}
 .pr-m{flex:0 0 auto;font-size:12px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -1049,6 +1203,10 @@ body.dense .pr-n{font-size:13px;display:inline}
 body.dense .pr-t{display:inline;margin-left:8px}
 body.dense .pr-m.opt{display:none}
 body.dense .opt{display:none}
+
+/* The focus-reading theme was tried and retired (the reader it was built for
+   found it stranger than the problem it solved). What stayed: .tiny at 12px
+   and the looser line-heights — those belong to the default theme now. */
 .pd-wrap{display:grid;grid-template-columns:1.35fr 1fr;gap:var(--s5);align-items:start}
 .pd-back{display:none}
 body.picked .pd-back{display:inline-flex}
@@ -1058,8 +1216,17 @@ body.picked .pd-back{display:inline-flex}
 .more{display:flex;align-items:center;gap:8px;padding:10px var(--s4);border-top:1px solid var(--line);
   font-size:12.5px;color:var(--ink-3);width:100%;border-left:none;border-right:none;border-bottom:none;background:none}
 .more:hover{color:var(--blue)}
+/* The prose that lives under a table. `.more` is a flex row because it is a
+   BUTTON — icon, label, maybe a spacer. Three screens borrowed it for a
+   paragraph, and flex made a flex item of every fragment: each <b> and each
+   run of text became its own narrow column, and the sentence read as vertical
+   strips ("Three lines, that is the / whole model / — and you can / move
+   them."). Prose wants block flow. */
+.more--prose{display:block;cursor:default}
+.more--prose:hover{color:inherit}
 .soc{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface-2);
-  border-radius:var(--r-chip);padding:2px 8px;font-size:11px;color:var(--ink-2);text-decoration:none;white-space:nowrap}
+  border-radius:var(--r-chip);padding:2px 8px;font-size:11px;color:var(--ink-2);text-decoration:none;white-space:nowrap;
+  max-width:100%;overflow:hidden}
 .soc:hover{border-color:var(--blue);color:var(--blue)}
 .find-row{display:flex;align-items:center;gap:var(--s3);width:100%;border:none;background:none;
   padding:10px var(--s4);border-bottom:1px solid var(--line);text-align:left}
@@ -1117,6 +1284,16 @@ body.nowm .wm{display:none}
 .stage-pill.s2{background:var(--stage-2-t);color:var(--stage-2-ink)}
 .stage-pill.s3{background:var(--stage-3-t);color:var(--stage-3-ink)}
 .stage-pill.s4{background:var(--stage-4-t);color:var(--stage-4-ink)}
+/* Insights funnel: the row sits on a wash of its stage tint, width = share
+   of the open money. The wash never covers the words — text rows ride above
+   it. */
+.ibar{position:relative;overflow:hidden}
+.ibar > *{position:relative;z-index:1}
+.ibar-fill{position:absolute;left:0;top:0;bottom:0;z-index:0;opacity:.55;border-radius:2px}
+.ibar-fill.s1{background:var(--stage-1-t)}
+.ibar-fill.s2{background:var(--stage-2-t)}
+.ibar-fill.s3{background:var(--stage-3-t)}
+.ibar-fill.s4{background:var(--stage-4-t)}
 /* W4b — the waypoint track: the drawer's stage rail. Four waypoints joined
    by a line; the ones behind the deal are lit in the deal's own stage
    colour, the one it stands on glows, the road ahead stays unpainted. The
@@ -1153,6 +1330,18 @@ body.nowm .wm{display:none}
 /* The model's own surface — the one card in the product that is not ours. */
 .card--brand{background:var(--violet-50);border-color:var(--violet-line)}
 /* The calendar day number: quiet, but today is not. */
+/* Seven real columns, not seven crushed ones. Below 640px a `1fr` cell is
+   about 45px wide, which fits a day number and nothing else — every entry
+   truncated itself down to a dot and a letter. The grid keeps its seven
+   columns and the CONTAINER scrolls instead; the day cells stay wide enough
+   to read, and sideways is a real direction on a phone. */
+.cal-scroll{overflow-x:auto}
+@media(max-width:640px){
+  .cal-grid{min-width:660px}
+}
+.cal-more{display:block;width:100%;text-align:left;border:none;background:none;cursor:pointer;
+  font-size:11px;color:var(--blue);padding:1px 4px;font-weight:600}
+.cal-more:hover{text-decoration:underline}
 .cal-d{font-size:11.5px;font-weight:500;color:var(--ink-2);margin-bottom:2px;padding-left:2px}
 .cal-d.today{font-weight:700;color:var(--blue)}
 /* A row card: the same surface as `.card`, at list density. The Customers
@@ -1238,6 +1427,15 @@ body.nowm .wm{display:none}
   .mascot{animation:none!important}
   .battery .bfill{width:100%;background:var(--fig-full);animation:none}
 }
+/* Where a message stands. The host is the live region (see #toastHost); the
+   toasts inside it are ordinary flex children, so two at once stack instead of
+   landing on top of each other the way two `position:fixed; bottom:28px`
+   boxes did. It takes no pointer events, because a bar that sits over the page
+   must never swallow a click meant for the page. */
+.toast-host{position:fixed;left:0;right:0;bottom:28px;display:flex;flex-direction:column;
+  align-items:center;gap:8px;pointer-events:none;z-index:99}
+.toast-host:empty{display:none}
+
 @media print{
   body:not(.canprint) .page,body:not(.canprint) main,body:not(.canprint) .rail{display:none !important}
   body:not(.canprint)::after{content:"Printing is disabled — this data may not leave Waypoint.";
@@ -1272,9 +1470,17 @@ body.nowm .wm{display:none}
         Search customers, people, opportunities…
         <span class="kbd">⌘K</span>
       </button>
-      <div class="st" id="connPill" title="Data server connection">
+      <div class="st" id="connPill" title="Data server connection"
+           role="status" aria-live="polite">
         <span class="dot dot--ok" id="connDot"></span>
         <span class="tiny muted conn" id="connState"></span>
+        <!-- The same word again, in the short. Below 880px the pill hides its
+             sentence and keeps only the light — which was fine when the only
+             two states were "Saved" and "Offline" and is not fine now that the
+             pill can say a merge kept somebody else's version, or that a field
+             was put back. A phone is exactly where a person needs that, so the
+             sentence shrinks instead of disappearing. -->
+        <span class="tiny muted conn-s" id="connShort"></span>
       </div>
       <button class="ai-btn" id="aiBtn" title="Copilot — ask it to find, draft or analyse">
         <span class="ai-face" id="aiFace"></span><span>Copilot</span>
@@ -1291,6 +1497,13 @@ body.nowm .wm{display:none}
   <button class="tour-fab" id="tourOpen" aria-label="Quick tour"
     title="Quick tour — walkthroughs over the real screens">?</button>
 </div>
+<!-- One home for every message, and a live region: the save state and the
+     toasts are the only two things this product says out loud about whether
+     the work survived, and neither of them was ever announced — a person
+     reading the page with a screen reader could not hear "Not saved" at all.
+     The host exists from the first paint, because a live region that is added
+     to the page at the same moment as its text is often not read. -->
+<div id="toastHost" class="toast-host" role="status" aria-live="polite"></div>
 <div id="navBack"></div>
 <div id="loginRoot"></div>
 <!-- signed-in identity menu: who you are, and the way out -->
@@ -1623,6 +1836,48 @@ const stageTag = (s) => D.stages.includes(s)
 const oppsOf = (cid) => ((cust(cid) || {}).opps || []).map(opp).filter(Boolean);
 
 /* ============================================================================ */
+/*  Progressive disclosure — one pattern for every long list                    */
+/*                                                                             */
+/*  Until now each long list invented its own answer, and every answer was     */
+/*  all-or-nothing: the customer list showed fifty rows and then a single      */
+/*  "Show all 156" button that dumped the rest into the DOM in one step; the   */
+/*  People tab showed eight people out of forty and offered the same cliff.    */
+/*  Two wrong choices dressed as one feature — fifty is too many to skim, and  */
+/*  everything is too much to render. The honest middle: a first chunk that    */
+/*  fits the eye, a button that says what one more click buys ("Show 25 more · */
+/*  106 remaining"), and an end that SAYS so ("All 156 shown · collapse")      */
+/*  instead of the button quietly vanishing, so a short scroll is never        */
+/*  mistaken for the whole story.                                              */
+/*                                                                             */
+/*  State lives in one module-level map keyed by scope ("customers",           */
+/*  "custpeople:c_may"), because render() redraws the whole page on every      */
+/*  change and a closure would collapse an expanded list back to its first     */
+/*  chunk. The click handler (at the bottom of this file) remembers the        */
+/*  scroll position and restores it after render: the button sits at the       */
+/*  BOTTOM of the list, and re-rendering without the restore throws the        */
+/*  reader back to the top of the page they were reading.                      */
+/* ============================================================================ */
+const LIST_CHUNK = { customers: 50, custpeople: 12, peoplegroups: 20, audit: 20, watch: 8 };
+let listShown = {};
+const listChunk = (scope) => LIST_CHUNK[scope.split(':')[0]] || 50;
+function listCap(scope, total){
+  const chunk = listChunk(scope);
+  const cur = listShown[scope];
+  return Math.min(cur == null ? chunk : cur, total);
+}
+function listFoot(scope, total){
+  const chunk = listChunk(scope);
+  const shown = listCap(scope, total);
+  if (shown >= total){
+    return total > chunk
+      ? `<button class="more" data-less="${scope}">All ${total} shown · collapse ↑</button>`
+      : '';
+  }
+  const more = Math.min(chunk, total - shown);
+  return `<button class="more" data-more="${scope}">Show ${more} more · ${total - shown} remaining</button>`;
+}
+
+/* ============================================================================ */
 /* The numbers in the rail are counted at draw time by `navCount`, inside the
    reader's own scope. They are deliberately NOT written here: a number in a
    table like this one goes stale the moment somebody adds a customer, and a
@@ -1633,9 +1888,6 @@ const NAV = [
     { k: 'calendar', l: 'Calendar' },
     { k: 'customers', l: 'Customers' },
     { k: 'people', l: 'People' },
-    /* #80 (§23): the one place that answers "is my AI request still running,
-       and is the result ready?" — a screen, not a system. */
-    { k: 'aitasks', l: 'AI Tasks' },
   ]},
   { g: 'Pipeline', i: [
     { k: 'opportunities', l: 'Opportunities' },
@@ -1644,6 +1896,12 @@ const NAV = [
   { g: 'Reference', i: [
     { k: 'products', l: 'Products' },
     { k: 'insights', l: 'Insights' },
+  ]},
+  /* The system corner: the AI queue and the admin console. Both answer "is
+     the machine behaving" — a question you ask rarely, in a place of its
+     own, away from the daily book. */
+  { g: 'System', i: [
+    { k: 'aitasks', l: 'AI Tasks' },
     { k: 'admin', l: 'Admin' },
   ]}
 ];
@@ -1804,9 +2062,9 @@ function navigateFromHash(){
 let custQ = '';            /* scoped find: one box for the whole customer */
 let custSort = 'need';     /* need | pipeline | name | activity — how the customer list answers */
 let oppsTab = 'active';    /* active | parked — which pipeline columns are shown */
+let oppCust = '';          /* customer filter — both the board and the list answer it */
 let peopleScope = 'all';
 let showMap = false;
-let showAllPeople = false;
 let dense = false;
 let pickedPerson = null;   /* master–detail; null = "whoever leads the list" */
 let tlOpen = new Set([todayISO().slice(0, 7)]);
@@ -1924,7 +2182,15 @@ const inScope = (cid) => myIds().includes(cid);
    with. Classification is a closed list of four, so it is chips. */
 const BANDS = ['Decision maker', 'Blocker', 'Influencer', 'User'];
 const RISK = { 'Against us': 0, 'Undecided': 1, 'With us': 2 };
-const bandOf = (p) => (BANDS.indexOf(p.b) >= 0 ? p.b : 'Influences');
+/* A person with no classification is not an "Influencer" — inventing a band
+   for them was a lie on the page, and the word it chose ("Influences") was not
+   even a band, so the grouping header read "INFLUENCES" and every lookup of
+   its explanation printed the bare string `undefined`. The honest word is a
+   to-do, not a band: it says nobody has decided yet. `indexOf` still answers
+   -1 for it, so unclassified people keep sorting ahead of every band — an
+   unknown is exactly what classification is for, so it sorts first. */
+const UNBANDED = 'Not classified yet';
+const bandOf = (p) => (BANDS.indexOf(p.b) >= 0 ? p.b : UNBANDED);
 const dayGap = (d) => Math.round((new Date(todayISO()) - new Date(d)) / 864e5);
 
 /* How long an opportunity has been sitting in the stage it is in — the same
@@ -2383,6 +2649,7 @@ const CORGI = {
 function corgiOn(){
   try { return localStorage.getItem('cwb-corgi') !== '0'; } catch (e) { return true; }
 }
+
 function mascot(id, cls){
   return corgiOn()
     ? '<img class="mascot ' + (cls || '') + '" src="' + CORGI[id] + '" alt="" aria-hidden="true">'
@@ -2495,15 +2762,16 @@ function wipeEphemeral(){
   addFor = null; doneOpen = false; watchAdd = false; fileAdd = false;
   addFormCustomer = () => null;
   pickedPerson = null;
-  custF = { q:'', ind:'', st:'' }; custQ = ''; custShowAll = false; custSort = 'need';
+  custF = { q:'', ind:'', st:'' }; custQ = ''; custSort = 'need';
   meetQ = ''; meetC = ''; peopleQ = ''; peopleC = '';
-  meetRange = 'Last 90 days'; peopleStance = 'any'; peopleShowAll = false;
-  auditQ = ''; auditKind = 'all'; auditShowAll = false; adminTab = 'people';
-  prodQ = ''; paId = null; oppsTab = 'active';
-  showWatchAll = false; showMap = false; showAllPeople = false;
+  meetRange = 'Last 90 days'; peopleStance = 'any'; peopleView = 'cards';
+  auditQ = ''; auditKind = 'all'; adminTab = 'people';
+  prodQ = ''; paId = null; oppsTab = 'active'; oppCust = '';
+  showMap = false;
+  listShown = {};   /* every expanded list collapses back to its first chunk */
   tlOpen = new Set([todayISO().slice(0, 7)]);
   openMonths = new Set([todayISO().slice(0, 7)]);
-  calMonth = null;
+  calMonth = null; calOpenDays = new Set();
   document.querySelectorAll('.toast').forEach((t) => t.remove());
 }
 
@@ -2671,12 +2939,12 @@ function screenToday(){
       <div class="v">${usOverdue.length}</div>
       <div class="d">ours, not theirs — past the date we set</div>
     </div>
-    <div class="kpi">
+    <div class="kpi info">
       <div class="l">Closing ≤ 45d</div>
       <div class="v">${closingV ? cm(closingV) : '—'}</div>
       <div class="d">${closing.length ? closing.length + ' deal' + (closing.length === 1 ? '' : 's') + ', nearest first' : 'nothing closes inside 45 days'}</div>
     </div>
-    <div class="kpi">
+    <div class="kpi info">
       <div class="l">Pipeline</div>
       <div class="v">${cm(openV)}</div>
       <div class="d">${allOpps.length} opportunit${allOpps.length === 1 ? 'y' : 'ies'} · weighted ${cm(weighted)}</div>
@@ -2687,8 +2955,8 @@ function screenToday(){
     { action: 'focus-week' })}
   ${D.customers.length ? '' : firstUseCard()}
 
-  <div class="grid g3" style="margin-top:var(--s6)">
-    <div>
+  <div class="today-grid">
+    <div class="today-main">
       <h2 class="tsec" data-tour="needs">Needs you today<span class="why">— next steps, grouped by who owes the move</span></h2>
       <div class="card" style="padding:0;overflow:hidden">
         ${weOwe.length ? `<div class="owe-h">We owe <span class="n">${weOwe.length}</span></div>` : ''}
@@ -2706,9 +2974,12 @@ function screenToday(){
           Nothing overdue and nothing waiting on anybody.</div>`}
       </div>
     </div>
-    <div>
+    <div class="today-rail">
       <h2 class="tsec" data-tour="meet">Interactions<span class="why">— and what each one owes</span></h2>
-      ${D.interactions.map(m => {
+      <!-- The rail shows the newest four and a door to the rest — every
+           interaction ever logged used to render here, which at 190 records
+           made the front page the longest page in the product. -->
+      ${D.interactions.slice(0, 4).map(m => {
         const c = cust(m.c);
         return `<div class="card" style="margin-bottom:var(--s3)">
           <div class="row" style="align-items:flex-start">
@@ -2721,7 +2992,9 @@ function screenToday(){
           </div>
         </div>`;
       }).join('')}
-      <h3 style="margin-top:var(--s5)">Closing soon<span class="why" style="font-size:11.5px;font-weight:500;color:var(--ink-3);margin-left:6px">— the money calendar</span></h3>
+      ${D.interactions.length > 4
+      ? `<button class="more" data-go="interactions">All ${D.interactions.length} interactions →</button>` : ''}
+      <h3 class="ovl" style="margin-top:var(--s5)">Closing soon<span style="font-size:11px;font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink-3);margin-left:6px">— the money calendar</span></h3>
       <div class="card" style="padding:11px 16px">
         ${closing.length ? closing.map(o => {
           const g = -dayGap(o.close);
@@ -2733,9 +3006,7 @@ function screenToday(){
           </div>`;
         }).join('') : '<div class="tiny muted" style="padding:4px 0">No open deal closes inside 45 days.</div>'}
       </div>
-    </div>
-    <div>
-      <h2 class="tsec">Risk radar<span class="why">— what the book is worried about</span></h2>
+      <h2 class="tsec" style="margin-top:var(--s6)">Risk radar<span class="why">— what the book is worried about</span></h2>
       <div class="card" style="padding:0;overflow:hidden">
         ${radar.length ? radar.slice(0, 5).map(r => `
           <div class="risk-item ${r.sev}" data-open="${esc(r.c.id)}" title="Open ${esc(r.c.name)}">
@@ -2756,7 +3027,7 @@ function screenToday(){
           .sort((a,b) => b.v - a.v).slice(0, 3);
         if (!ranked.length) return '';
         return `
-      <h3 style="margin-top:var(--s5)">What should I do next?</h3>
+      <h3 class="ovl" style="margin-top:var(--s5)">What should I do next?</h3>
       <div class="card" style="padding:0">
         ${ranked.map(({c, v}) => `
           <div class="row" style="padding:11px var(--s4);border-bottom:1px solid var(--line)">
@@ -2787,6 +3058,7 @@ function screenToday(){
    stays out of the URL for the same reason the search boxes do, and every
    fresh open starts on the month you are in. */
 let calMonth = null;   /* 'YYYY-MM', or null for the month you are in */
+let calOpenDays = new Set();   /* days expanded in place via "+N more" */
 
 function calYm(){
   if (!calMonth){
@@ -2853,8 +3125,11 @@ function screenCalendar(){
     cells.push(`
       <div style="border:1px solid var(--line);border-radius:var(--r-sm);padding:5px 4px;min-height:88px;overflow:hidden;${isToday ? 'outline:2px solid var(--blue);outline-offset:-2px' : ''}">
         <div class="cal-d${isToday ? ' today' : ''}">${d}</div>
-        ${items.slice(0, 3).map(calItem).join('')}
-        ${items.length > 3 ? `<div class="tiny muted" style="padding:1px 4px">+${items.length - 3} more</div>` : ''}
+        <!-- "+N more" used to be a dead count — a day with seven entries told
+             you about four and charged you a page turn for the rest. It is a
+             button now: the day opens in place, in the grid. -->
+        ${(calOpenDays.has(iso) ? items : items.slice(0, 3)).map(calItem).join('')}
+        ${items.length > 3 ? `<button class="cal-more" data-calx="${iso}">${calOpenDays.has(iso) ? 'show less' : '+' + (items.length - 3) + ' more'}</button>` : ''}
       </div>`);
   }
   return `
@@ -2887,11 +3162,16 @@ function screenCalendar(){
     ${overdue.length > 5 ? `<div class="tiny muted" style="padding:7px var(--s4)">${overdue.length - 5} more overdue — Today carries the full list.</div>` : ''}
   </div>` : ''}
 
-  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:var(--s3)">
+  <!-- One scroll parent for BOTH grids: the weekday header and the day cells
+       have to slide together, or Tuesday's header would sit over Wednesday's
+       cells the moment only one of them scrolled. -->
+  <div class="cal-scroll">
+  <div class="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:var(--s3)">
     ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div class="tiny muted" style="text-align:center;font-weight:600">${d}</div>`).join('')}
   </div>
-  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
+  <div class="cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px">
     ${cells.join('')}
+  </div>
   </div>
 
   ${!dated && !overdue.length ? `<div class="empty" style="padding:var(--s5) var(--s4);margin-top:var(--s4)">
@@ -2973,7 +3253,9 @@ function screenCustomers(){
 
     return `
     <div class="phead">
-      <div><h1>Customers</h1><p class="sub">One row per customer, carrying enough to act without opening it</p></div>
+      <div><h1>Customers</h1><p class="sub">${rows.length === vis.length
+        ? 'One row per customer, carrying enough to act without opening it'
+        : rows.length + ' of ' + vis.length + ' customers match'}</p></div>
       <div class="spacer"></div>
       <div class="seg">
         <button data-cv="board">Cards</button>
@@ -2995,7 +3277,7 @@ function screenCustomers(){
       </div>
     </div>
 
-    ${(custShowAll ? rows : rows.slice(0, 50)).map(({c, ops, val}) => {
+    ${rows.slice(0, listCap('customers', rows.length)).map(({c, ops, val}) => {
       /* custContext, not a local copy: the local nextStep() this replaced did
          not filter completed steps, so a customer whose FIRST step was already
          done showed that done step as "Next" — the done work nagging forever. */
@@ -3027,15 +3309,15 @@ function screenCustomers(){
           ${c.contacts.slice(0, 3).map(p => `<span class="tiny">${esc(p.n.split(' ').slice(-1)[0])} <span class="muted">${esc(p.s)}</span></span>`).join('<span class="tiny muted">·</span>')}
         </div>
       </div>`;
-    }).join('')}${rows.length > 50 && !custShowAll
-      ? `<button class="more" data-act="custshowall" style="margin-bottom:var(--s4)">Show all ${rows.length} customers ↓</button>`
-      : ''}`;
+    }).join('')}${listFoot('customers', rows.length)}`;
   }
 
   if (view.cview === 'table'){
     return `
     <div class="phead">
-      <div><h1>Customers</h1><p class="sub">The dense table — managers live here</p></div>
+      <div><h1>Customers</h1><p class="sub">${rows.length === vis.length
+        ? 'The dense table — managers live here'
+        : rows.length + ' of ' + vis.length + ' customers match'}</p></div>
       <div class="spacer"></div>
       <div class="seg">
         <button data-cv="board">Cards</button>
@@ -3045,10 +3327,22 @@ function screenCustomers(){
       ${can('create') ? '<button class="btn pri" data-act="newcust">+ New customer</button>' : ''}
     </div>
     ${filterBar()}
-    <div class="card" style="padding:0;overflow-x:auto">
-      <table>
-        <tr><th>Customer</th><th>Industry</th><th>Stance</th><th>Health</th><th>People</th><th>Opportunities</th><th>Open value</th><th>Owner</th><th>Last meeting</th></tr>
-        ${rows.map(({c,ops,val}) => {
+    <!-- ctbl-wrap: the table scrolls inside its own frame (both axes), so the
+         sticky header holds at every window width. A sticky header against the
+         WINDOW would break the moment overflow-x:auto on this card made the
+         card the scroll container — which it does at any width where the table
+         is wider than the page. -->
+    <div class="card ctbl-wrap" style="padding:0">
+      <table class="ctbl">
+        <thead><tr>
+          <th data-csort="name" class="${custSort === 'name' ? 'on' : ''}">Customer${custSort === 'name' ? ' ↑' : ''}</th>
+          <th>Industry</th><th>Stance</th><th>Health</th><th>People</th><th>Opportunities</th>
+          <th data-csort="pipeline" class="${custSort === 'pipeline' ? 'on' : ''}">Open value${custSort === 'pipeline' ? ' ↓' : ''}</th>
+          <th>Owner</th>
+          <th data-csort="activity" class="${custSort === 'activity' ? 'on' : ''}">Last meeting${custSort === 'activity' ? ' ↓' : ''}</th>
+        </tr></thead>
+        <tbody>
+        ${rows.slice(0, listCap('customers', rows.length)).map(({c,ops,val}) => {
           /* W2b §03 A: the peek — next step and last touch under the row. The
              row itself stays a door to the full record (the suites and the
              deep tabs live there); the chevron is the glance that spares a
@@ -3072,8 +3366,10 @@ function screenCustomers(){
           <div><span class="t">Last touch</span> · ${last ? `${esc(last.d)} — ${esc(last.t)}` : '<span class="m">no interaction recorded</span>'}</div>
         </div></td></tr>` : ''}`;
         }).join('')}
+        </tbody>
       </table>
-    </div>`;
+    </div>
+    ${listFoot('customers', rows.length)}`;
   }
 
   /* L4: "Board" here is a grid of cards; on Opportunities the same word is
@@ -3114,7 +3410,7 @@ function screenCustomers(){
 
   ${filterBar()}
   ${rows.length ? `<div class="grid g3" data-tour="cboard">
-    ${rows.map(({c, ops, val}) => {
+    ${rows.slice(0, listCap('customers', rows.length)).map(({c, ops, val}) => {
       const { lm, ns, to } = custContext(c);
       const late = ns && ns.from === 'us' && stepOverdue(ns);
       const why = healthWhy(c);
@@ -3153,7 +3449,8 @@ function screenCustomers(){
         <div class="tiny muted" style="margin-top:4px;line-height:1.45">${esc(why)}</div>
       </div>`;
     }).join('')}
-  </div>`
+  </div>
+  ${listFoot('customers', rows.length)}`
     : `<div class="card"><div class="empty">
          <div style="display:flex;justify-content:center;margin-bottom:var(--s3)">${ART.empty}</div>
          ${vis.length
@@ -3168,7 +3465,7 @@ function screenCustomers(){
    only shows once something is narrowed — a bar that is always asking you to
    undo things is just noise. */
 let custF = { q:'', ind:'', st:'' };
-let custShowAll = false;   /* the list caps at 50; "Show all" lifts it */
+/* the list opens with its first fifty; [data-more="customers"] grows it */
 
 function custMatches(c){
   if (custF.ind && c.industry !== custF.ind) return false;
@@ -3208,9 +3505,20 @@ function screenCustomer(){
   const ops = oppsOf(c.id);
   const tab = view.tab;
 
+  /* The record header used to spend ~210px before the first fact: an actions
+     row, a hero block, a search row, then the tabs. Now the actions ride on
+     the title line, the find box rides on the tab row, and the tab row sticks
+     under the top bar — the record is long, its doors should not scroll away. */
   return `
-  <div class="row" style="margin-bottom:var(--s3)">
+  <div class="cd-h">
     <button class="btn sm" data-go="customers">← Customers</button>
+    <div class="cd-title">
+      ${logo(c, 26)}
+      <h1>${esc(c.name)}</h1>
+      ${stanceTag(c.stance)}
+      ${healthTag(c.health, healthWhy(c))}
+      ${c.unverified ? `<span class="tag t-warn" title="Filled from public sources — not yet confirmed by somebody who knows this account">Unverified</span>` : ''}
+    </div>
     <div class="spacer"></div>
     ${can('log') && aiReady(c) ? `<button class="btn sm ai" data-act="insights" data-cid="${c.id}"
       title="The model reads this customer's own facts - anonymised, and shown to you before anything is sent - and proposes concrete next moves.">What should I do next?</button>` : ''}
@@ -3218,34 +3526,20 @@ function screenCustomer(){
     ${can('del') ? `<button class="btn sm btn--danger" data-act="delcust" data-cid="${c.id}"
       title="Administrator only — deletes this customer and every record on it">Delete</button>` : ''}
   </div>
+  <p class="sub" style="margin:0 0 2px">${esc(c.industry)} · ${esc(c.hq)}${(c.people || 0) > 0 ? ' · ' + c.people.toLocaleString() + ' people' : ''} · customer since ${esc(c.since)}</p>
+  <p class="tiny" style="margin:0 0 var(--s3);color:var(--ink-2)" title="§10: the health word is never shown without its reason"><b>Health ·</b> ${esc(healthWhy(c))}</p>
   ${edFor === 'cust|' + c.id ? edForm('cust|' + c.id, [c.name, c.industry, c.hq, c.site, c.owner, c.stance, c.health, (c.people || 0) > 0 ? String(c.people) : '', c.since || '']) : ''}
 
-  <div class="phead" style="margin-bottom:var(--s4)">
-    <div style="flex:1;min-width:0">
-      <div class="row" style="gap:10px">
-        ${logo(c, 28)}
-        <h1>${esc(c.name)}</h1>
-        ${stanceTag(c.stance)}
-        ${healthTag(c.health, healthWhy(c))}
-        ${c.unverified ? `<span class="tag t-warn" title="Filled from public sources — not yet confirmed by somebody who knows this account">Unverified</span>` : ''}
-      </div>
-      <p class="sub">${esc(c.industry)} · ${esc(c.hq)}${(c.people || 0) > 0 ? ' · ' + c.people.toLocaleString() + ' people' : ''} · customer since ${esc(c.since)}</p>
-      <p class="tiny" style="margin:2px 0 0;color:var(--ink-2)" title="§10: the health word is never shown without its reason"><b>Health ·</b> ${esc(healthWhy(c))}</p>
+  <div class="cd-tabs" data-tour="tabs">
+    <div class="tabs" style="margin-bottom:0;flex:1;min-width:0">
+      ${CUST_TABS.map(t =>
+        `<button class="tab ${tab === t.k ? 'on' : ''}" data-tab="${t.k}">${t.l}</button>`
+      ).join('')}
     </div>
-  </div>
-
-  <div class="row" style="margin-bottom:var(--s3);gap:10px;flex-wrap:wrap">
-    <label class="search" style="width:340px;max-width:100%">
+    <label class="search cd-find">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.6" stroke="var(--ink-0)" stroke-width="1.5"/><path d="M10.6 10.6L14 14" stroke="var(--ink-0)" stroke-width="1.5" stroke-linecap="round"/></svg>
       <input data-cq placeholder="Find in this customer…" title="Find in this customer — a person, a meeting, a system" value="${esc(custQ)}" />
     </label>
-    <div class="spacer"></div>
-  </div>
-
-  <div class="tabs" data-tour="tabs">
-    ${CUST_TABS.map(t =>
-      `<button class="tab ${tab === t.k ? 'on' : ''}" data-tab="${t.k}">${t.l}</button>`
-    ).join('')}
   </div>
 
   ${custFind(c)}
@@ -3296,7 +3590,6 @@ const WATCH_KIND = {
 /* Confirmed and dismissed are stored on the record and saved, not held in
    memory. A human decision that evaporates on reload is not a decision — the
    next person opens the same unverified row and starts again. */
-let showWatchAll = false;
 let watchAdd = false;
 
 const watchOf = (cid) => D.watch
@@ -4170,11 +4463,42 @@ async function deleteCustomerNow(){
      so the envelope is now the only way a removal happens at all — on a merge
      as much as on a replace. The server still has the last word: DELETE_ROLES
      is the administrator's alone. */
+  /* The answer decides the sentence. This used to fire the request, swallow
+     every failure — the `catch` had nothing in it — and then tell the person
+     the customer and every record on it were gone. A session that had expired,
+     a refusal, a server that never answered: all of them produced the same
+     "… deleted — every record on it went with it." The person stops chasing an
+     account that is still on every other screen, which is worse than the
+     delete failing. So: read the answer, and only claim the removal once the
+     server has said it happened. GONE is never cleared on a failure, so the
+     next scheduled save still owes the removal and will carry it again. */
   try {
-    await fetch('/api/data', { method: 'PUT', credentials: 'same-origin',
+    const res = await fetch('/api/data', { method: 'PUT', credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json', 'X-Base-Rev': String(SY.rev) },
       body: JSON.stringify({ state: buildState(), baseRev: SY.rev, deleted: goneTake() }) });
-  } catch { /* GONE is kept, so the next scheduled save carries the removal again */ }
+    if (!res.ok){
+      let why = '';
+      try {
+        const b = await res.clone().json();
+        why = String((b && (b.error || b.message)) || '').trim();
+      } catch { /* not JSON — fall back to the plain sentence */ }
+      const said = why || 'the server refused this change';
+      SY.note = 'Not deleted. ' + said + ' ' + c.name + ' is still in the book.';
+      paintSync();
+      toast('Not deleted — ' + said + '.', null, 'err');
+      return;
+    }
+    const b = await res.json().catch(() => null);
+    if (b && b.rev) SY.rev = b.rev;
+  } catch {
+    /* GONE is kept, so the next scheduled save carries the removal again — and
+       so does this note, which is the only thing telling the person that the
+       customer they just watched disappear is not gone anywhere. */
+    SY.note = 'Not deleted — the data server could not be reached, so ' + c.name + ' is still in the book.';
+    paintSync();
+    toast('Not deleted — the data server could not be reached.', null, 'err');
+    return;
+  }
   toast(c.name + ' deleted — every record on it went with it.');
 }
 
@@ -4201,7 +4525,7 @@ function watchCard(c){
   const all = watchOf(c.id);
   const fresh = all.filter(w => dayGap(w.d) <= 30).length;
   const comp  = all.filter(w => w.k === 'competitor').length;
-  const shown = showWatchAll ? all : all.slice(0, 4);
+  const shown = all.slice(0, listCap('watch:' + c.id, all.length));
   /* Three zeros in a row read as three failures. The counts only mean
      something once there is something to count. */
   /* An empty block collapses instead of holding height: with no signal the
@@ -4232,8 +4556,7 @@ function watchCard(c){
       <span class="tiny muted">Nothing here is <b>true</b> until somebody opens the link and marks it confirmed.</span>
     </div>
     ${shown.map(w => watchRow(w, false)).join('')}
-    ${all.length > shown.length ? `<button class="more" data-act="wall">Show all ${all.length} ↓</button>` : ''}
-    ${showWatchAll && all.length > 4 ? `<button class="more" data-act="wless">Show fewer ↑</button>` : ''}
+    ${listFoot('watch:' + c.id, all.length)}
     ${can('log')
       ? (watchAdd
           ? watchAddForm(c)
@@ -4318,10 +4641,13 @@ function tabFiles(c){
 
   <div class="grp-h">Audit<span class="n">${log.length}</span>
     <span class="why">who changed what, and what it was before${log.length > 20 ? " · showing the 20 most recent" : ""}</span></div>
-  ${log.length ? `<div class="card" style="padding:0">
-    ${(auditShowAll ? log : log.slice(0, 20)).map(a => `
+  ${log.length ? `<div class="flow">
+    ${log.slice(0, listCap('audit:' + c.id, log.length)).map(a => `
       <div class="pr" style="align-items:flex-start">
-        <span class="pr-m" style="width:48px;flex:0 0 48px;padding-top:2px">${esc(a.tm)}</span>
+        <!-- 78px, not 48px: this column holds a whole ISO date ("2026-05-26"),
+             and at 48px the day was cut off the end ("2026-05-") — a record of
+             what changed that no longer says when. -->
+        <span class="pr-m" style="width:78px;flex:0 0 78px;padding-top:2px">${esc(a.tm)}</span>
         <span class="tag ${a.k === 'sec' ? 't-risk' : a.k === 'ai' ? 't-violet' : 't-grey'}"
           style="flex:0 0 auto">${esc((AUDIT_K[a.k] || AUDIT_K.data).l)}</span>
         <span class="pr-main">
@@ -4334,7 +4660,7 @@ function tabFiles(c){
           <span class="tiny" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500" title="${esc(a.to)}">${esc(String(a.to).slice(0, 80))}</span>
         </span>
       </div>`).join('')}
-    ${log.length > 20 && !auditShowAll ? `<button class="more" data-act="ashowall">Show all ${log.length} changes</button>` : ''}
+    ${listFoot('audit:' + c.id, log.length)}
   </div>` : `<div class="card"><div class="empty">Nothing recorded on this customer yet.</div></div>`}
 
 `;
@@ -4500,25 +4826,45 @@ const SIX_QS = [
   { id:'past',      nav:'What happened' },
   { id:'mine',      nav:'What needs me' }
 ];
-const sqHead = (n, q, why) => `
-  <div class="sq-h"><span class="q">Q${n}</span><h2>${q}</h2><span class="sq-why">${why}</span></div>`;
+/* Which of the six questions the reader has folded away. A reading
+   preference, not data — so it lives in localStorage on this device, never
+   in the book, and deliberately NOT in resetState: signing out is not a
+   reason to forget how somebody likes to read. */
+let sixClosed = new Set();
+try { sixClosed = new Set(JSON.parse(localStorage.getItem('cwb-six') || '[]')); } catch (e) { sixClosed = new Set(); }
+function sixSave(){ try { localStorage.setItem('cwb-six', JSON.stringify([...sixClosed])); } catch (e) { /* file:// */ } }
+/* The whole header row is the toggle — a question you are not working on
+   today folds to one line and stays where it was. Default is open: the first
+   visit shows everything, folding is always the reader's own act. */
+const sqHead = (id, n, q, why) => {
+  const closed = sixClosed.has(id);
+  return `<button class="sq-h" data-sqc="${id}" aria-expanded="${!closed}"
+    title="${closed ? 'Open this question' : 'Fold this question away for now'}">
+    <span class="tw">›</span><span class="q">Q${n}</span><h2>${q}</h2><span class="sq-why">${why}</span></button>`;
+};
 
 function tabBrief(c, ops){
   const open = ops.filter(o => D.stages.includes(o.stage));
   const rest = ops.length - open.length;
-  const q = (id, n, title, why, body) => `
-    <section class="six-q" id="sq-${id}">${sqHead(n, title, why)}
-      <div class="six-body">${body}</div>
+  const q = (id, n, title, why, body) => {
+    const closed = sixClosed.has(id);
+    return `
+    <section class="six-q${closed ? ' sq-shut' : ''}" id="sq-${id}">${sqHead(id, n, title, why)}
+      ${closed ? '' : `<div class="six-body">${body}</div>`}
     </section>`;
+  };
   return `
   <div class="six">
     <nav class="six-nav" aria-label="The six questions">
       <span class="sn-h">Six questions</span>
-      ${SIX_QS.map((x, i) => `<button data-sq="${x.id}"><span class="sn-n">Q${i + 1}</span>${esc(x.nav)}</button>`).join('')}
+      ${SIX_QS.map((x, i) => `<button data-sq="${x.id}"${sixClosed.has(x.id) ? ' class="sq-off"' : ''}><span class="sn-n">Q${i + 1}</span>${esc(x.nav)}</button>`).join('')}
     </nav>
     <div>
       ${q('who', 1, 'Who is this customer', '— the company, the record, and where we stand',
-        briefIdentity(c, open, rest) + standCard(c, ops))}
+        /* Q1 is two questions answered side by side: what the company IS
+           (identity) and where WE stand with it (the judgement). One column
+           made the reader scroll between facts that belong together. */
+        `<div class="brief-2col">${briefIdentity(c, open, rest)}${standCard(c, ops)}</div>`)}
       ${q('happening', 2, 'What\u2019s happening', '— the last touch, the outside signals, and what the model reads in this account',
         taskAskBox('custBrief-' + esc(c.id), 'Brief Customer',
           'A briefing from your own records — the facts, then what the model reads in them.',
@@ -4608,7 +4954,7 @@ function recentHistory(c){
   const ev = (c.timeline || []).slice().sort((a, b) => String(b.d).localeCompare(String(a.d))).slice(0, 6);
   if (!ev.length) return `<div class="card" style="padding:var(--s5)">
     <span class="tiny muted">Nothing has happened on this account yet. The first thing logged here becomes the start of its history.</span></div>`;
-  return `<div>
+  return `<div class="flow">
     ${ev.map(t => `<div class="tl-row">
       <span class="tl-spine"><span class="tl-dot ${tlDotCls(t.k)}"></span><span class="tl-line"></span></span>
       <span class="pr-main" style="padding-bottom:10px;min-width:0">
@@ -4884,7 +5230,12 @@ const BAND_WHY = {
   'Decision maker':'signs it, or says no',
   'Blocker':'can stop it — win them or go around them',
   'Influencer':'shapes the choice, does not sign it',
-  'User':'lives with it every day, after we leave'
+  'User':'lives with it every day, after we leave',
+  /* The word bandOf hands back for a person nobody has classified. Without
+     this entry the page printed the bare string `undefined` — in the group
+     header, in the person card, and in what the AI layer is told about the
+     record. An unclassified person is not an error; it is a to-do. */
+  'Not classified yet':'nobody has said what they are in this decision yet'
 };
 
 function personRow(c, p, on){
@@ -5063,7 +5414,7 @@ function tabPeople(c){
   if (peopleScope === 'quiet')   list = quiet;
   if (peopleScope === 'none')    list = unowned;
 
-  const cap = showAllPeople ? list.length : 8;
+  const cap = listCap('custpeople:' + c.id, list.length);
   const shown = list.slice(0, cap);
   const selName = (pickedPerson && list.some(p => p.n === pickedPerson)) ? pickedPerson
                 : (window.innerWidth > 880 && shown[0] ? shown[0].n : null);
@@ -5099,8 +5450,7 @@ function tabPeople(c){
         <span class="tiny muted">${shown.length} of ${list.length}</span>
       </div>
       ${rows || `<div class="empty">Nobody in this view.</div>`}
-      ${list.length > cap ? `<button class="more" data-act="showall">Show all ${list.length} people ↓</button>` : ''}
-      ${showAllPeople && list.length > 8 ? `<button class="more" data-act="showless">Show the first 8 ↑</button>` : ''}
+      ${listFoot('custpeople:' + c.id, list.length)}
     </div>
     <div>${sel ? personCard(c, sel)
       : `<div class="card"><div class="empty">Pick a person to see everything we know about them.</div></div>`}</div>
@@ -5262,7 +5612,7 @@ function tabTimeline(c){
   /* You are already inside the customer, so the meeting form here needs no
      customer picker — it is this customer's meeting by construction. */
   return `${addBarFor('interactions', { label:'Log an interaction with ' + c.name.split(' ')[0] })}
-  <div class="card" style="padding:0">
+  <div class="flow">
     <div class="strip">
       <span class="sstat"><span class="n">${ev.length}</span><span class="l">event${ev.length === 1 ? '' : 's'}</span></span>
       <span class="sstat"><span class="n">${meets}</span><span class="l">interaction${meets === 1 ? '' : 's'}</span></span>
@@ -5337,6 +5687,56 @@ function screenPeople(){
   const shown = list.reduce((a,x) => a + x.people.length, 0);
   const total = D.customers.reduce((a,c)=>a + c.contacts.length, 0);
 
+  /* Org map mode: pick a company, see its shape. The picker in peopleBar is
+     the driver; with nothing picked the map opens on the account with the
+     most names on the record — the one whose shape is hardest to hold in
+     your head. The drawing is the same relMapBlock the customer tab has
+     always had; below it the people become compact rows, because a map with
+     forty nodes is a drawing of nothing and the list has to carry it. */
+  if (peopleView === 'map'){
+    const target = D.customers.find(c => c.id === peopleC)
+      || ((list.slice().sort((a, b) => b.people.length - a.people.length)[0] || {}).c)
+      || D.customers[0];
+    if (!target){
+      return `
+      <div class="phead"><div><h1>People</h1><p class="sub">No customers yet</p></div></div>
+      ${peopleBar()}
+      <div class="card"><div class="empty">Add a customer first — the map draws the people OF a company.</div></div>`;
+    }
+    const rows = (target.contacts || []).slice()
+      .sort((a, b) => (BANDS.indexOf(bandOf(a)) - BANDS.indexOf(bandOf(b))) || String(a.n).localeCompare(String(b.n)));
+    const met = rows.filter(p => lastMet(target, p)).length;
+    return `
+    <div class="phead">
+      <div><h1>People</h1>
+        <p class="sub">Org map · ${esc(target.name)} — ${rows.length} ${rows.length === 1 ? 'person' : 'people'} on the record, ${met} met</p></div>
+    </div>
+    ${peopleBar()}
+    ${addBarFor('gpeople')}
+    <div class="card" style="padding:0;margin-bottom:var(--s4)">
+      <div class="strip"><span class="sstat"><span class="n">${esc(target.name)}</span>
+        <span class="l">solid line = met them · dashed = nobody has yet</span></span></div>
+      ${relMapBlock(target)}
+    </div>
+    <div class="card" style="padding:0">
+      ${rows.map(p => {
+        const lm = lastMet(target, p);
+        /* "met" rides in the subtitle, not a fixed 150px side column — a fixed
+           column on a 390px phone starves the name column to a word per line. */
+        return `<button class="pr" data-drw="person|${esc(target.id)}|${esc(p.n)}"
+          title="Open ${esc(p.n)} — the record drawer, with Edit inside"
+          style="width:100%;text-align:left;border:none;background:none;cursor:pointer">
+          <span class="av" style="width:26px;height:26px;font-size:10px;flex:0 0 26px">${esc(initials(p.n))}</span>
+          <span class="pr-main">
+            <span class="pr-n" style="font-weight:500">${esc(p.n)}</span>
+            <span class="pr-t">${esc(p.t || '')} · ${esc(bandOf(p))} · our owner ${esc(p.o)} · ${lm ? 'met ' + esc(fmtDay(lm.d)) : '<span class="urgent">never met</span>'}</span>
+          </span>
+          ${stanceTag(p.s)}
+        </button>`;
+      }).join('') || '<div class="tiny muted" style="padding:14px var(--s4)">Nobody on the record yet.</div>'}
+    </div>`;
+  }
+
   if (!list.length){
     return `
     <div class="phead"><div><h1>People</h1><p class="sub">${total} ${total === 1 ? 'person' : 'people'}</p></div></div>
@@ -5358,8 +5758,8 @@ function screenPeople(){
   ${(() => {
     /* A person is a CARD, not a row: who they are, where they stand, how to
        reach them, and an Edit that works right here — the Dribbble contact-card
-       shape Kelvin pointed at. Groups cap at twenty customers; search and
-       filters override the cap. */
+       shape Kelvin pointed at. Groups come in chunks of twenty; search and
+       filters override the chunking and show every match. */
     const groupHtml = list.map(({c, people}) => `
     <div style="margin-bottom:var(--s5)">
       <div class="row" style="margin-bottom:var(--s2);gap:9px">
@@ -5376,9 +5776,9 @@ function screenPeople(){
         ${people.map(p => personMiniCard(c, p)).join('')}
       </div>
     </div>`);
-    if (!q && !peopleC && peopleStance === 'any' && !peopleShowAll && groupHtml.length > 20){
-      return groupHtml.slice(0, 20).join('')
-        + `<button class="more" data-act="pshowall" style="margin-bottom:var(--s4)">Show all ${groupHtml.length} customers ↓</button>`;
+    if (!q && !peopleC && peopleStance === 'any'){
+      return groupHtml.slice(0, listCap('peoplegroups', groupHtml.length)).join('')
+        + listFoot('peoplegroups', groupHtml.length);
     }
     return groupHtml.join('');
   })()}`;
@@ -5387,11 +5787,19 @@ function screenPeople(){
 /* The contact card the People page runs on. Edit works inline, on this page —
    nobody should have to open the customer, open the tab, open the person,
    just to fix a phone number. */
+/* A people card is READ-ONLY on purpose. Editing used to live on the card
+   itself — an Edit button and a form that burst the card open in the middle
+   of the grid. That made a correction feel risky (one click and the layout
+   moves) and the card did nothing when you clicked the person, which is the
+   natural thing to do. Now the whole card is the door: it opens the person in
+   the record drawer, and the ONLY Edit lives inside that drawer — the same
+   rule as opportunities. A card you can read without fear of changing it. */
 function personMiniCard(c, p){
-  const key = rmKey.person(c, p);
   const liUrl = String(p.li || '').trim();
   const contact = [p.em, p.ph].filter(Boolean).map(esc).join(' · ');
-  return `<div class="card" style="display:flex;flex-direction:column;gap:8px">
+  return `<div class="card pcard" data-drw="person|${esc(c.id)}|${esc(p.n)}"
+      title="Open ${esc(p.n)} — the record drawer, with Edit inside"
+      style="display:flex;flex-direction:column;gap:8px;cursor:pointer">
     <div class="row" style="align-items:flex-start;gap:9px">
       <div class="av" style="width:30px;height:30px;font-size:11px;flex:0 0 30px">${esc(initials(p.n))}</div>
       <div style="flex:1;min-width:0">
@@ -5406,23 +5814,30 @@ function personMiniCard(c, p){
       <span class="tiny muted" style="margin-right:auto">our owner · ${esc(p.o)}</span>
       <a class="lk" href="${esc(liUrl || liPeople(liPersonQ(p, c)))}" target="_blank" rel="noopener"
          title="${liUrl ? 'The exact profile — set by the team in Edit' : 'A LinkedIn search — paste the exact profile in Edit when you know it'}">LinkedIn ↗</a>
-      ${canEditKind(key) ? `<button class="btn sm" data-act="ed" data-ed="${esc(key)}">Edit</button>` : ''}
     </div>
-    ${edFor === key ? edForm(key, [p.n, p.t, bandOf(p), p.s, p.em, p.ph, p.li]) : ''}
   </div>`;
 }
 
 function peopleBar(){
+  /* Cards answer "who do we know"; Org map answers "how is one company
+     organised". The picker drives both — in map mode it chooses the company
+     whose shape you are looking at, so the search and stance filters step
+     aside rather than filter a drawing. */
+  const map = peopleView === 'map';
   return `<div class="row" style="margin-bottom:var(--s5);flex-wrap:wrap;gap:8px">
-    <label class="search">
+    <div class="seg">
+      <button data-pv="cards" class="${map ? '' : 'on'}">Cards</button>
+      <button data-pv="map" class="${map ? 'on' : ''}">Org map</button>
+    </div>
+    ${map ? '' : `<label class="search">
       <svg width="13" height="13" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="4.6" stroke="var(--ink-0)" stroke-width="1.5"/><path d="M10.6 10.6L14 14" stroke="var(--ink-0)" stroke-width="1.5" stroke-linecap="round"/></svg>
       <input data-pq placeholder="Search people, titles, notes…" value="${esc(peopleQ)}" />
-    </label>
+    </label>`}
     ${customerPicker(peopleC, 'data-pcs')}
-    <select class="pick" id="peopleStance" style="color:var(--ink-3)">
+    ${map ? '' : `<select class="pick" id="peopleStance" style="color:var(--ink-3)">
       ${['any', 'With us', 'Undecided', 'Against us'].map(s =>
         `<option value="${s}"${s === peopleStance ? ' selected' : ''}>${s === 'any' ? 'Stance: any' : s}</option>`).join('')}
-    </select>
+    </select>`}
     <div class="spacer"></div>
   </div>`;
 }
@@ -5437,13 +5852,18 @@ function oppScreenBody(){
      `view.cview` is the same switch the customer page uses, so the control
      sits in the same place and behaves the same way on both screens. */
   if (view.cview === 'list'){
-    const rows = Object.values(D.opps).filter(o => inScope(o.c));
+    const scoped = Object.values(D.opps).filter(o => inScope(o.c));
+    const rows = scoped.filter(o => !oppCust || o.c === oppCust);
     const open = rows.filter(o => D.stages.includes(o.stage));
     const sorted = rows.slice().sort((a,b) => b.v - a.v);
     return `
     <div class="phead">
-      <div><h1>Opportunities</h1><p class="sub">One row per opportunity, largest first — the shape the board cannot show</p></div>
+      <div><h1>Opportunities</h1><p class="sub">${oppCust
+        ? rows.length + ' of ' + scoped.length + ' · ' + esc((cust(oppCust) || {}).name || '') + ' only'
+        : 'One row per opportunity, largest first — the shape the board cannot show'}</p></div>
       <div class="spacer"></div>
+      ${customerPicker(oppCust, 'data-ocs')}
+      ${oppCust ? `<button class="rchip on" data-act="oclear" title="Clear the customer filter">${esc((cust(oppCust) || {}).name || '')} ✕</button>` : ''}
       <div class="seg">
         <button data-cv="board">Board</button>
         <button class="on" data-cv="list">List</button>
@@ -5491,7 +5911,7 @@ function oppScreenBody(){
   }
 
   const cols = D.stages.map((s, i) => {
-    const list = Object.values(D.opps).filter(o => o.stage === s && inScope(o.c)).sort((a,b) => oppAge(b) - oppAge(a));
+    const list = Object.values(D.opps).filter(o => o.stage === s && inScope(o.c) && (!oppCust || o.c === oppCust)).sort((a,b) => oppAge(b) - oppAge(a));
     const tot = list.reduce((a,o) => a + o.v, 0);
     /* W4b — the header is the funnel: count and money, in the stage's own
        colour, on a card that stands on the page like the records under it.
@@ -5547,13 +5967,16 @@ function oppScreenBody(){
      trusts. W4b: one strip under the board, a line of prose with a verdict
      pill, not a second grid competing with the path above it. */
   const all = Object.values(D.opps).filter(o => inScope(o.c));
-  const open = all.filter(o => D.stages.includes(o.stage));
-  const parked = all.filter(o => !D.stages.includes(o.stage));
+  const fopps = all.filter(o => !oppCust || o.c === oppCust);
+  const open = fopps.filter(o => D.stages.includes(o.stage));
+  const parked = fopps.filter(o => !D.stages.includes(o.stage));
 
   return `
   <div class="phead">
-    <div><h1>Opportunities</h1><p class="sub">${open.length} open · ${cm(all.reduce((a,o)=>a+o.v,0))} · weighted ${cm(all.reduce((a,o)=>a+o.v*(o.p/100),0))}</p></div>
+    <div><h1>Opportunities</h1><p class="sub">${open.length} open · ${cm(fopps.reduce((a,o)=>a+o.v,0))} · weighted ${cm(fopps.reduce((a,o)=>a+o.v*(o.p/100),0))}${oppCust ? ' · ' + esc((cust(oppCust) || {}).name || '') + ' only — ' + fopps.length + ' of ' + all.length : ''}</p></div>
     <div class="spacer"></div>
+    ${customerPicker(oppCust, 'data-ocs')}
+    ${oppCust ? `<button class="rchip on" data-act="oclear" title="Clear the customer filter">${esc((cust(oppCust) || {}).name || '')} ✕</button>` : ''}
     <div class="seg">
       <button class="on" data-cv="board">Board</button>
       <button data-cv="list">List</button>
@@ -5597,8 +6020,33 @@ function screenOpportunities(){
    to, behind the same permission functions. Nothing here invents a fact: a
    line with nothing behind it renders as the honest dash the rest of the app
    uses. */
+/* The person drawer: the same facts the customer's People tab shows in its
+   side panel (personCard, unchanged — classification chips, links, the one
+   Edit), wearing the drawer's frame instead. Nothing here invents a second
+   editor: the panel's own permission checks decide whether Edit is drawn. */
+function drwPersonMarkup(){
+  const c = cust(drawer.cid);
+  const p = c && (c.contacts || []).find(x => x.n === drawer.pn);
+  if (!c || !p){ drawer = null; return ''; }
+  return `
+  <div class="drw-veil" data-drw-x title="Close the drawer"></div>
+  <aside class="drw"${drwFresh ? ' data-fresh' : ''} role="dialog" aria-label="${esc(p.n)}">
+    <div class="drw-h">
+      <button class="drw-x" data-drw-x title="Close (esc)">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <span class="crumb">People <i>/</i> <a class="lk" data-open="${esc(c.id)}" title="Open ${esc(c.name)} — the full record">${esc(c.name)}</a> <i>/</i> <b>${esc(p.n)}</b></span>
+      <span class="drw-hint">esc · 📌 pin</span>
+      <button class="drw-pin${splitPin ? ' on' : ''}" data-drw-pin title="${splitPin ? 'Unpin — back to the drawer' : 'Pin as split — list and record side by side.'}"><span style="font-size:12px;line-height:1">📌</span></button>
+    </div>
+    <div class="drw-b">${personCard(c, p)}</div>
+  </aside>`;
+}
+
 function drwMarkup(){
-  if (!drawer || drawer.kind !== 'opp') return '';
+  if (!drawer) return '';
+  if (drawer.kind === 'person') return drwPersonMarkup();
+  if (drawer.kind !== 'opp') return '';
   const o = D.opps[drawer.id];
   if (!o){ drawer = null; return ''; }
   const c = cust(o.c);
@@ -5725,12 +6173,12 @@ function rowActs(c, k){
 }
 
 let meetQ = '', meetC = '', peopleC = '', peopleQ = '';
+let peopleView = 'cards';   /* cards | map — the People page answers two questions */
 /* Two filters that used to be drawn and did nothing. A control that looks
    like a choice but never changes the list is worse than no control. */
 let meetRange = 'Last 90 days';
 let peopleStance = 'any';
-let peopleShowAll = false;   /* at fifty customers the People page caps at twenty groups until asked for more */
-let auditShowAll = false;    /* the customer audit caps at twenty rows until asked for more */
+/* peoplegroups and audit chunks are LIST_CHUNK / listShown now (top of file) */
 /* Past months start collapsed; the current month is open. Nothing is hidden —
    a collapsed month still shows its count, so a card can never go missing. */
 let openMonths = new Set([todayISO().slice(0, 7)]);
@@ -5763,7 +6211,7 @@ function screenInteractions(){
     <span class="tiny muted">Searching opens every month that has a match.</span>
   </div>
   ${aiOffNote()}
-  <div id="mList"></div>`;
+  <div id="mList" class="flow"></div>`;
 }
 
 function drawInteractions(){
@@ -5893,7 +6341,11 @@ function screenInsights(){
       <span class="sstat"><span class="n">${scoped.length}</span><span class="l">opportunit${scoped.length === 1 ? 'y' : 'ies'}</span></span>
       <div class="spacer"></div>
     </div>
-    ${byStage.map(r => `<div class="row" style="padding:10px var(--s4);border-bottom:1px solid var(--line)">
+    ${byStage.map(r => `<div class="row ibar" style="padding:10px var(--s4);border-bottom:1px solid var(--line)">
+      <!-- the wash behind the row is the stage's own tint, its width the
+           stage's share of the money — a funnel you can read before you
+           read a single number -->
+      <span class="ibar-fill ${stageCls(r.st)}" style="width:${totV ? Math.max(r.v / totV * 100, r.n ? 2 : 0) : 0}%"></span>
       <span class="stage-pill ${stageCls(r.st)}" style="flex:0 0 auto">${esc(r.st)}</span>
       <span class="tiny muted" style="flex:1">${r.n} opportunit${r.n === 1 ? 'y' : 'ies'}</span>
       <span class="mono" style="font-size:13px">${money(r.v)}</span>
@@ -6091,7 +6543,7 @@ function roleMatrix(){
       ${CAP_ROWS.map(row => `<tr><td>${esc(row.l)}${row.locked ? ' <span class="tiny muted">(always Admin)</span>' : ''}</td>
         ${ROLE_DEFS.map(r => `<td>${cellFor(row, r)}</td>`).join('')}</tr>`).join('')}
     </table>
-    <div class="more" style="border-top:1px solid var(--line);text-align:left;padding:11px var(--s4)">
+    <div class="more more--prose" style="border-top:1px solid var(--line);text-align:left;padding:11px var(--s4)">
       <strong>Three lines, that is the whole model — and you can move them.</strong>
       <b>Admin</b> is you, and it cannot be reduced. <b>Manager</b> ships read-only. <b>BD</b> owns
       the money and <b>SA</b> owns the machines, each reading the other’s half and neither writing
@@ -6324,7 +6776,11 @@ function adminAudit(){
     <div class="card" style="padding:0;margin-bottom:var(--s4)">
       ${list.filter(a => a.d === day).map(a => `
         <div class="pr" style="align-items:flex-start">
-          <span class="pr-m" style="width:48px;flex:0 0 48px;padding-top:2px" class="mono">${esc(a.tm)}</span>
+          <!-- Same 78px as the customer's audit tab: a whole date, or a whole
+               time, with nothing cut off the end. (The stray second "class"
+               attribute this line used to carry was ignored by every browser —
+               it has gone.) -->
+          <span class="pr-m mono" style="width:78px;flex:0 0 78px;padding-top:2px">${esc(a.tm)}</span>
           <span class="tag ${a.k === 'sec' ? 't-risk' : a.k === 'ai' ? 't-violet' : 't-grey'}"
             style="flex:0 0 auto">${esc((AUDIT_K[a.k] || AUDIT_K.data).l)}</span>
           <span class="pr-main">
@@ -7193,7 +7649,7 @@ function screenAdmin(){
       <div class="spacer"></div>
       <button class="btn sm" data-atab="audit">${recent} acts logged in 7 days →</button>
     </div>
-    ${unowned.length ? `<div class="more" style="border-top:1px solid var(--line)">
+    ${unowned.length ? `<div class="more more--prose" style="border-top:1px solid var(--line)">
       <strong>${unowned.map(c => esc(c.name)).join(', ')}</strong> ${unowned.length === 1 ? 'has' : 'have'} no BD and no SA.
       A customer nobody is on is a customer nobody will update — it will sit here looking healthy.</div>` : ''}
   </div>
@@ -7275,7 +7731,7 @@ function screenProducts(){
       <div class="spacer"></div>
       <span class="tiny muted">${can('users') ? 'You maintain this list. Everybody can read it.' : 'Read-only — an Admin maintains this list.'}</span>
     </div>
-    <div class="more" style="border-top:1px solid var(--line)">
+    <div class="more more--prose" style="border-top:1px solid var(--line)">
       ${onPlatform} of the ${people.length} specialists named here also have a Waypoint account.
       <b>They do not need one.</b> This is a name and a way to reach them — the product SA is a
       contact, not a user, and a product can be backed by as many people as it takes.
@@ -7303,12 +7759,24 @@ function screenProducts(){
             <span class="pr-n" style="font-weight:500">${esc(p.n)}</span>
             <span class="pr-t">${esc(p.one)}</span>
           </span>
-          <span class="pr-m" style="width:250px;flex:0 0 250px">
+          <!-- ".pr-m" is nowrap on purpose -- it keeps badges and "3d" cells on
+               one line -- but this column holds sentences ("Nobody named yet —
+               ...") and names with roles, and a nowrap 250px box does not clip
+               them politely: the text runs on under the Assign button and out
+               past the card edge, cut mid-word by the card's overflow. This
+               column is the one place the nowrap has to be given back.
+               (Plain quotes, no backticks: this comment lives inside a
+               template literal, and a backtick here would end the string.) -->
+          <span class="pr-m" style="width:250px;flex:0 0 250px;min-width:0;white-space:normal">
             ${ss.length ? ss.slice(0, 2).map(x => `<span class="who">
                 <span class="tiny" style="font-weight:500">${esc(x.n)}</span>
                 <span class="pr-t" style="margin-top:1px">${esc(x.r)} · ${esc(x.hq)}${isUser(x.n) ? ' · has an account' : ''}</span>
               </span>`).join('') + (ss.length > 2 ? `<span class="tiny muted">+${ss.length - 2} more</span>` : '')
-              : `<span class="tiny muted">Nobody named yet — the team will avoid selling what nobody backs.</span>`}
+              /* The unclaimed warning said the same sentence on every one of
+                 149 rows — the reader learned it once and then paid for it
+                 forever. The count lives in the group header and the strip;
+                 the row gets a quiet dash with the sentence on hover. */
+              : `<span class="tiny muted" title="Nobody named yet — the team will avoid selling what nobody backs.">—</span>`}
           </span>
           ${can('users') ? `<button class="btn sm" data-pa="${p.id}">${ss.length ? 'Edit' : 'Assign'}</button>` : ''}
           ${ss.length ? `<button class="btn sm" data-pw="${esc(ss[0].n)}" title="Copy the name so you can find them in WeCom — a page cannot open an app it does not control">${esc(ss[0].how)}</button>` : ''}
@@ -7668,8 +8136,16 @@ const SYNC_MAPS = ['opps'];
 /* `down` is set only when a note was written BECAUSE the server stopped
    answering, so the heartbeat knows which notes it may withdraw when the
    connection returns — a refusal was about the record, not the wire. */
+/* `nConflicts` / `nReverted` / `nRefused` are the SERVER's own account of the
+   last save, mirrored here so the banner can repeat it. A save the server
+   partly undid used to read "Saved" like any other: it answers `reverted`
+   (fields put back because the caller's role may not change them), `refused`
+   (removals it would not perform) and `conflicts` (rows where a colleague's
+   newer edit won the merge). Counting them is the difference between a banner
+   that reports the save and one that flatters it. */
 const SY = { rev: 0, live: false, sending: false, retry: false, timer: null, sent: {}, note: '',
              changed: false, cfgSig: '', refused: false, down: false, beat: null,
+             nConflicts: 0, nReverted: 0, nRefused: 0,
              /* `armed` is set the first time the server answers for a real
                 session. Until then there is nobody to save for. */
              armed: false, flight: null,
@@ -8332,6 +8808,16 @@ async function syncSave(){
     if (res.ok){
       const b = await res.json();
       SY.rev = b.rev || SY.rev;
+      /* What the server says it actually did. It answers these on every save
+         and they were never read: a merge that kept somebody else's newer row
+         over yours, a field put back because your role may not change it, a
+         removal it refused — each of those is a save that did less than the
+         person asked for, and until now each one ended in the same green
+         "Saved". Counting them here is what lets the banner tell the truth;
+         they are set from THIS answer only, so the next save clears them. */
+      SY.nConflicts = Number(b.conflicts) || 0;
+      SY.nReverted  = Number(b.reverted)  || 0;
+      SY.nRefused   = Number(b.refused)   || 0;
       /* Answered, so stop repeating the removals. A save that was REFUSED keeps
          them: a row taken off somebody's screen is still owed to the server. */
       goneClear();
@@ -8435,14 +8921,36 @@ function paintSync(){
    `SY.note` is a failure somebody is owed, `SY.sending` is an answer in
    flight, `SY.live` is the last time the server actually answered, and a
    guest has no session to report on, so the line is not shown at all. */
+/* `short` is the same word for a narrow bar: below 880px the pill drops its
+   sentence and keeps the short one, so the state is still named and not only
+   coloured. Every branch carries it, because a branch without one is a state
+   that goes quiet on a phone. */
 function connTone(){
-  if (SY.note)   return { text: 'Not saved',  tone: 'risk',
+  if (SY.note)   return { text: 'Not saved',  tone: 'risk', short: 'Not saved',
                           why: SY.note };
-  if (SY.sending) return { text: 'Saving…',   tone: 'blue',
+  /* A save the server accepted and then partly undone is not "Saved" and it is
+     not "Not saved" either — most of it landed. Say which, and say what did
+     not, because the person's next move depends on it: a field put back means
+     their role cannot change it, a refused removal means the row is still
+     there, and a conflict means somebody else's newer edit won and theirs is
+     in the conflict log rather than in the book. */
+  if (SY.nRefused > 0)
+    return { text: `Saved — ${SY.nRefused} removal${SY.nRefused === 1 ? '' : 's'} refused`, tone: 'warn',
+             short: 'Refused',
+             why: `The server would not remove ${SY.nRefused} row${SY.nRefused === 1 ? '' : 's'} — your role may not delete ${SY.nRefused === 1 ? 'it' : 'them'}. ${SY.nRefused === 1 ? 'It is' : 'They are'} still in the book; everything else was saved.` };
+  if (SY.nReverted > 0)
+    return { text: `Saved — ${SY.nReverted} change${SY.nReverted === 1 ? '' : 's'} not applied`, tone: 'warn',
+             short: 'Not applied',
+             why: `The server put back ${SY.nReverted} field${SY.nReverted === 1 ? '' : 's'} your role may not change. Everything else in this save was written.` };
+  if (SY.nConflicts > 0)
+    return { text: `Merged — ${SY.nConflicts} conflict${SY.nConflicts === 1 ? '' : 's'}`, tone: 'warn',
+             short: 'Merged',
+             why: `A colleague saved a newer version of ${SY.nConflicts} row${SY.nConflicts === 1 ? '' : 's'} after your last sync. Theirs was kept and yours went to the conflict log on the server — nothing was lost, but your version is not the one in the book.` };
+  if (SY.sending) return { text: 'Saving…',   tone: 'blue', short: 'Saving…',
                           why: 'This change is on its way to the data server.' };
-  if (!SY.live)  return { text: 'Offline — this device only', tone: 'warn',
+  if (!SY.live)  return { text: 'Offline — this device only', tone: 'warn', short: 'Offline',
                           why: 'The data server is not answering. Anything done now stays on this device until it does.' };
-  return { text: 'Saved', tone: 'ok',
+  return { text: 'Saved', tone: 'ok', short: 'Saved',
            why: 'Everything on this screen is on the data server.' };
 }
 
@@ -8461,8 +8969,34 @@ function paintConn(){
   const s = connTone();
   el.textContent = s.text;
   el.title = s.why;
+  const sh = document.getElementById('connShort');
+  if (sh){ sh.textContent = s.short || s.text; sh.title = s.why; }
   if (dot) dot.className = 'dot dot--' + s.tone;
 }
+
+/* Going out the door with work still on this device.
+   The banner says "Offline — changes are held here until the server answers",
+   and that is true of the tab and of nothing else: the book being edited lives
+   in memory, so a reload, a crash, a closed tab or a slipped trackpad ends it
+   without a word. There was no prompt at all, which made the banner's promise
+   the last thing the person read before losing the work it promised to hold.
+   So ask — but only when there really is something to lose: a note means the
+   server said no, a save in flight has not answered yet, a pending removal has
+   not been carried, and a change made while the server was down is on this
+   machine alone. A clean page says nothing, because a prompt that always
+   appears is a prompt nobody reads. */
+window.addEventListener('beforeunload', (e) => {
+  if (guest) return;                                  /* a guest has nothing to save */
+  const owesRemoval = Object.keys(GONE).length > 0;
+  const heldHere = SY.changed && !SY.live;
+  if (!(SY.note || SY.sending || owesRemoval || heldHere)) return;
+  e.preventDefault();
+  /* The older, still-honoured half of the contract: every browser that shows
+     its own dialog reads `returnValue`, and a handler that only calls
+     preventDefault is silently ignored in some of them. */
+  e.returnValue = '';
+  return '';
+});
 
 /* A quiet page has no reason to ask the server anything. That is the whole
    trap: `syncSave` returns early when nothing changed, so a server that dies
@@ -9380,14 +9914,30 @@ function saveEdit(key){
    sets SY.note, and until now nothing ever printed it. A workspace that can
    lose an edit while looking calm is worse than one that crashes: at least a
    crash is honest. Shown at the top of every screen, with a way to try again. */
+/* Two different kinds of bad news, and they are not dressed the same.
+   `SY.note` is a save that did not happen: nothing reached the server, so the
+   answer is a retry. A save the server ACCEPTED and then partly undid is the
+   other kind — most of it is in the book, so a retry would be a lie about what
+   was written; what the person needs is to be told which part was not, and a
+   way to put the message away once they have read it.
+   Until this the second kind had no surface at all: the banner is drawn from
+   `SY.note` alone, so "your field was put back" and "a colleague's version
+   won" were carried by an 11.5px pill and by nothing else — and below 880px
+   the pill keeps only its light. */
 function syncBanner(){
-  if (!SY.note) return '';
-  return '<div class="card card--risk" style="margin-bottom:var(--s4)">'
+  const partial = !SY.note && (SY.nRefused > 0 || SY.nReverted > 0 || SY.nConflicts > 0);
+  if (!SY.note && !partial) return '';
+  const tone = partial ? 'warn' : 'risk';
+  const head = partial ? 'Saved — partly' : 'Not saved';
+  const body = partial ? connTone().why : SY.note;
+  return '<div class="card card--' + tone + '" style="margin-bottom:var(--s4)">'
     + '<div class="row" style="gap:8px;flex-wrap:wrap">'
-    + '<span class="tag t-risk">Not saved</span>'
-    + '<span class="tiny">' + esc(SY.note) + '</span>'
+    + '<span class="tag t-' + tone + '">' + head + '</span>'
+    + '<span class="tiny">' + esc(body) + '</span>'
     + '<div class="spacer"></div>'
-    + '<button class="btn sm" data-act="retry">Retry now</button>'
+    + (partial
+        ? '<button class="btn sm" data-act="ackmerge">Got it</button>'
+        : '<button class="btn sm" data-act="retry">Retry now</button>')
     + '</div></div>';
 }
 
@@ -9406,9 +9956,17 @@ function syncBanner(){
    add/edit form's own fields are only carried while the SAME form is still the
    open one: a different form reuses the same field ids for different questions,
    and an answer meant for the last one must not appear in it. */
+/* The filter-bar selects are VIEW STATE, not drafts-in-progress: their truth
+   lives in custSort / meetRange / peopleStance and every render draws from it.
+   Snapshotting them made the restore a second writer — a sort changed from a
+   column header would render the header arrow for "name" and then have the
+   old "need" written back into the select, the rows sorted one way and the
+   control claiming another. */
+const VIEW_STATE_IDS = new Set(['custSort', 'meetRange', 'peopleStance']);
 function addFormDraft(key){
   const vals = {};
   for (const el of document.querySelectorAll('#page input[id], #drwHost input[id], #page select[id], #drwHost select[id], #page textarea[id], #drwHost textarea[id]')) {
+    if (VIEW_STATE_IDS.has(el.id)) continue;
     vals[el.id] = el.value;
   }
   /* `open` is the form that was open when this snapshot was taken — see above. */
@@ -9480,7 +10038,10 @@ function render(keepScroll){
   renderNav();
   const p = document.getElementById('page');
   let s = view.s;
-  if (s === 'admin' && !can('users')) s = 'today';   /* no back-door by URL */
+  /* no back-door by URL — except during a walkthrough over the sample book:
+     the roles tour drives the admin console, and the tour-demo posture is
+     already fenced (guest ⇒ nothing saves), so the console may show. */
+  if (s === 'admin' && !can('users') && !tourDemo) s = 'today';
   p.innerHTML = roleBanner() + '<div id="syncNote">' + syncBanner() + '</div>' +
    (s === 'today' ? screenToday() :
     s === 'calendar' ? screenCalendar() :
@@ -9602,6 +10163,7 @@ document.addEventListener('input', (e) => {
 /* customer pickers — a select, because the customer list grows */
 document.addEventListener('change', (e) => {
   if (e.target.matches('[data-pcs]')){ peopleC = e.target.value; render(); }
+  if (e.target.matches('[data-ocs]')){ oppCust = e.target.value; render(); }
   if (e.target.matches('[data-mcs]')){ meetC = e.target.value; drawInteractions(); }
   if (e.target.matches('[data-cfind]')){ custF.ind = e.target.value; render(); }
   if (e.target.matches('[data-cfst]')){ custF.st = e.target.value; render(); }
@@ -10929,9 +11491,12 @@ function screenAiTasks(){
 
 function aiTasksRowsHtml(){
   const list = aiTaskList;
+  /* An empty status page is one line of truth, not a blank card the size of
+     a window — there is nothing to look at, and the page should say so and
+     get out of the way. */
   if (!list.length) return `
-    <div class="card"><div class="empty">Nothing is running and nothing has finished.
-      Ask from any customer, any opportunity or the palette (⌘K) — every ask appears here while it works.</div></div>`;
+    <div class="tiny muted" style="padding:6px 2px">Nothing is running and nothing has finished.
+      Ask from any customer, any opportunity or the palette (⌘K) — every ask appears here while it works.</div>`;
   const active = list.filter(t => t.state === 'queued' || t.state === 'processing');
   const done = list.filter(t => t.state === 'completed');
   const failed = list.filter(t => t.state === 'failed');
@@ -11728,13 +12293,18 @@ function toast(msg, mascotId, kind){
      the surface stays calm. The class gives the identity sweep a handle:
      a toast aimed at the previous identity dies with their session. */
   t.className = 'toast';
-  t.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;' +
-    'padding:10px 16px;border-radius:var(--r-sm);font-size:13px;z-index:99;display:flex;gap:14px;align-items:center;' +
+  /* Positioning lives on the host now (`.toast-host`), so the toast is only
+     its own surface. An error is an alert rather than a status: it interrupts,
+     because "Not deleted" is not something a person should have to go looking
+     for. */
+  t.style.cssText = 'background:var(--ink);color:#fff;' +
+    'padding:10px 16px;border-radius:var(--r-sm);font-size:13px;display:flex;gap:14px;align-items:center;' +
     'box-shadow:' + (kind === 'err' ? 'inset 3px 0 0 var(--risk), ' : '') + 'var(--e3)';
+  if (kind === 'err') t.setAttribute('role', 'alert');
   t.innerHTML = (mascotId && corgiOn()
       ? '<img class="mascot m-proud" src="' + CORGI[mascotId] + '" alt="" aria-hidden="true">' : '')
     + `<span>${esc(msg)}</span>`;
-  document.body.appendChild(t);
+  (document.getElementById('toastHost') || document.body).appendChild(t);
   setTimeout(() => t.remove(), 4200);
 }
 
@@ -11781,8 +12351,26 @@ document.addEventListener('click', async (e) => {
 
   /* W5 — the six-question rail: a question scrolls its section into view. The
      scroll listener (bound once at boot) keeps the highlight honest. */
+  /* The section header folds the question away (or opens it). Collapsing
+     moves everything below, so the header is measured before the redraw and
+     put back under the reader's eye after it. */
+  const sqc = e.target.closest('[data-sqc]');
+  if (sqc){
+    const id = sqc.dataset.sqc;
+    const beforeTop = sqc.getBoundingClientRect().top;
+    if (sixClosed.has(id)) sixClosed.delete(id); else sixClosed.add(id);
+    sixSave();
+    render(true);
+    const el2 = document.getElementById('sq-' + id);
+    if (el2) window.scrollBy(0, el2.getBoundingClientRect().top - beforeTop);
+    return;
+  }
+
   const sq = e.target.closest('[data-sq]');
   if (sq){
+    /* the nav is a promise: tapping a folded question opens it first, then
+       goes there — jumping to a collapsed stub would be arriving nowhere. */
+    if (sixClosed.has(sq.dataset.sq)){ sixClosed.delete(sq.dataset.sq); sixSave(); render(true); }
     const el = document.getElementById('sq-' + sq.dataset.sq);
     if (el) el.scrollIntoView({ behavior:'smooth', block:'start' });
     return;
@@ -11806,6 +12394,15 @@ document.addEventListener('click', async (e) => {
 
   /* The month on screen moves without leaving a trace in the URL — the
      same rule the search boxes live by. */
+  /* A day cell's "+N more" opens the day in place — the month is the context
+     the reader came for, so the expansion happens inside the grid. */
+  const calx = e.target.closest('[data-calx]');
+  if (calx){
+    const iso = calx.dataset.calx;
+    if (calOpenDays.has(iso)) calOpenDays.delete(iso); else calOpenDays.add(iso);
+    render(true); return;
+  }
+
   const cal = e.target.closest('[data-cal]');
   if (cal){
     const w = cal.dataset.cal;
@@ -11867,6 +12464,14 @@ document.addEventListener('click', async (e) => {
 
   const cv = e.target.closest('[data-cv]');
   if (cv){ view.cview = cv.dataset.cv; render(); return; }
+
+  const pv = e.target.closest('[data-pv]');
+  if (pv){ peopleView = pv.dataset.pv; render(); return; }
+
+  /* A column header is the sort control a table is expected to have. It sets
+     the same custSort the filter-bar select sets — one value, two doors. */
+  const cs = e.target.closest('[data-csort]');
+  if (cs){ custSort = cs.dataset.csort; render(); return; }
 
   /* a count in the strip is a view, not a decoration */
   const sc = e.target.closest('[data-scope]');
@@ -11940,13 +12545,25 @@ document.addEventListener('click', async (e) => {
     render(); return;
   }
 
+  /* Progressive disclosure (the helper at the top of this file). The button
+     lives at the BOTTOM of a list, and render() rebuilds the page — the
+     browser would read that as "back to the top". Remember where the reader
+     was, redraw, and put them back. */
+  const mo = e.target.closest('[data-more],[data-less]');
+  if (mo){
+    const y = window.scrollY;
+    const s = mo.dataset.more != null ? mo.dataset.more : mo.dataset.less;
+    listShown[s] = mo.dataset.more != null ? listCap(s, Infinity) + listChunk(s) : listChunk(s);
+    render();
+    window.scrollTo(0, y);
+    return;
+  }
+
   const ac = e.target.closest('[data-act]');
   if (ac){
     const a = ac.dataset.act;
     if (a === 'map'){ showMap = !showMap; render(); return; }
     if (a === 'dense'){ dense = !dense; render(); return; }
-    if (a === 'showall'){ showAllPeople = true; render(); return; }
-    if (a === 'showless'){ showAllPeople = false; render(); return; }
     if (a === 'unpick'){ pickedPerson = null; render(); return; }
     if (a === 'fileadd'){ if (!can('log')){ toast('Your role cannot add documents.', null, 'err'); return; } fileAdd = !fileAdd; render(); return; }
     if (a === 'filesave'){ saveFile(); return; }
@@ -11994,12 +12611,12 @@ document.addEventListener('click', async (e) => {
     if (a === 'delcust'){ openDeleteCustomer(ac.dataset.cid); return; }
     if (a === 'delcustgo'){ deleteCustomerNow(); return; }
     if (a === 'delcustno'){ delCust = null; closeCapture(); return; }
-    if (a === 'wall'){ showWatchAll = true; render(); return; }
-    if (a === 'wless'){ showWatchAll = false; render(); return; }
-    if (a === 'pshowall'){ peopleShowAll = !peopleShowAll; render(); return; }
-    if (a === 'ashowall'){ auditShowAll = !auditShowAll; render(); return; }
+    /* wall/wless/pshowall/ashowall/showall/showless/custshowall were each a
+       private all-or-nothing switch for one list; every one of them is now the
+       shared [data-more]/[data-less] handler a few lines up. */
     if (a === 'clearq'){ custQ = ''; render(); return; }
     if (a === 'clearpq'){ prodQ = ''; render(); return; }
+    if (a === 'oclear'){ oppCust = ''; render(); return; }
     if (a === 'tlall'){
       const cc = view.id ? cust(view.id) : null;
       const months = cc ? [...new Set(cc.timeline.map(t => t.d.slice(0, 7)))] : [];
@@ -12152,6 +12769,11 @@ document.addEventListener('click', async (e) => {
     if (a === 'edpains'){ edFor = 'pains|' + ac.dataset.cid; render(); return; }
     if (a === 'edsave'){ saveEdit(ac.dataset.ed); return; }
     if (a === 'retry'){ syncSave(); render(); return; }
+    /* Read and put away. The counts are the server's account of the last save,
+       so dismissing them does not change the book — it only stops the page
+       saying the same sentence on every screen until the next save replaces
+       it. A note is never dismissed this way: that one is work still owed. */
+    if (a === 'ackmerge'){ SY.nConflicts = 0; SY.nReverted = 0; SY.nRefused = 0; render(); return; }
     if (a === 'copilot'){ openPal(); return; }
     if (a === 'corgi'){
       try { localStorage.setItem('cwb-corgi', corgiOn() ? '0' : '1'); } catch (e) { /* file:// */ }
@@ -12159,8 +12781,8 @@ document.addEventListener('click', async (e) => {
       toast(corgiOn() ? 'Corgi theme on.' : 'Corgi theme off — all business.');
       return;
     }
-    if (a === 'cfclear'){ custF = { q:'', ind:'', st:'' }; custShowAll = false; render(); return; }
-    if (a === 'custshowall'){ custShowAll = true; render(); return; }
+
+    if (a === 'cfclear'){ custF = { q:'', ind:'', st:'' }; delete listShown.customers; render(); return; }
     if (a === 'asadmin'){ if (!isAdminSession()) return; asRole = 'admin'; view.s = 'admin'; render(); return; }
     if (a === 'asrole'){ if (!isAdminSession()) return; asRole = ac.dataset.as; render(); return; }
     if (a === 'signin'){
@@ -12247,14 +12869,29 @@ document.addEventListener('click', async (e) => {
   }
   const dw = e.target.closest('[data-drw]');
   if (dw){
+    const raw = dw.dataset.drw;
+    /* A LinkedIn link inside a people card is a link, not the door — the
+       click belongs to the anchor. */
+    if (e.target.closest('a[href]')) return;
+    if (raw.startsWith('person|')){
+      const cid = raw.slice(7, raw.indexOf('|', 7));
+      const pn = raw.slice(raw.indexOf('|', 7) + 1);
+      if (drawer && drawer.kind === 'person' && drawer.cid === cid && drawer.pn === pn && !splitPin){
+        drawer = null; render(true); return;
+      }
+      if (e.metaKey || e.ctrlKey) splitPin = true;
+      drwFresh = true;
+      drawer = { kind: 'person', cid, pn };
+      render(true); drwFresh = false; return;
+    }
     /* A second click on the row already open closes the drawer again — the
        same toggle the peek chevron answers to. */
-    if (drawer && drawer.kind === 'opp' && drawer.id === dw.dataset.drw && !splitPin){
+    if (drawer && drawer.kind === 'opp' && drawer.id === raw && !splitPin){
       drawer = null; render(true); return;
     }
     if (e.metaKey || e.ctrlKey) splitPin = true;   /* ⌘-click pins (§03 C) */
     drwFresh = true;
-    drawer = { kind: 'opp', id: dw.dataset.drw };
+    drawer = { kind: 'opp', id: raw };
     render(true); drwFresh = false; return;
   }
   if (e.target.id === 'capClose') closeCapture();
@@ -12341,11 +12978,11 @@ document.getElementById('nav').addEventListener('click', closeNav);
 const TOURS = [
   { id:'start', name:'Getting started', blurb:'The five places, and where a day begins',
     steps:[
-      { go:'today', sel:'#nav', d:4200, t:'Five places on the left. <b>Today</b> is where a day starts; the others are different doors into the same records — customers, the people inside them, the money, the interactions.' },
+      { go:'today', sel:'#nav', d:4200, t:'Four groups on the left, the way a day is grouped: the work, the pipeline, the reference library, the system corner. <b>Today</b> is where a day starts; the others are different doors into the same records.' },
       { sel:'#cmdOpen', d:3600, t:'From anywhere, <b>⌘K</b>: ask a question or give an instruction in plain language. It is one box, not a chatbot in the corner.' },
-      { sel:'[data-tour="figs"]', d:4400, t:'The day in four cards. <b>On you today</b> is the headline — every action owed, with its overdue count in red. <b>Overdue</b> counts only ours. <b>Closing inside 45 days</b> is the money calendar; <b>pipeline</b> is what is on the table, and <b>weighted</b> is the same money adjusted by probability — the one you forecast with.' },
+      { sel:'[data-tour="figs"]', d:4400, t:'The day in <b>one band, four numbers</b>. <b>On you today</b> is the headline — every action owed, with its overdue count in red. <b>Overdue</b> counts only ours. <b>Closing inside 45 days</b> is the money calendar; <b>pipeline</b> is what is on the table, and <b>weighted</b> is the same money adjusted by probability — the one you forecast with.' },
       { sel:'[data-tour="needs"]', d:4000, t:'What needs you, in the order it needs you. Red is <b>overdue — a date we set</b>. Grey is <b>waiting on</b>, which is somebody else’s date.' },
-      { sel:'[data-tour="meet"]', d:3800, t:'Today’s interactions with who is actually in the room. One click and you walk in briefed instead of guessing.' }
+      { sel:'[data-tour="meet"]', d:3800, t:'The latest interactions, with who is actually in the room — four on the rail, one click to all of them. One more click and you walk in briefed instead of guessing.' }
     ]},
 
   { id:'day', name:'Read your day', blurb:'Two money numbers, two clocks',
@@ -12359,13 +12996,13 @@ const TOURS = [
 
   { id:'cust', name:'Work a customer', blurb:'One record, six views',
     steps:[
-      { go:'customers', sel:'[data-tour="cboard"]', d:4000, t:'Customers grouped by industry, each card carrying stance, health, open value and the owner. Clicking one <b>opens</b> it — there is no preview to dismiss.' },
+      { go:'customers', sel:'[data-tour="cboard"], #page .empty', d:4000, t:'Customers grouped by industry, each card carrying stance, health, open value and the owner. Clicking one <b>opens</b> it — there is no preview to dismiss.' },
       { go:'customer', id:'c1', sel:'[data-tour="tabs"]', d:4400, t:'A customer is six views: the <b>brief</b>, their <b>people</b>, <b>what they run</b>, the <b>opportunities</b>, the <b>timeline</b>, and <b>files & audit</b>. Same record, six questions — and no seventh tab, because every tab you add is somewhere else a colleague has to look before a meeting.' },
       { go:'customer', id:'c1', tab:'brief', sel:'[data-tour="brief"]', d:4200, t:'The brief is one paragraph about where the account stands. You write it, or the model drafts it when one is connected — and the card always says which, so you never mistake a draft for a measurement.' },
       { go:'customer', id:'c1', tab:'brief', sel:'[data-tour="watch"]', d:5600, t:'Above it, what changed <b>outside</b>: a competitor’s MOU, a regulator, a new CFO. These are recorded by the team, not scanned — nothing here is fetched for you, and nothing is invented for you. Every item carries a link to its source and the date it was recorded, and no item is trusted until you open that link and mark it confirmed.' },
       { go:'customer', id:'c1', tab:'people', sel:'[data-tour="ppl"]', d:5200, t:'People, ordered by <b>who needs you first</b>: who decides, then who is not with us. The counts are <b>views</b> — press one and the list becomes that. No filter to configure and no map to read before you can work.' },
       { go:'customer', id:'c1', tab:'people', sel:'[data-tour="net"]', d:4000, t:'The relationship map is a <b>diagnostic you open</b>, not a way to browse. Useful at four people, useless at forty — so the list carries the weight and the map stays behind a button.' },
-      { go:'customer', id:'c1', tab:'timeline', sel:'#page .card', d:3600, t:'Everything that ever happened, newest first. This is the memory the team never had.' }
+      { go:'customer', id:'c1', tab:'timeline', sel:'#page .flow', d:3600, t:'Everything that ever happened, newest first — a stream, not a box: the months fold, and the month you are reading stays pinned while you scroll. This is the memory the team never had.' }
     ]},
 
   { id:'capture', name:'An interaction becomes records', blurb:'Type once, four records',
@@ -12383,7 +13020,7 @@ const TOURS = [
       { before:() => { drawer = { kind:'opp', id: tourOpp() }; render(true); }, sel:'.wp-track', d:4200, t:'Open a card and the record shows its <b>waypoints</b> — the stages behind it, the one it stands on, the road ahead. Age in stage is the risk: a deal that has not moved is not “in progress” — it is waiting for somebody to move it.' },
       { before:() => { drawer = null; render(true); openWhy(tourOpp()); }, sel:'#capVeil .sheet', d:5600, t:'<b>“Why is it stuck?”</b> Detection is a query and costs nothing. Only the paragraph is the model, and it is written from the evidence underneath — which lines were computed and which were said.' },
       { go:'insights', sel:'#page .grid.g3 .card', d:4400, t:'The same computed fact shows up on Insights, where the whole book is judged by the same rules.' },
-      { before:() => { asRole = 'admin'; adminTab = 'ai'; view.s = 'admin'; render(); }, sel:'[data-tour="model"]', d:4200, t:'And if you change your mind about the model, it is a <b>setting</b>. Swap the endpoint, replace the key, nothing ships — and the swap is written on the audit trail.' }
+      { before:() => { asRole = 'admin'; adminTab = 'ai'; view.s = 'admin'; render(); }, sel:() => can('users') ? '[data-tour="model"]' : '#page .phead', d:4200, t:'And if you change your mind about the model, it is a <b>setting</b>. Swap the endpoint, replace the key, nothing ships — and the swap is written on the audit trail. (This step points at the model settings on an administrator sign-in.)' }
     ]},
 
   { id:'scale', name:'Reading a long list', blurb:'Order, summary, grouping, density — and no filter to set up',
@@ -12397,19 +13034,19 @@ const TOURS = [
 
   { id:'enrich', name:'Logo, intro & socials', blurb:'What we fetch, what we never invent, and what stays unverified',
     steps:[
-      { go:'customers', sel:'[data-act="newcust"]', d:4400, t:'Create a customer with a name and a domain. From those two facts we can fill in the rest — from <b>their own site</b>, not from a model’s imagination.' },
+      { go:'customers', sel:'[data-act="newcust"], #page .phead', d:4400, t:'Create a customer with a name and a domain. From those two facts we can fill in the rest — from <b>their own site</b>, not from a model’s imagination.' },
       { before:() => openNewCustomer(), sel:'#ncLook', d:5200, t:'“Look up” really looks: it searches the public company record for the company, takes the website that company publishes, then reads that site’s own <b>logo</b>, <b>title</b>, <b>description</b> and <b>social links</b>. Industry, HQ, headcount and founding year come from the record — read and cached, never generated.' },
-      { before:() => { openNewCustomer(); document.getElementById('ncLook').click(); }, sel:'#capBody .pchip', d:5200, t:'The intro arrives as <b>editable text in a box</b>, with a link to where each line came from, marked <b>Unverified</b> until somebody who knows the account says it is right.' },
-      { before:() => { openNewCustomer(); document.getElementById('ncLook').click(); }, sel:'#capBody .soc', d:4800, t:'Socials are <b>found, not invented</b>. No official handle means no chip — and the button opens a search instead. A wrong link costs more than no link.' },
-      { before:() => { openNewCustomer(); document.getElementById('ncLook').click(); }, sel:'#ncCreate', d:4000, t:'Create it. The record is real, the fetched parts stay flagged, and anyone can correct them — the only honest way to use public data.' }
+      { before:() => { openNewCustomer(); document.getElementById('ncLook').click(); }, sel:'#capBody .pchip, #ncSkip', d:5200, t:'The intro arrives as <b>editable text in a box</b>, with a link to where each line came from, marked <b>Unverified</b> until somebody who knows the account says it is right. (If the public record could not be reached just now, “Create without a lookup” builds the same record by hand.)' },
+      { before:() => { openNewCustomer(); document.getElementById('ncLook').click(); }, sel:'#capBody .soc, #ncSkip', d:4800, t:'Socials are <b>found, not invented</b>. No official handle means no chip — and the button opens a search instead. A wrong link costs more than no link.' },
+      { before:() => { openNewCustomer(); document.getElementById('ncLook').click(); }, sel:'#ncCreate, #ncSkip', d:4000, t:'Create it. The record is real, the fetched parts stay flagged, and anyone can correct them — the only honest way to use public data.' }
     ]},
 
-  { id:'roles', name:'Four roles', blurb:'Admin, Manager, BD, SA — who sees what, and who may change it',
+  { id:'roles', name:'Four roles', blurb:'Admin, Manager, BD, SA — who sees what, and who may change it', needs:'users',
     steps:[
       { before:() => { adminTab = 'roles'; view.s = 'admin'; render(); }, sel:'[data-tour="matrix"]', d:6000, t:'Four roles, one table. The split that matters: <b>BD owns the money</b> — value, stage, close date, owner — and <b>SA owns the machines</b> — systems, risks, POC. Each can read the other’s half, neither can change it, so a record never has two authors.' },
       { before:() => { adminTab = 'roles'; view.s = 'admin'; render(); }, sel:'[data-tour="viewas"]', d:5600, t:'Then see it, rather than read about it. Switch to a role and the <b>rows, the counts and the buttons</b> change everywhere — not a mock-up, the same app with a smaller world.' },
-      { before:() => { asRole = 'bd'; view.s = 'customers'; render(); }, sel:'[data-tour="roleban"]', d:5600, t:'As BD you get <b>your</b> customers: the rest are not greyed out, they are simply not there — not in the list, not in the total, not in the count on the rail. Scope applied before anything is drawn, so nothing leaks through a sum.' },
-      { before:() => { asRole = 'manager'; view.s = 'customers'; render(); }, sel:'[data-tour="roleban"]', d:6000, t:'A Manager gets <b>every customer and no way to change one</b> — read-only, as required: the whole book, and nothing in the product to press. The five rows marked <em>Off</em> in the table are judgement rather than editing, and an Admin can switch them on. They ship off.' },
+      { before:() => { asRole = 'bd'; view.s = 'customers'; render(); }, sel:'[data-tour="roleban"], [data-tour="guestban"]', d:5600, t:'As BD you get <b>your</b> customers: the rest are not greyed out, they are simply not there — not in the list, not in the total, not in the count on the rail. Scope applied before anything is drawn, so nothing leaks through a sum.' },
+      { before:() => { asRole = 'manager'; view.s = 'customers'; render(); }, sel:'[data-tour="roleban"], [data-tour="guestban"]', d:6000, t:'A Manager gets <b>every customer and no way to change one</b> — read-only, as required: the whole book, and nothing in the product to press. The five rows marked <em>Off</em> in the table are judgement rather than editing, and an Admin can switch them on. They ship off.' },
       { before:() => { asRole = 'admin'; adminTab = 'roles'; view.s = 'admin'; render(); }, sel:'[data-cap]', d:6000, t:'These are <b>your</b> defaults, not the product’s laws. Click any cell under BD, SA or Manager to grant or remove it, and the change is written to the audit trail. Export and the AI controls stay with Admin — reading everything and taking everything out are different acts, and only one of them is reversible.' },
       { before:() => { asRole = 'admin'; adminTab = 'roles'; view.s = 'admin'; render(); }, sel:'[data-tour="guard"]', d:6400, t:'Then the control that matters most: <b>nothing leaves without you.</b> No export, no print, no save-as for BD, SA or Manager. And because a phone camera outranks any web page, every screen carries a watermark with the name and the time — so a photo of the screen names its author.' },
       { before:() => { asRole = 'admin'; adminTab = 'people'; view.s = 'admin'; render(); }, sel:'[data-act="newuser"]', d:5600, t:'Adding a person takes a name, a work email, a role, which accounts they are on, and a starting password they must change at first sign-in. <b>You</b> create the account — nobody signs themselves up, so there is nothing to accept and nobody waiting on an email.' },
@@ -12420,9 +13057,9 @@ const TOURS = [
   { id:'products', name:'Products & who backs them', blurb:'The catalogue BD and SA can read, and the name to call',
     steps:[
       { go:'products', sel:'[data-tour="plist"]', d:5600, t:'The products we can sell, grouped the way the catalogue groups them. <b>Everybody reads this</b> — BD, SA, Manager — because “what can we actually offer” should never be a question you have to ask in a chat thread.' },
-      { go:'products', sel:'[data-pa]', d:6000, t:'The part that changes behaviour: <b>the people behind each product</b>. When a customer asks the awkward technical question at five in the afternoon, this is who you call — and it is the same answer for BD as for SA. A product can have as many specialists as it needs.' },
+      { go:'products', sel:'[data-pa], #page .pr', d:6000, t:'The part that changes behaviour: <b>the people behind each product</b>. When a customer asks the awkward technical question at five in the afternoon, this is who you call — and it is the same answer for BD as for SA. A product can have as many specialists as it needs.' },
       { before:() => openAssign('p3'), sel:'#capBody [data-pn]', d:6000, t:'And they <b>do not need an account here</b>. A product SA is a contact — a name, what they do, and how to reach them. Add anyone, even somebody who will never sign in, and they are one click away from the BD who needs them.' },
-      { go:'products', sel:'.note', d:6000, t:'Unclaimed products are <b>counted, not hidden</b>. A product nobody backs is a product the team quietly stops selling, and hiding that in a spreadsheet is how it stays invisible. Admin maintains the list; everybody else reads it.' }
+      { go:'products', sel:'#page .grp-h', d:6000, t:'Unclaimed products are <b>counted, not hidden</b> — every group header says how many are backed and how many are not. A product nobody backs is a product the team quietly stops selling, and hiding that in a spreadsheet is how it stays invisible. Admin maintains the list; everybody else reads it.' }
     ]},
 
   { id:'copilot', name:'Ask Waypoint', blurb:'Questions, instructions, and what it may not do',
@@ -12436,6 +13073,18 @@ const TOURS = [
 ];
 
 let tour = { id:null, i:0, timer:null, playing:false };
+/* A walkthrough needs a book to walk through. On a fresh workspace there is
+   nothing — every step would play blind. So the tour borrows the sample
+   workspace: guest is switched on for the duration, which brings the whole
+   no-save fence with it (scheduleSync refuses to write for a guest), and the
+   page reloads when the tour ends, putting the real workspace back from the
+   server. Nothing typed during a tour is ever written. */
+let tourDemo = false;
+function tourDemoBook(){
+  tourDemo = true;
+  guest = true;
+  loadGuestBook();
+}
 
 function seenTour(){
   try { return localStorage.getItem('cwb-tour-seen') === '1'; } catch (e) { return false; }
@@ -12473,11 +13122,14 @@ function anchorTourMenu(){
 
 function tourMenu(){
   const m = document.getElementById('tMenu');
+  const empty = !D.customers.length;
   m.innerHTML = `<div class="tm-f" style="padding-bottom:8px">${TOURS.length} walkthroughs. Each one plays over the
-    real screens — same data, same words.</div>` +
-    TOURS.map(t => `<button class="tm-i" data-tour-start="${t.id}">
-      <span class="n">${t.name}<div class="d">${t.blurb}</div></span>
-      <span class="m">${t.steps.length}</span></button>`).join('');
+    real screens — same data, same words.${empty ? '<br /><b>Your workspace is empty, so these play over the sample workspace.</b> Nothing is written, and your own book comes back when the walkthrough ends.' : ''}</div>` +
+    TOURS.map(t => {
+      const ok = !t.needs || can(t.needs);
+      return `<button class="tm-i" data-tour-start="${t.id}"${ok ? '' : ' disabled title="Plays on an administrator sign-in"'}${ok ? '' : ' style="opacity:.5"'}>
+      <span class="n">${t.name}<div class="d">${ok ? t.blurb : t.blurb + ' — administrator sign-in'}</div></span>
+      <span class="m">${t.steps.length}</span></button>`; }).join('');
   m.classList.toggle('on');
   if (m.classList.contains('on')) anchorTourMenu();
 }
@@ -12487,7 +13139,24 @@ window.addEventListener('resize', () => {
 });
 
 function startTour(id){
-  if (!TOURS.some(t => t.id === id)) return;
+  const def = TOURS.find(t => t.id === id);
+  if (!def) return;
+  /* The roles walkthrough plays on the admin console — its nine steps would
+     every one of them bounce back to Today for a BD or a guest. The menu
+     dims it; this guard is the belt under those braces. */
+  if (def.needs && !can(def.needs)){
+    toast('The “' + def.name + '” walkthrough plays on an administrator sign-in.');
+    return;
+  }
+  /* A tour started while another is playing used to orphan the old chain:
+     tour was replaced wholesale, the pending dwell timer's handle went with
+     it, and two step-machines then fought over one screen — the address bar
+     said customers while the page said Admin. The handle is cleared BEFORE
+     the replacement, so there is only ever one chain. */
+  if (tour && tour.timer) clearTimeout(tour.timer);
+  /* Empty workspace: borrow the sample book for the tour, then reload the
+     real one when the tour ends. */
+  if (!D.customers.length) tourDemoBook();
   document.getElementById('tMenu').classList.remove('on');
   markTourSeen();
   /* The tour drives the app through a dozen screens in ninety seconds. Those
@@ -12530,7 +13199,11 @@ function tourGoto(i){
 
   const dwell = s.d || 3800;
   setTimeout(() => {
-    const el = s.sel ? document.querySelector(s.sel) : null;
+    /* A step's target can depend on the state the before() hook just built —
+       on role, on whether a lookup answered, on what the book holds — so a
+       step may name its target with a function as well as a selector. */
+    const selStr = typeof s.sel === 'function' ? s.sel() : s.sel;
+    const el = selStr ? document.querySelector(selStr) : null;
     const spot = document.getElementById('tSpot'), cur = document.getElementById('tCur');
     if (!el){
       console.warn('walkthrough: no target for ' + s.sel);
@@ -12571,6 +13244,14 @@ function tourStop(){
      position again, so it is theirs to keep. */
   routeSilent = false;
   syncRoute();
+  /* A borrowed sample book goes back when the walkthrough is over: the page
+     reloads and the session token brings the real workspace back from the
+     server — the truth the tour never wrote to. */
+  if (tourDemo){
+    tourDemo = false;
+    toast('Walkthrough finished — reloading your own workspace.');
+    setTimeout(() => location.reload(), 1100);
+  }
 }
 
 document.getElementById('tourOpen').onclick = tourMenu;

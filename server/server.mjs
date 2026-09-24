@@ -1988,8 +1988,27 @@ const API_MAX_PER_WINDOW = 600;             // 10/second sustained; a person is 
 const apiHits = new Map();                  // ip -> { n, start }
 let apiPrunedAt = Date.now();
 
+/**
+ * Whose calls these are.
+ *
+ * Behind a reverse proxy every colleague arrives from the proxy's own address,
+ * so the flat ceiling below was shared by the whole team: one person leaving a
+ * chatty tab open could spend the budget everybody else needed. The header is
+ * only read when the operator has said the proxy is theirs to trust
+ * (`WB_TRUST_PROXY=1`) — a client can put anything in `X-Forwarded-For`, and
+ * believing it by default would turn a per-address ceiling into no ceiling at
+ * all. Default unchanged: the socket address.
+ */
+function clientIp(req) {
+  if (process.env.WB_TRUST_PROXY === '1') {
+    const xff = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+    if (xff) return xff;
+  }
+  return req.socket?.remoteAddress ?? 'unknown';
+}
+
 function apiThrottle(req) {
-  const ip = req.socket?.remoteAddress ?? 'unknown';
+  const ip = clientIp(req);
   const now = Date.now();
   if (now - apiPrunedAt > 5 * 60_000) {              // forget idle addresses
     apiPrunedAt = now;

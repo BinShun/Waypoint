@@ -40,6 +40,7 @@
     "verify:ai-tasks": "node --env-file-if-exists=.env scripts/verify-ai-tasks.mjs",
     "verify:switch": "node --env-file-if-exists=.env scripts/verify-switch.mjs",
     "verify:copilot": "node --env-file-if-exists=.env scripts/verify-copilot.mjs",
+    "verify:honesty": "node --env-file-if-exists=.env scripts/verify-honesty.mjs",
   "migrate:interactions": "node --env-file-if-exists=.env scripts/migrate-interactions.mjs",
   "verify:all": "node --env-file-if-exists=.env scripts/verify-all.mjs"
   },

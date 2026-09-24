@@ -17,7 +17,7 @@ npm start          # http://localhost:8787 —— 服务器零依赖，不需要
 跑一遍回归确认手里这份代码是完整的（约 10 分钟）：
 
 ```bash
-WP_PASS='你的测试密码' npm run verify:all    # 27 套件 / 1389 checks，全绿 = 可交付状态
+WP_PASS='你的测试密码' npm run verify:all    # 28 套件 / 1420 checks，全绿 = 可交付状态
 ```
 
 `WP_PASS` 需 8 位以上、含字母和数字——这是服务器本身的密码策略，套件会用它建临时管理员。
@@ -30,7 +30,7 @@ WP_PASS='你的测试密码' npm run verify:all    # 27 套件 / 1389 checks，�
 | 部署产物 | `dist/index.html` | 前端的副本，**服务器实际服务的是它** |
 | 服务器 | `server/` | 零依赖 Node，一个端口同时给静态页和 `/api/*` |
 | 数据 | `data/workbench.json` | 整个团队一本书；改它前先备份 |
-| 回归套件 | `scripts/verify-*.mjs` | 27 个，行为规格就在测试里 |
+| 回归套件 | `scripts/verify-*.mjs` | 28 个，行为规格就在测试里 |
 | 模型凭据 | `.env`（可选） | 不进 git |
 | HTTPS 证书 | `certs/`（可选） | 不进 git |
 
@@ -133,7 +133,7 @@ WP_PASS='...' npm run verify:all
 - [ ] 演示密码 `Waypoint#2026` 没有出现在任何生产账号上（`seed:demo` 只用于演示环境）
 - [ ] 公网部署的域名已在 Origin 白名单，`HOST=0.0.0.0` 只在反代后使用
 - [ ] `data/`、`certs/`、`.env` 没被提交进 git（`git status` 里看不到它们即正常）
-- [ ] 交付前 `verify:all` 全绿（27 套件 / 1389 checks）
+- [ ] 交付前 `verify:all` 全绿（28 套件 / 1420 checks）
 
 ## 从这里去哪
 

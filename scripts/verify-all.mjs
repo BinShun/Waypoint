@@ -60,6 +60,7 @@ const SUITES = [
   ['copilot-scope', 'scripts/verify-copilot-scope.mjs', '§4: the AI layer never sees what the caller cannot'],
   ['ai-tasks', 'scripts/verify-ai-tasks.mjs', '§21–§23: the task table holds under fire'],
   ['switch', 'scripts/verify-switch.mjs', 'an identity change leaves nothing of the last one behind'],
+  ['honesty', 'scripts/verify-honesty.mjs', 'the save banner never claims more than the server did'],
   ['roles', 'scripts/verify-roles.mjs', 'four roles, CAN and MUST-NOT'],
   ['journey', 'scripts/verify-journey.mjs', 'a real day, per role, without getting stuck'],
   ['scenarios', 'scripts/verify-scenarios.mjs', 'the four acceptance journeys, executed'],

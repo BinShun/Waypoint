@@ -797,12 +797,17 @@ check('the board card carries the pen behind the same rule as the List',
    nothing. `loadGuestBook` must not appear anywhere else — a second caller
    is a second chance for the demo book to leak into a session that saves. */
 const loadCalls = (src.match(/loadGuestBook\(\);/g) || []).length;
+/* Two callers, both fenced: enterApp's guest branch, and tourDemoBook — the
+   walkthrough's borrow-the-sample-book path, which sets `guest = true` BEFORE
+   it loads, so the no-save fence is up before a single demo row lands in D.
+   Any third caller is a leak waiting to happen. */
 check('the demo book has one loader and it belongs to the guest alone',
   /function demoBook\(\)/.test(src) && /function loadGuestBook\(\)/.test(src)
-    && loadCalls === 1   /* exactly one call: inside enterApp's guest branch */
-    && /if \(guest\)\{[\s\S]{0,700}loadGuestBook\(\)/.test(src),
-  loadCalls !== 1 ? `loadGuestBook is called ${loadCalls} times — one caller too many`
-    : 'demoBook -> loadGuestBook -> enterApp(true), nothing else');
+    && loadCalls === 2   /* enterApp's guest branch + the fenced tour borrow */
+    && /if \(guest\)\{[\s\S]{0,700}loadGuestBook\(\)/.test(src)
+    && /function tourDemoBook\(\)\{[\s\S]{0,160}guest = true;[\s\S]{0,200}loadGuestBook\(\)/.test(src),
+  loadCalls !== 2 ? `loadGuestBook is called ${loadCalls} times — expected 2 (guest entry, fenced tour borrow)`
+    : 'demoBook -> loadGuestBook -> enterApp(true) + tourDemoBook (guest-fenced), nothing else');
 
 check('the guest sees the whole book, and signs nothing',
   /guest \|\| can\('allCustomers'\)/.test(src) && /if \(guest \|\| !SY\.armed\) return/.test(src),
@@ -812,6 +817,41 @@ check('every demo record says so where it is read',
   /— DEMO/.test(src) && /is not a Waypoint or Tencent Cloud customer/.test(src)
     && /demo: true/.test(src),
   'name suffix, closing line of the brief, row flag — three marks');
+
+/* Progressive disclosure is one shared pattern now, not five private ones.
+   The guard: the helper exists, every long list goes through it, and the old
+   all-or-nothing switches (custShowAll and friends) never come back — a
+   "Show all 156" that dumps the whole book into the DOM in one click is the
+   bug this pattern replaced. */
+const footScopes = (src.match(/listFoot\('/g) || []).length;
+check('every long list shares the one progressive-disclosure pattern',
+  /function listFoot\(/.test(src) && /function listCap\(/.test(src)
+    && footScopes >= 5 && /data-more/.test(src) && /data-less/.test(src),
+  `listFoot used at ${footScopes} call sites`);
+
+check('the all-or-nothing show-all switches are gone for good',
+  !/custShowAll|showAllPeople|peopleShowAll|auditShowAll|showWatchAll/.test(src),
+  'no custShowAll / showAllPeople / peopleShowAll / auditShowAll / showWatchAll anywhere');
+
+/* The people card is a door, not a form: a click opens the drawer, and the
+   only Edit lives inside it. An Edit button back on the card face is the
+   accidental-edit trap returning. */
+const miniCard = (src.match(/function personMiniCard[\s\S]*?\n}/) || [''])[0];
+check('a people card is read-only — the one Edit lives in the drawer',
+  /data-drw="person\|/.test(miniCard) && !/data-act="ed"/.test(miniCard)
+    && /drwPersonMarkup/.test(src),
+  'card carries data-drw=person|, no inline Edit, drawer renders personCard');
+
+/* The focus-reading theme was tried and retired. What stayed is the default
+   theme's own readability: .tiny at 12px and the looser line-heights. The
+   guard is that NO focus-theme machinery ever comes back. */
+check('the retired focus-reading theme stays retired',
+  !/cwb-focus|focusToggleRow|body\.focus/.test(html),
+  'no cwb-focus, no toggle row, no body.focus rules anywhere');
+
+check('the six questions fold and remember',
+  /data-sqc/.test(src) && /sixSave\(\)/.test(src) && /localStorage\.getItem\('cwb-six'\)/.test(src),
+  'sqc wired, cwb-six persisted');
 
 console.log(`\n${ran} checks run.${bad ? '  *** FAILURES ***' : '  all passed'}`);
 process.exit(bad ? 1 : 0);
