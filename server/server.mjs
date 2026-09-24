@@ -3363,6 +3363,23 @@ const handler = async (req, res, secure) => {
         const users = Array.isArray(disk.users) ? disk.users : [];
         const user = users.find((u) => u.id === id)
           || users.find((u) => String(u.name ?? '').toLowerCase() === id.toLowerCase());
+        /* The roster is server-owned (a save never writes it), so a name whose
+           account is already gone has exactly one door left — this one. A
+           removal whose account half landed and whose roster half did not used
+           to end here as a flat 404, and the row stayed forever. */
+        if (!user && body?.remove === true){
+          const roster = Array.isArray(disk.team) ? disk.team : [];
+          const member = roster.find((t) => String(t.n ?? '').toLowerCase() === id.toLowerCase());
+          if (member){
+            disk.team = roster.filter((t) => t !== member);
+            await writeState(disk);
+            const revR0 = (await readRev()) + 1;
+            const infoR0 = await statFile();
+            await writeRev(revR0, infoR0.savedAt, infoR0.bytes);
+            log(`roster name removed: ${member.n} by ${who.user?.name ?? '?'}`);
+            return { status: 200, body: { ok: true, removed: member.n, rosterOnly: true } };
+          }
+        }
         if (!user) return { status: 404, body: { ok: false, error: 'No such person.' } };
 
         /* Removing an account is not the same as erasing a history: the audit
@@ -3377,6 +3394,13 @@ const handler = async (req, res, secure) => {
           }
           disk.users = users.filter((u) => u.id !== user.id);
           if (disk.credentials && disk.credentials[user.id] !== undefined) delete disk.credentials[user.id];
+          /* The roster row goes with the account: the roster is server-owned,
+             so leaving it here meant the row outlived the account and no
+             later click could ever remove it (the PUT cannot write it). */
+          if (Array.isArray(disk.team)){
+            const name = String(user.name ?? '').toLowerCase();
+            disk.team = disk.team.filter((t) => String(t.n ?? '').toLowerCase() !== name);
+          }
           await writeState(disk);
           const revR = (await readRev()) + 1;
           const infoR = await statFile();

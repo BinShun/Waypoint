@@ -2720,8 +2720,6 @@ function loginScreen(){
             <input type="checkbox" id="lgKeep" style="margin:0" /> Remember this device
           </label>
           <div class="spacer" style="flex:1"></div>
-          <span class="glink" style="cursor:default"
-            title="Passwords are reset by your administrator - accounts are created by them, so there is no email to recover through.">Forgot password?</span>
         </div>
 
         <button class="btn pri lg-go" data-act="signin">Sign in</button>
@@ -7291,13 +7289,20 @@ async function removeUser(name){
     ok = res.ok;
     if (!res.ok) why = ((await res.json().catch(() => ({}))).error) || why;
   } catch { why = 'the server could not be reached'; }
-  if (!ok){ toast('Not removed · ' + why + '. Nothing was changed.', null, 'err'); return; }
+  /* "No such person" is not a refusal — it means the sign-in is ALREADY gone
+     and only the roster row is left (a removal whose roster half never
+     landed). There is no account left to protect: honour the row. Every
+     other failure still stops here, changing nothing. */
+  if (!ok && why !== 'No such person.'){
+    toast('Not removed · ' + why + '. Nothing was changed.', null, 'err'); return;
+  }
   /* Off every customer too — membership was their access, and it goes with it. */
   D.customers.forEach(c => setOn(name, c.id, false));
   D.team = (D.team || []).filter(x => x.n !== name);
   if (euName === name){ euName = null; closeCapture(); }
   delUser = null;
-  audit('access', 'Account removed', name, 'had a sign-in', 'no sign-in — records keep their name');
+  audit('access', ok ? 'Account removed' : 'Roster name removed', name,
+    ok ? 'had a sign-in' : 'sign-in already gone', 'no sign-in — records keep their name');
   render(); syncSave();
   toast(name + ' removed · everything they recorded keeps their name.');
 }
