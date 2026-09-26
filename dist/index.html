@@ -3194,7 +3194,8 @@ const LV_PAGE = 50;          /* rows per page — a page you can act on, not a s
 
 function lvState(obj){
   return LV[obj] || (LV[obj] = { viewId:'', q:'', filters:[], sort:null, cols:null,
-    page:1, sel:new Set(), builder:false, colsOpen:false, saveOpen:false, allMatch:false });
+    page:1, sel:new Set(), builder:false, colsOpen:false, saveOpen:false, allMatch:false,
+    delArm:false });
 }
 
 /* --- field definitions ------------------------------------------------------
@@ -3607,6 +3608,11 @@ const LV_BULK = {
   opportunities: [
     { k:'stage', l:'Set stage', input:'sel', vals:()=>D.stages },
     { k:'owner', l:'Set owner', input:'team' },
+    /* Deleting is the one act the capability matrix keeps for the admin,
+       so the option is only DRAWN for one (lvBulkBar filters on it) —
+       and lvBulkApply asks again, because an option a client hides is a
+       promise a console can ignore. The server says no on its own too. */
+    { k:'del', l:'Delete', input:'none' },
   ],
   interactions: [],
   steps: [
@@ -3618,7 +3624,7 @@ const LV_BULK = {
 function lvBulkBar(obj, scope, rows){
   const st = lvState(obj);
   if (!st.sel.size) return '';
-  const acts = LV_BULK[obj] || [];
+  const acts = (LV_BULK[obj] || []).filter(a => a.k !== 'del' || can('del'));
   const matching = st.sel.size < rows.length && rows.length > LV_PAGE;
   return `<div class="lv-bulk">
     <strong>${st.allMatch ? rows.length : st.sel.size}</strong> <span class="tiny">selected</span>
@@ -3678,6 +3684,21 @@ function lvBulkApply(obj, scope, actK, val){
         else if (actK === 'band') r.p.b = val;
         else if (actK === 'owner') r.p.o = val;
       } else if (obj === 'opportunities'){
+        if (actK === 'del'){
+          /* An admin-only act, checked here as well as at the option: the
+             bar hides it for everybody else, but a click can be forged from
+             a console. The actual removal is the same shape as the single
+             Remove — out of the map, out of the customer's index, and into
+             the deleted envelope the server enforces DELETE_ROLES on. */
+          if (!can('del')){ fail++; why = 'deleting is administrator-only'; return; }
+          const oid = r.id;
+          delete D.opps[oid];
+          const cu = cust(r.c);
+          if (cu && (cu.opps || []).includes(oid)) cu.opps = cu.opps.filter(x => x !== oid);
+          goneAdd('opps', oid);
+          ok++;
+          return;
+        }
         if (!can('commercial')){ fail++; why = 'not your half of the record'; return; }
         if (actK === 'stage'){
           /* Stage moves go through the same validator as a single edit — a
@@ -7775,6 +7796,7 @@ function screenSteps(){
       ${isDone
         ? `<span class="tag t-ok" title="${esc(s.doneBy ? 'by ' + s.doneBy : '')}${esc(s.doneNote ? ' — ' + s.doneNote : '')}">done${s.done ? ' · ' + esc(fmtDay(s.done)) : ''}</span>`
         : `<span class="tag ${od ? 't-risk' : 't-grey'}">${esc(stepWhen(s))}${od ? ' · overdue' : ''}</span>`}
+      ${rmBar(rmKey.step(c, s), s.t)}
     </div>`;
   };
   const empty = stepsFilter === 'done' ? 'Nothing finished yet — the finished ones land here, struck through, not deleted.'
@@ -15541,13 +15563,23 @@ document.addEventListener('click', async (e) => {
     }
     if (act === 'selall'){ st.allMatch = true; render(); return; }
     if (act === 'selpageonly'){ st.allMatch = false; render(); return; }
-    if (act === 'selclear'){ st.sel = new Set(); st.allMatch = false; render(); return; }
+    if (act === 'selclear'){ st.sel = new Set(); st.allMatch = false; st.delArm = false; render(); return; }
     if (act === 'export'){ const n = lvExport(obj, st.scope); toast('Exported ' + n + ' rows'); return; }
     if (act === 'bulkgo'){
       const actSel = document.querySelector('[data-lv="bulkact"][data-obj="' + obj + '"]');
       const valEl = document.querySelector('[data-lv="bulkval"][data-obj="' + obj + '"]');
       const actK = actSel ? actSel.value : '';
       if (!actK){ toast('Pick a bulk action first.'); return; }
+      /* Deleting is the one bulk act that cannot be taken back, so it asks
+         twice: the first Apply says what is about to happen, the second
+         does it. Arming lives on the lv state, so walking away — or a
+         Clear — disarms it again. */
+      if (actK === 'del' && !st.delArm){
+        st.delArm = true;
+        toast('Apply again to delete ' + lvBulkRows(obj, st.scope).length + ' selected — this cannot be undone.');
+        return;
+      }
+      st.delArm = false;
       const msg = lvBulkApply(obj, st.scope, actK, valEl ? valEl.value.trim() : '');
       render(); toast(msg); return;
     }
