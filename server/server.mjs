@@ -1774,6 +1774,23 @@ function hashCredential(password) {
   };
 }
 
+/* A password that changes without leaving a footprint is how an evening
+   of "who did this" begins: every route that writes a credential also
+   writes one line into the visible audit log — the same shape the
+   command-line password tool leaves — so the Admin page can always say
+   who changed whose password, when, and through which door. */
+function noteAuthEvent(state, userId, summary) {
+  state.logs = Array.isArray(state.logs) ? state.logs : [];
+  state.logs.unshift({
+    id: `l_pw_${Date.now()}`,
+    at: new Date().toISOString(),
+    action: 'update',
+    entityType: 'auth',
+    entityId: userId,
+    summary,
+  });
+}
+
 function verifyPassword(password, cred) {
   if (!cred || cred.algo !== ALGO || typeof password !== 'string') return false;
   let salt, expected;
@@ -3361,6 +3378,7 @@ const handler = async (req, res, secure) => {
         disk.users.push(user);
         disk.credentials[id] = { userId: id, ...hashCredential(password), mustChange: true, updatedAt: user.createdAt };
         disk.setupComplete = true;
+        noteAuthEvent(disk, id, `Password issued for ${name} by ${who.user?.name ?? 'the first-run setup'}, with a forced change on first sign-in`);
         await writeState(disk);
         const rev = (await readRev()) + 1;
         const info = await statFile();
@@ -3477,6 +3495,7 @@ const handler = async (req, res, secure) => {
             userId: user.id, ...hashCredential(next),
             mustChange: true, updatedAt: new Date().toISOString(),
           };
+          noteAuthEvent(disk, user.id, `Password reset for ${user.name} by ${who.user?.name ?? 'another admin'}`);
         }
         await writeState(disk);
         const rev = (await readRev()) + 1;
@@ -3524,6 +3543,7 @@ const handler = async (req, res, secure) => {
           userId: me.id, ...hashCredential(next),
           mustChange: false, updatedAt: new Date().toISOString(),
         };
+        noteAuthEvent(disk, me.id, `Password changed by ${me.name} for their own account`);
         await writeState(disk);
         const rev = (await readRev()) + 1;
         const info = await statFile();
