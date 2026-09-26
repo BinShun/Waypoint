@@ -113,7 +113,9 @@ const byText = (sel, t) => $$(sel).find(e => (e.textContent || '').trim().includ
 const seen = () => (doc.getElementById('page') || doc.body).textContent;
 const veil = () => (doc.getElementById('capBody') || doc.body).textContent;
 async function click(el, ms = 260) { if (!el) return false; el.dispatchEvent(new win.MouseEvent('click', { bubbles: true })); await wait(ms); return true; }
-async function setVal(el, v) { if (!el) return false; el.value = v; el.dispatchEvent(new win.Event('input', { bubbles: true })); el.dispatchEvent(new win.Event('change', { bubbles: true })); await wait(120); return true; }
+/* Rich fields are contenteditable surfaces — assigning `.value` there writes
+   an expando nothing reads, and the save then stores the pre-fill. */
+async function setVal(el, v) { if (!el) return false; if (el.classList && el.classList.contains('rte-ed')) el.textContent = v; else el.value = v; el.dispatchEvent(new win.Event('input', { bubbles: true })); el.dispatchEvent(new win.Event('change', { bubbles: true })); await wait(120); return true; }
 
 if (!(await up())) { console.log('FAIL  the test server never answered'); process.exit(1); }
 check('the server is up', true);
@@ -263,6 +265,10 @@ const beforeN = Object.keys(before.opps || {}).length;
 await click($('button[data-add="opportunities"]'), 350);
 check('the create form opens with a customer picker', !!$('#ad0') && !!$('#ad1'));
 
+/* The picker now opens on an honest empty option — naming nobody attaches the
+   record to nobody, and the save says so instead of guessing. The customer
+   must be named on purpose. */
+await setVal($('#ad0'), 'Maybank');
 const custName = ($('#ad0') || {}).value;
 await setVal($('#ad1'), 'Billing platform migration');
 await setVal($('#ad2'), '2400000');
@@ -285,6 +291,7 @@ check('Interactions offers a way to log one', !!$('button[data-add="interactions
 const mBefore = (disk().interactions || []).length;
 await click($('button[data-add="interactions"]'), 350);
 check('the meeting form opens', !!$('#ad1') && !!$('#ad0'));
+await setVal($('#ad0'), 'Maybank');
 await setVal($('#ad1'), 'Cutover dry-run review');
 await setVal($('#ad3'), 'Wave 1 confirmed read-only');
 await click($('[data-act="addsave"]'), 900);
@@ -326,7 +333,12 @@ await click($('[data-act="cfclear"]'), 350);
 check('and recovers', cards() === shown);
 
 /* --------------------------------------------------------- edit a customer */
-const target = $$('#page [data-open]')[0];
+/* The board answers in its own order — alphabetical, most in need, whatever
+   the list was last asked for — so "the first card" is not a stable way to
+   say "the customer this test just gave an opportunity to". Name that
+   customer instead; otherwise the check passes or fails on a sort order. */
+const target = $$('#page [data-open]').find(e => (e.textContent || '').includes(custName))
+  || $$('#page [data-open]')[0];
 await click(target, 700);
 check('a customer opened', !!$('[data-act="edcust"]'));
 await click($('[data-act="edcust"]'), 400);
@@ -753,19 +765,19 @@ if (editBtn) {
 {
   await click($('[data-go="customers"]'), 600);
   await click($$('#page [data-open]')[0], 800);
-  const addW = $('[data-act="watchadd"]');
+  const addW = $('[data-act="addopen"][data-add="watch"]');
   check('a signal can be recorded by hand', !!addW);
   if (addW) {
     await click(addW, 400);
     check('the form asks for the headline, the source and why it matters',
-      !!$('#wa1') && !!$('#wa2') && !!$('#wa5'));
+      !!$('#ad1') && !!$('#ad2') && !!$('#ad5'));
     const head = 'Signs an MOU on AI-ready infrastructure';
-    await setVal($('#wa1'), head);
-    await setVal($('#wa2'), 'The Edge Markets');
-    await setVal($('#wa3'), 'https://theedgemalaysia.com/');
-    await setVal($('#wa5'), 'Changes who we are competing against on billing.');
+    await setVal($('#ad1'), head);
+    await setVal($('#ad2'), 'The Edge Markets');
+    await setVal($('#ad3'), 'https://theedgemalaysia.com/');
+    await setVal($('#ad5'), 'Changes who we are competing against on billing.');
     const wBefore = (disk().watch || []).length;
-    await click($('[data-act="wasave"]'), 1000);
+    await click($('[data-act="addsave"]'), 1000);
     const dw = disk();
     check('the signal is on disk', (dw.watch || []).length === wBefore + 1,
       wBefore + ' -> ' + (dw.watch || []).length);

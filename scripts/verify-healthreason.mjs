@@ -221,16 +221,14 @@ check('D: a healthy account shows its evidence',
   t.includes('Last interaction ' + fmt(day(-2))) && t.includes('next step due ' + fmt(day(5))));
 check('no reason is a NaN or an undefined', !/\bNaN\b|undefined/.test(t));
 
-/* ------------------------------------------------------- 2. the list view */
-await s.click(s.$('#page [data-cv="list"]'), 700);
+/* ------------------------------------------------------- 2. the one list */
 t = s.text();
-check('the list view carries the reasons too',
+check('the list carries the reasons too',
   t.includes('was due ' + fmt(day(-2))) && t.includes('No interaction logged yet'));
 check('the list view shows the OPEN step as Next, not the done one',
   t.includes('Next · Send the pricing note') && !t.includes('Next · The completed site survey'));
 
-/* ------------------------------------------------------ 3. the table view */
-await s.click(s.$('#page [data-cv="table"]'), 700);
+/* ------------------------------------------------ 3. the same list, read as a table */
 t = s.text();
 check('the table puts the reason under the health word',
   t.includes('Blocker on B migration deal') && t.includes('Last interaction ' + fmt(day(-2))));
@@ -238,7 +236,6 @@ check('the table still shows the health words themselves',
   t.includes('Watch') && t.includes('At risk') && t.includes('Healthy'));
 
 /* ----------------------------------------------------- 4. customer detail */
-await s.click(s.$('#page [data-cv="board"]'), 700);
 await s.click(byText('#page [data-open]', 'D Steady Bhd'), 900);
 t = s.text();
 check('the customer header shows the reason under the health word',
@@ -263,7 +260,7 @@ check('a clean deal shows its stage evidence, not a complaint',
 await s.click(s.$('#page [data-cv="list"]'), 700);
 t = s.text();
 check('the opportunity list row explains on hover',
-  !!(s.$('#page td[title]') || [...s.doc.querySelectorAll('#page td')].find(td => (td.getAttribute('title') || '').includes('since'))),
+  !!(s.$('#page [title*="since"]') || [...s.doc.querySelectorAll('#page [title]')].find(el => (el.getAttribute('title') || '').includes('since'))),
   'an In-stage cell carries the reason as its title');
 
 /* ------------------------------------------------- 6. nothing was harmed */

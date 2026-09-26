@@ -150,7 +150,10 @@ async function open(email) {
     },
     set: async (el, v) => {
       if (!el) return false;
-      el.value = v;
+      /* Rich fields are contenteditable surfaces — `.value` does not exist on
+         them; writing there is a silent no-op. Put the words in the editable. */
+      if (el.classList && el.classList.contains('rte-ed')){ el.textContent = v; }
+      else el.value = v;
       el.dispatchEvent(new sess.win.Event('input', { bubbles: true }));
       el.dispatchEvent(new sess.win.Event('change', { bubbles: true }));
       await wait(80); return true;
@@ -193,7 +196,7 @@ await s.click(s.byText('#page [data-tab]', 'Opportunities'), 700);
    the picker is added only where a person is not already in one
    (`pickCustomer`). Asserting `#ad0` here would demand a field the design
    deliberately omits. */
-const addBtn = s.$('[data-act="addtoggle"][data-add="opportunities"]');
+const addBtn = s.$('[data-act="addopen"][data-add="opportunities"]');
 check('the customer’s Opportunities tab offers a way to add one', !!addBtn);
 await s.click(addBtn, 600);
 check('the add form asks for the deal itself',
@@ -304,8 +307,8 @@ check('reopening the form shows the saved competitor',
   (s.doc.getElementById('ed6') || {}).value === UNIQUE.ed6,
   '"' + ((s.doc.getElementById('ed6') || {}).value || '') + '"');
 check('reopening the form shows the saved description',
-  (s.doc.getElementById('ed8') || {}).value === UNIQUE.ed8,
-  '"' + ((s.doc.getElementById('ed8') || {}).value || '') + '"');
+  ((s.doc.getElementById('ed8') || {}).textContent || '') === UNIQUE.ed8,
+  '"' + ((s.doc.getElementById('ed8') || {}).textContent || '') + '"');
 
 check('no page errors were thrown', pageErrors.length === 0, pageErrors.slice(0, 2).join(' | '));
 

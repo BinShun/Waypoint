@@ -346,8 +346,11 @@ const scanForSchedulers = (source) => (/\bsetInterval\s*\(/.test(source) ? ['set
       transports + ' fetch(es) of /api/ai/complete');
     check(f + ' holds the legacy ask sites at a maximum of three', calls <= 3,
       calls + ' askModel call site(s)');
+    /* The ask moved server-side when briefings became tasks (the executor
+       owns the prompt now, behind the deep gate). What the client must still
+       name is the task itself — the action id the button dispatches. */
     check(f + ' still names the account-brief ask it shipped with',
-      src.includes('Write a brief of at most 90 words'));
+      src.includes("action: 'brief-customer'"));
     check(f + ' still names the stage-suggest ask it shipped with',
       src.includes('which stage should the opportunity move to'));
   }

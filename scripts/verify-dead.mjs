@@ -49,6 +49,10 @@ for (const m of src.matchAll(/data-act=["']([a-zA-Z0-9_-]+)["']/g)) acts.add(m[1
 const handled = new Set();
 for (const m of src.matchAll(/a\s*===\s*['"]([a-zA-Z0-9_-]+)['"]/g)) handled.add(m[1]);
 for (const m of src.matchAll(/case\s+['"]([a-zA-Z0-9_-]+)['"]/g)) handled.add(m[1]);
+/* A locally-scoped flow can wire a button imperatively instead of going
+   through the dispatcher: the code asks for the element by its data-act and
+   binds it there. Asking for it by name is the evidence it is wired. */
+for (const m of src.matchAll(/querySelector(?:All)?\(\s*['"]\[data-act=["']([a-zA-Z0-9_-]+)["']\]\s*['"]\s*\)/g)) handled.add(m[1]);
 const deadActs = [...acts].filter((a) => !handled.has(a)).sort();
 check('every rendered data-act has a handler', deadActs.length === 0,
   deadActs.length ? `unhandled: ${deadActs.join(', ')}` : `${acts.size} actions, all handled`);
@@ -82,6 +86,7 @@ const BUILTIN = new Set(('' + `
   calc translateX translateY translateZ rotate scale rgba rgb var min max clamp
   FileReader File FileList DataTransfer URLSearchParams AbortController Headers Request
   Response TextDecoder TextEncoder MutationObserver IntersectionObserver ResizeObserver
+  DOMParser XMLSerializer
 `).split(/\s+/).filter(Boolean));
 
 /* English words that sit next to a bracket inside prose ("3 days ago (12 Sep)").
@@ -96,6 +101,14 @@ for (const m of src.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:as
 for (const m of src.matchAll(/(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:async\s*)?function/g)) declared.add(m[1]);
 /* Named function arguments: they are declared, just not at the top level. */
 for (const m of src.matchAll(/\(([^()]{0,200})\)\s*=>/g)) {
+  for (const p of m[1].split(',')) {
+    const n = p.trim().split('=')[0].trim();
+    if (/^[A-Za-z_$][\w$]*$/.test(n)) declared.add(n);
+  }
+}
+/* The same is true of a classic declaration's parameter list — a callback
+   handed to `initRte(ed, onInput)` is a declaration, not a missing function. */
+for (const m of src.matchAll(/function\s+[A-Za-z_$][\w$]*\s*\(([^()]{0,200})\)/g)) {
   for (const p of m[1].split(',')) {
     const n = p.trim().split('=')[0].trim();
     if (/^[A-Za-z_$][\w$]*$/.test(n)) declared.add(n);
@@ -529,13 +542,11 @@ check('every family the tokens name has an embedded face', embeddedFaces >= 4,
    tall as the card beside it that had something to say. */
 const cardRowDef = /\.card--row\{[^}]*\}/.exec(html)?.[0] || '';
 const stepRowDef = /\.step-row\{[^}]*\}/.exec(html)?.[0] || '';
-check('list-card density is a class, not a style attribute',
+check('list density is a class, not a style attribute',
   !/style="[^"]*padding:13px/.test(html)
-    && /padding:13px var\(--s4\)/.test(cardRowDef)
-    && /class="card card--row/.test(html)
-    && /padding:13px var\(--s5\)/.test(stepRowDef)
-    && /class="row step-row/.test(html),
-  stepRowDef ? cardRowDef.slice(0, 46) + ' · ' + stepRowDef.slice(0, 42) : '.card--row / .step-row are not defined');
+    && /function lvTable\(/.test(src) && /\.lv-table td\{padding:/.test(html)
+    && /padding:13px var\(--s5\)/.test(stepRowDef),
+  'the list engine owns row density; step rows keep theirs; no inline 13px paddings');
 const pchipPad = /\.pchip\{[^}]*padding:([^;]+);/.exec(html)?.[1] || '';
 const oppPad = /\.opp\{[^}]*padding:([^;]+);/.exec(html)?.[1] || '';
 check('the row cards share one density band (12–13px)', /^1[23]px/.test(pchipPad) && /^1[23]px/.test(oppPad),
@@ -699,13 +710,9 @@ check('a title inside a card speaks in the body face',
    leaving a form that looked fine and would not go — and it drew itself as
    a notification, the same black bar as "Customer created". A refusal is a
    verdict, and it belongs on the field that was refused. */
-const chipsSrc = /function socialChips\(c[^{]*\{[\s\S]*?\n\}/.exec(src)?.[0] || '';
-check('a card on the board carries two links and no more',
-  /socialChips\(c,\s*2\)/.test(src) && /function socialChips\(c,\s*max\)/.test(src)
-    && /slice\(0,\s*max\)/.test(chipsSrc),
-  !/socialChips\(c,\s*2\)/.test(src) ? 'the board still asks for every link'
-    : /slice\(0,\s*max\)/.test(chipsSrc) ? 'two links, and the rest are on the customer'
-      : 'socialChips takes a limit but never applies it');
+check('the card-wall link helper stays retired with the wall',
+  !/function socialChips/.test(src),
+  'socialChips served the customers board; the engine lists replaced both');
 
 const refuseSrc = /function refuse\([\s\S]*?\n\}/.exec(src)?.[0] || '';
 const refuseCalls = (src.match(/\brefuse\(/g) || []).length;
@@ -756,11 +763,10 @@ check('a stage is drawn by one thing, on the path or off it',
       : stageTagCalls < 3 ? `only ${stageTagCalls - 1} views draw it through the one place`
         : `${stageTagCalls - 1} views, one shape`);
 
-check('money is not a colour, and it does not share a pill with the stage',
-  /money\(to\.v\)/.test(src) && !/\$\{money\(to\.v\)\} · \$\{esc\(to\.stage\)\}/.test(src),
-  !/money\(to\.v\)/.test(src) ? 'the top opportunity no longer carries a value'
-    : /\$\{money\(to\.v\)\} · \$\{esc\(to\.stage\)\}/.test(src)
-      ? 'the amount and the stage still share one chip' : 'the amount is type, the stage is the pill');
+check('money is not a colour, and it does not share a pill with a state',
+  /l:'Open pipeline'/.test(src) && /money\(v\)/.test(src)
+    && /l:'Health'/.test(src) && /class="tag /.test(src),
+  'the engine lists money as its own column and health as a tag — never one pill doing both');
 
 /* A note that ships to the screen is checked where it can be seen at all:
    verify-live walks the rendered pages and refuses any `/*` in the copy. A
@@ -788,9 +794,9 @@ check('the walkthroughs have a second door in the rail',
 
 check('the board card carries the pen behind the same rule as the List',
   (/opp-act/.test(src) && /data-act="ed" data-ed="\$\{k\}"/.test(src)
-    && /col-ed/.test(src)),
+    && /k\.startsWith\('opp\|'\)/.test(src) && /drawer = \{ kind:'opp', id:oid \}/.test(src)),
   !/opp-act/.test(src) ? 'the board is a wall again — no way into a card'
-    : 'Edit on the card, the form opens under it');
+    : 'Edit on the card, the record drawer opens for it');
 
 /* The demo boundary, in three shapes: the book is built by one function,
    that function is loaded by exactly one posture, and the posture writes
@@ -824,10 +830,13 @@ check('every demo record says so where it is read',
    "Show all 156" that dumps the whole book into the DOM in one click is the
    bug this pattern replaced. */
 const footScopes = (src.match(/listFoot\('/g) || []).length;
-check('every long list shares the one progressive-disclosure pattern',
-  /function listFoot\(/.test(src) && /function listCap\(/.test(src)
-    && footScopes >= 5 && /data-more/.test(src) && /data-less/.test(src),
-  `listFoot used at ${footScopes} call sites`);
+check('long business lists page through the one list engine',
+  /function lvTable\(/.test(src) && /const LV_PAGE = /.test(src)
+    && /data-lv="page"/.test(src),
+  'lvTable + LV_PAGE + pager present');
+check('chunking survives only where the engine does not reach yet',
+  footScopes <= 2,
+  `listFoot used at ${footScopes} call sites — streams only, never a business list`);
 
 check('the all-or-nothing show-all switches are gone for good',
   !/custShowAll|showAllPeople|peopleShowAll|auditShowAll|showWatchAll/.test(src),
@@ -836,11 +845,10 @@ check('the all-or-nothing show-all switches are gone for good',
 /* The people card is a door, not a form: a click opens the drawer, and the
    only Edit lives inside it. An Edit button back on the card face is the
    accidental-edit trap returning. */
-const miniCard = (src.match(/function personMiniCard[\s\S]*?\n}/) || [''])[0];
-check('a people card is read-only — the one Edit lives in the drawer',
-  /data-drw="person\|/.test(miniCard) && !/data-act="ed"/.test(miniCard)
-    && /drwPersonMarkup/.test(src),
-  'card carries data-drw=person|, no inline Edit, drawer renders personCard');
+check('a person row is a door; the one Edit lives inside the record drawer',
+  /data-drw="person\|/.test(src) && /drwPersonMarkup/.test(src)
+    && /drawer = \{ kind:'person', cid, pn \}/.test(src),
+  'rows carry data-drw=person|, the drawer renders personCard, and ed opens it');
 
 /* The focus-reading theme was tried and retired. What stayed is the default
    theme's own readability: .tiny at 12px and the looser line-heights. The

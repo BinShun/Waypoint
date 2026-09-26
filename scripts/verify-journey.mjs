@@ -188,7 +188,9 @@ async function open(email, via = 'click') {
     },
     set: async (el, v) => {
       if (!el) return false;
-      el.value = v;
+      /* Rich fields are contenteditable — `.value` does not reach them. */
+      if (el.classList && el.classList.contains('rte-ed')){ el.textContent = v; }
+      else el.value = v;
       el.dispatchEvent(new win.Event('input', { bubbles: true }));
       el.dispatchEvent(new win.Event('change', { bubbles: true }));
       await wait(90); return true;
@@ -263,8 +265,8 @@ check('opening it shows the customer', /Berjaya/.test(bd.text()));
 
 /* 2. Add a stakeholder. */
 await bd.click(bd.byText('#page [data-tab]', 'People'), 700);
-check('the People tab offers a way to add a person', !!bd.$('[data-act="addtoggle"][data-add="people"]'));
-await bd.click(bd.$('[data-act="addtoggle"][data-add="people"]'), 500);
+check('the People tab offers a way to add a person', !!bd.$('[data-act="addopen"][data-add="people"]'));
+await bd.click(bd.$('[data-act="addopen"][data-add="people"]'), 500);
 check('the form asks for a name, a title and a classification',
   !!bd.$('#ad1') && !!bd.$('#ad2') && !!bd.$('#ad3'));
 await bd.set(bd.$('#ad1'), 'Mei Ling Tan');
@@ -278,9 +280,9 @@ check('and is on screen straight away', /Mei Ling Tan/.test(bd.text()));
 /* 3. Log the meeting. */
 await bd.click(bd.$('[data-go="interactions"]'), 800);
 check('the Interactions screen offers a way to log one',
-  !!bd.$('[data-act="addtoggle"][data-add="interactions"]'));
-if (bd.$('[data-act="addtoggle"][data-add="interactions"]')) {
-  await bd.click(bd.$('[data-act="addtoggle"][data-add="interactions"]'), 500);
+  !!bd.$('[data-act="addopen"][data-add="interactions"]'));
+if (bd.$('[data-act="addopen"][data-add="interactions"]')) {
+  await bd.click(bd.$('[data-act="addopen"][data-add="interactions"]'), 500);
   const sel = bd.$('#ad0');
   check('the form asks which customer it was with', !!sel, sel ? sel.options.length + ' customers' : '');
   await bd.set(sel, 'Berjaya Retail');
@@ -298,12 +300,12 @@ if (bd.$('[data-act="addtoggle"][data-add="interactions"]')) {
       places, written once. */
 await bd.click(bd.$('[data-go="customers"]'), 700);
 await bd.click(bd.$$('#page [data-open]').find(x => /Berjaya/.test(x.textContent || '')), 900);
-await bd.click(bd.byText('#page [data-tab]', 'Timeline'), 700);
+await bd.click(bd.byText('#page [data-tab]', 'Activity'), 700);
 check('the meeting is on the customer timeline too', /retail platform refresh/i.test(bd.text()),
   'one fact, two views');
 
 /* 5. Pain points. */
-await bd.click(bd.byText('#page [data-tab]', 'Brief'), 700);
+await bd.click(bd.byText('#page [data-tab]', 'Overview'), 700);
 check('the Brief offers a way to record what hurts', !!bd.$('[data-act="edpains"]'));
 await bd.click(bd.$('[data-act="edpains"]'), 500);
 await bd.set(bd.$('#ed1'), 'Nightly batch misses the 6am store opening\nNo single view of stock across channels');
@@ -319,8 +321,8 @@ check('and are on screen', /Nightly batch/.test(bd.text()));
 /* 6. An opportunity. */
 await bd.click(bd.byText('#page [data-tab]', 'Opportunities'), 700);
 check('the Opportunities tab offers a way to add one',
-  !!bd.$('[data-act="addtoggle"][data-add="opportunities"]'));
-await bd.click(bd.$('[data-act="addtoggle"][data-add="opportunities"]'), 500);
+  !!bd.$('[data-act="addopen"][data-add="opportunities"]'));
+await bd.click(bd.$('[data-act="addopen"][data-add="opportunities"]'), 500);
 await bd.set(bd.$('#ad1'), 'Warehouse robotics rollout');
 await bd.set(bd.$('#ad2'), '900000');
 await bd.click(bd.$('[data-act="addsave"]'), 300);
@@ -399,7 +401,7 @@ if (oppEdit) {
 }
 
 /* 11. Hand the customer to a colleague. */
-await bd.click(bd.byText('#page [data-tab]', 'Brief'), 800);
+await bd.click(bd.byText('#page [data-tab]', 'Overview'), 800);
 const addTeam = bd.$('[data-act="teamadd"]');
 check('the owner can put somebody else on the customer', !!addTeam);
 if (addTeam) {
@@ -423,8 +425,8 @@ if (addTeam) {
 
 /* 11b. The same record, the other half: a BD reads what they run but does
         not get to change it. */
-await bd.click(bd.byText('#page [data-tab]', 'What they run'), 700);
-check('BD does not get to add a system', !bd.$('[data-act="addtoggle"][data-add="run"]'),
+await bd.click(bd.byText('#page [data-tab]', 'Systems & Products'), 700);
+check('BD does not get to add a system', !bd.$('[data-act="addopen"][data-add="systems"]'),
   'BD owns money, SA owns machines');
 
 /* 12. Deletion is the administrator's act. A Remove drawn for a BD was a
@@ -452,10 +454,10 @@ check('the SA can see the customer they were put on', /Berjaya/.test(sa.text()),
 const saCard = sa.$$('#page [data-open]').find(x => /Berjaya/.test(x.textContent || ''));
 if (saCard) {
   await sa.click(saCard, 900);
-  await sa.click(sa.byText('#page [data-tab]', 'What they run'), 800);
-  check('SA can add a system', !!sa.$('[data-act="addtoggle"][data-add="run"]'));
-  if (sa.$('[data-act="addtoggle"][data-add="run"]')) {
-    await sa.click(sa.$('[data-act="addtoggle"][data-add="run"]'), 500);
+  await sa.click(sa.byText('#page [data-tab]', 'Systems & Products'), 800);
+  check('SA can add a system', !!sa.$('[data-act="addopen"][data-add="systems"]'));
+  if (sa.$('[data-act="addopen"][data-add="systems"]')) {
+    await sa.click(sa.$('[data-act="addopen"][data-add="systems"]'), 500);
     await sa.set(sa.$('#ad1'), 'Stock ledger (Oracle)');
     await sa.set(sa.$('#ad2'), 'Oracle Exadata');
     await sa.click(sa.$('[data-act="addsave"]'), 1300);
@@ -464,7 +466,7 @@ if (saCard) {
       (cSys.apps || []).length + ' systems');
   }
   await sa.click(sa.byText('#page [data-tab]', 'Opportunities'), 800);
-  check('SA does not get to change the money', !sa.$('[data-act="addtoggle"][data-add="opportunities"]'),
+  check('SA does not get to change the money', !sa.$('[data-act="addopen"][data-add="opportunities"]'),
     'BD owns money, SA owns machines');
   check('SA sees the opportunity but is offered no Edit on it',
     /Warehouse robotics rollout/.test(sa.text()) && !sa.$('[data-act="ed"]'),
@@ -488,7 +490,7 @@ const mgrCard = mgr.$$('#page [data-open]').find(x => /Berjaya/.test(x.textConte
 if (mgrCard) {
   await mgr.click(mgrCard, 900);
   check('Manager is offered no way to edit the customer', !mgr.$('[data-act="edcust"]'));
-  check('Manager is offered no way to add a person', !mgr.$('[data-act="addtoggle"]'));
+  check('Manager is offered no way to add a person', !mgr.$('[data-act="addopen"]'));
   check('Manager is offered no way to change the team', !mgr.$('[data-act="teamadd"]'));
   check('Manager is offered no way to remove anything', !mgr.$('[data-act="rm"]'),
     'read-only means no Remove either');

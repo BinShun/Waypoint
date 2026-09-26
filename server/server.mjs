@@ -606,7 +606,7 @@ function customerCsv(state, who) {
   const at = new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
   const name = who?.name || 'Administrator';
   const oppsMap = state.opps || {};
-  const head = ['Customer', 'Industry', 'HQ', 'Stance', 'Health', 'Owner', 'Confidential', 'Demo',
+  const head = ['Customer', 'Industry', 'HQ', 'Onboarded', 'Health', 'Owner', 'Confidential', 'Demo',
     'Opportunities', 'Open value', 'People', 'Systems', 'Last meeting', 'Next step',
     'Exported by', 'Exported at'];
   const rows = (state.customers || []).map((c) => {
@@ -617,7 +617,7 @@ function customerCsv(state, who) {
       .filter((s) => s.c === c.id)
       .sort((a, b) => String(a.due || '').localeCompare(String(b.due || '')))[0];
     return [
-      c.name, c.industry || '', c.hq || '', c.stance || '', c.health || '', c.owner || '',
+      c.name, c.industry || '', c.hq || '', c.onboard ? 'Onboarded' : 'Not onboarded', c.health || '', c.owner || '',
       c.confidential ? 'Yes' : 'No', c.demo ? 'Yes' : 'No',
       ops.length, ops.reduce((a, o) => a + (Number(o.v) || 0), 0),
       (c.contacts || []).length, (c.apps || []).length,
@@ -659,6 +659,13 @@ const LIST_KEYS = ['users', 'accounts', 'departments', 'contacts', 'contactOwner
      collection it does not know is a collection it will not carry forward.
      The old key stays until the migration script has run everywhere. */
   'customers', 'meetings', 'interactions', 'steps', 'audit', 'files',
+  /* No `depts` key here on purpose: departments belong to a customer and ride
+     inside `customers` as `c.depts`. A top-level list would have been a second
+     source of truth for a name every customer is allowed to spell differently. */
+  /* `views` are saved list questions (filters, sort, columns). Rows of
+     {id, obj, name, owner, shared, def} — merged like any other list so one
+     person's saved view survives a reload and a teammate can open it. */
+  'views',
   /* `watch` holds the signals a person recorded and, crucially, their decision
      on each one (confirmed / not relevant). It used to ride inside `config`,
      which made a human judgement a setting rather than a record. */
@@ -2371,8 +2378,8 @@ function stepIntegrity(state) {
  * `owner` is not a label — it decides whose book the account is in, which is
  * what `visibleAccountIds` reads to decide who can see the row at all. So an SA
  * writing it is not a small edit; it is handing themselves the account, and
- * taking it off whoever had it. `stance` and `health` are the same half of the
- * bargain: how the relationship stands. An SA may read all three — that is what
+ * taking it off whoever had it. `onboard` and `health` are the same half of the
+ * bargain: how the account stands. An SA may read all three — that is what
  * the shared record is for — and may write none of them.
  *
  * WHY THIS IS HERE, AND WHAT IT IS NOT
@@ -2401,7 +2408,7 @@ function stepIntegrity(state) {
  *
  * Returns null when the rule holds, or the reason it does not.
  */
-const SA_LOCKED_FIELDS = ['owner', 'stance', 'health'];
+const SA_LOCKED_FIELDS = ['owner', 'onboard', 'health'];
 function saCommercialGuard(disk, incoming, user) {
   /* No account means no role to hold to, and the open copy has exactly one
      person in it who is the owner of everything. A role that is not `sa` has
@@ -2421,8 +2428,13 @@ function saCommercialGuard(disk, incoming, user) {
        version of the first. */
     if (!was) continue;
     for (const f of SA_LOCKED_FIELDS) {
-      if (String(row[f] ?? '') === String(was[f] ?? '')) continue;
-      const label = f === 'owner' ? 'the Owner' : (f === 'stance' ? 'Their stance' : 'the Health');
+      /* Rows written before `onboard` existed carry nothing there, while the
+         new client always sends a boolean. Absent means false — otherwise every
+         legacy row reads as changed on an SA's first save after the upgrade. */
+      const a = row[f] ?? (f === 'onboard' ? false : '');
+      const b = was[f] ?? (f === 'onboard' ? false : '');
+      if (String(a) === String(b)) continue;
+      const label = f === 'owner' ? 'the Owner' : (f === 'onboard' ? 'Onboard status' : 'the Health');
       return `An SA cannot change ${label} of ${String(was.name ?? row.id)}. `
         + `§5: a BD owns the money — value, stage, close date, who owns what — `
         + `and an SA owns the machines. Ask the account's Primary BD `
@@ -4148,7 +4160,7 @@ async function assembleBrief(task) {
   const material = {
     customer: {
       name: String(customer.name || ''), industry: String(customer.industry || ''),
-      stance: String(customer.stance || ''), health: String(customer.health || ''),
+      onboard: customer.onboard ? 'Onboarded' : 'Not onboarded', health: String(customer.health || ''),
       site: String(customer.site || ''),
       pains: (Array.isArray(customer.pains) ? customer.pains : []).map(String),
     },
@@ -4168,7 +4180,7 @@ async function assembleBrief(task) {
     '',
     'Customer: ' + material.customer.name,
     'Industry: ' + material.customer.industry,
-    'Stance: ' + material.customer.stance,
+    'Onboarded: ' + material.customer.onboard,
     'Health: ' + material.customer.health,
   ];
   if (material.customer.pains.length) lines.push('Pain points: ' + material.customer.pains.join('; '));

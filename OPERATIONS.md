@@ -17,7 +17,7 @@ npm start          # http://localhost:8787 —— 服务器零依赖，不需要
 跑一遍回归确认手里这份代码是完整的（约 10 分钟）：
 
 ```bash
-WP_PASS='你的测试密码' npm run verify:all    # 28 套件 / 1420 checks，全绿 = 可交付状态
+WP_PASS='你的测试密码' npm run verify:all    # 28 套件 / 1427 checks，全绿 = 可交付状态
 ```
 
 `WP_PASS` 需 8 位以上、含字母和数字——这是服务器本身的密码策略，套件会用它建临时管理员。
@@ -133,7 +133,7 @@ WP_PASS='...' npm run verify:all
 - [ ] 演示密码 `Waypoint#2026` 没有出现在任何生产账号上（`seed:demo` 只用于演示环境）
 - [ ] 公网部署的域名已在 Origin 白名单，`HOST=0.0.0.0` 只在反代后使用
 - [ ] `data/`、`certs/`、`.env` 没被提交进 git（`git status` 里看不到它们即正常）
-- [ ] 交付前 `verify:all` 全绿（28 套件 / 1420 checks）
+- [ ] 交付前 `verify:all` 全绿（28 套件 / 1427 checks）
 
 ## 从这里去哪
 

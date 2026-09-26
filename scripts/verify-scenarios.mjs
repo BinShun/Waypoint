@@ -261,8 +261,8 @@ check('the creator owns it', sun && sun.owner === 'Ahmad Faiz', sun ? sun.owner 
 
 /* 2 · the person they just met */
 check('opening it works the way a user would click', await openCustomer(bd, 'Sunrise Retail Group'));
-check('the People tab is where a person gets added', await bd.click(tab(bd, 'People'), 700) && !!bd.$('[data-act="addtoggle"][data-add="people"]'));
-await bd.click(bd.$('[data-act="addtoggle"][data-add="people"]'), 500);
+check('the People tab is where a person gets added', await bd.click(tab(bd, 'People'), 700) && !!bd.$('[data-act="addopen"][data-add="people"]'));
+await bd.click(bd.$('[data-act="addopen"][data-add="people"]'), 500);
 check('the person form asks how to reach them', !!bd.$('#ad4') && !!bd.$('#ad5'),
   'email + phone — a contact you cannot reach is a name, not a contact');
 await bd.set(bd.$('#ad1'), 'Mei Ling Tan');
@@ -282,8 +282,8 @@ check('and is on screen straight away', /Mei Ling Tan/.test(bd.text()));
 
 /* 3 · the meeting */
 await bd.click(bd.$('[data-go="interactions"]'), 800);
-check('the Interactions screen offers Log an interaction', !!bd.$('[data-act="addtoggle"][data-add="interactions"]'));
-await bd.click(bd.$('[data-act="addtoggle"][data-add="interactions"]'), 500);
+check('the Interactions screen offers Log an interaction', !!bd.$('[data-act="addopen"][data-add="interactions"]'));
+await bd.click(bd.$('[data-act="addopen"][data-add="interactions"]'), 500);
 await bd.set(bd.$('#ad0'), 'Sunrise Retail Group');
 await bd.set(bd.$('#ad1'), 'Retail platform workshop');
 await bd.set(bd.$('#ad2'), 'Mei Ling Tan');
@@ -299,11 +299,11 @@ check('attached to the right customer', mtg && mtg.c === sun.id, mtg ? mtg.c : '
 
 /* 3b · a meeting can also be logged where its results will be read: inside
       the customer, on the Timeline, with no customer picker to get wrong. */
-check('back on the customer, the Brief tab is one click away', await openCustomer(bd, 'Sunrise Retail Group') && await bd.click(tab(bd, 'Brief'), 700));
-await bd.click(tab(bd, 'Timeline'), 700);
+check('back on the customer, the Brief tab is one click away', await openCustomer(bd, 'Sunrise Retail Group') && await bd.click(tab(bd, 'Overview'), 700));
+await bd.click(tab(bd, 'Activity'), 700);
 check('the Timeline tab offers Log an interaction for THIS customer',
-  !!bd.byText('#page [data-act="addtoggle"][data-add="interactions"]', 'Log an interaction'));
-await bd.click(bd.$('[data-act="addtoggle"][data-add="interactions"]'), 500);
+  !!bd.byText('#page [data-act="addopen"][data-add="interactions"]', 'Log an interaction'));
+await bd.click(bd.$('[data-act="addopen"][data-add="interactions"]'), 500);
 check('the customer picker opens on THIS customer, not the first in the list',
   (bd.$('#ad0') || {}).value === 'Sunrise Retail Group', (bd.$('#ad0') || {}).value || '(no picker)');
 await bd.set(bd.$('#ad1'), 'Budget review call');
@@ -344,8 +344,12 @@ check('a BD is offered no Remove on a meeting — the matrix reserves deletion t
   bd.$$('#page button[data-act="rm"]').map(b => b.dataset.rm).join(',') || 'none drawn');
 check('a BD corrects a mistake by editing it, which they can', !!bd.$$('#page button[data-ed]').length);
 
-/* 3e · the date filter on Meetings is a real filter, not decoration. */
-await bd.click(bd.$('[data-act="addtoggle"][data-add="interactions"]'), 500);
+/* 3e · the list engine's search, driven from the Interactions screen. The
+   picker's honest default is "Pick a customer…" — a global form must not
+   pretend the first customer in the book was chosen, so the scenario picks
+   the way a user does (§2 does the same one screen earlier). */
+await bd.click(bd.$('[data-act="addopen"][data-add="interactions"]'), 500);
+await bd.set(bd.$('#ad0'), 'Sunrise Retail Group');
 await bd.set(bd.$('#ad1'), 'Old quarter review');
 await bd.set(bd.$('#ad2'), '-');
 await bd.set(bd.$('#ad3'), '-');
@@ -356,16 +360,22 @@ if (oldEd) {
   await bd.set(bd.$('#ed2'), '2026-05-20');      /* ~120 days ago */
   await bd.click(bd.$('[data-act="edsave"]'), 1200);
 }
-check('the range filter defaults to Last 90 days', (bd.$('#meetRange') || {}).value === 'Last 90 days');
-check('which really hides the old meeting', !/Old quarter review/.test(bd.text()),
-  'the list is filtered, not just labelled');
-await bd.set(bd.$('#meetRange'), 'All time');
-const oldMonth = bd.$$('#page .mg').find(b => /2026-05|May/.test(b.textContent || ''));
-if (oldMonth) await bd.click(oldMonth, 500);   /* collapsed months stay collapsed — open it */
-check('and All time really brings it back', /Old quarter review/.test(bd.text()));
+/* 3e · the date range lives in the list engine now: nothing is hidden by
+   default, and a search narrows the whole book, not just the page. */
+check('the list shows everything by default — no silent range cut',
+  /Old quarter review/.test(bd.text()), 'the old meeting is visible without opening anything');
+await bd.set(bd.$('[data-lv="q"][data-obj="interactions"]'), 'Old quarter');
+await wait(700);
+check('and searching narrows to it',
+  /Old quarter review/.test(bd.text()) && !/Budget review call/.test(bd.text()),
+  'the engine search filters the whole book, not the page');
+await bd.set(bd.$('[data-lv="q"][data-obj="interactions"]'), '');
+await wait(700);
+check('and clearing brings the whole book back',
+  /Old quarter review/.test(bd.text()) && /Budget review call/.test(bd.text()));
 
 /* 4 · the pains, in the place the brief says they live */
-check('back on the customer, the Brief tab is one click away', await openCustomer(bd, 'Sunrise Retail Group') && await bd.click(tab(bd, 'Brief'), 700));
+check('back on the customer, the Brief tab is one click away', await openCustomer(bd, 'Sunrise Retail Group') && await bd.click(tab(bd, 'Overview'), 700));
 check('the pains card offers Edit', !!bd.$('[data-act="edpains"]'));
 await bd.click(bd.$('[data-act="edpains"]'), 500);
 await bd.set(bd.$('#ed1'), 'Billing runs on hardware that is out of support\nCheckout downtime in peak season costs them real revenue');
@@ -377,8 +387,8 @@ check('and readable on screen', /Checkout downtime/.test(bd.text()));
 
 /* 5 · the opportunity */
 check('the Opportunities tab offers Add opportunity',
-  await bd.click(tab(bd, 'Opportunities'), 700) && !!bd.$('[data-act="addtoggle"][data-add="opportunities"]'));
-await bd.click(bd.$('[data-act="addtoggle"][data-add="opportunities"]'), 500);
+  await bd.click(tab(bd, 'Opportunities'), 700) && !!bd.$('[data-act="addopen"][data-add="opportunities"]'));
+await bd.click(bd.$('[data-act="addopen"][data-add="opportunities"]'), 500);
 await bd.set(bd.$('#ad1'), 'Retail platform migration');
 await bd.set(bd.$('#ad2'), '1800000');
 await bd.set(bd.$('#ad3'), 'Interested');
@@ -390,9 +400,9 @@ check('and hangs off the right customer', oppRow && oppRow.c === sun.id, oppRow 
 
 /* 6 · work to do, with an owner — the action a BD promises in the room */
 check('the Brief tab shows an open-actions card for this customer',
-  await bd.click(tab(bd, 'Brief'), 700) && /Open actions|What we owe/i.test(bd.text()));
-check('and an Add action control where the actions are listed', !!bd.$('[data-act="addtoggle"][data-add="steps"]'));
-await bd.click(bd.$('[data-act="addtoggle"][data-add="steps"]'), 500);
+  await bd.click(tab(bd, 'Overview'), 700) && /Open actions|What we owe/i.test(bd.text()));
+check('and an Add action control where the actions are listed', !!bd.$('[data-act="addopen"][data-add="steps"]'));
+await bd.click(bd.$('[data-act="addopen"][data-add="steps"]'), 500);
 /* §5: an action now names TWO people — who EXECUTES it, and who TRACKS it —
    because doing the work and being answerable for it are different jobs, and a
    Product SA who executes is not on the account team. The form therefore has
@@ -456,6 +466,9 @@ check('our owner is saved where it can be reassigned', oppAfter && oppAfter.owne
   oppAfter ? oppAfter.owner : '');
 check('the audit trail says who changed it',
   (disk().audit || []).some(a => /Opportunity updated/.test(a.what || '') && a.who === 'Ahmad Faiz'));
+/* The catalogue attach lives on the cards mode of the tab — the per-deal
+   work surface. The list mode is for comparing. */
+await bd.click(bd.$('[data-act="oppv"][data-v="cards"]'), 500);
 check('the opportunity card offers products from the catalogue', !!bd.$('#page select[id^="oppItem"]'));
 {
   const sel = bd.$('#page select[id^="oppItem"]');
@@ -489,7 +502,7 @@ check('and the pipeline table shows the stage the deal is in',
 /* 8 · correct a fact on the record */
 check('back from Insights, the customer is one click away',
   await openCustomer(bd, 'Sunrise Retail Group'));
-await bd.click(tab(bd, 'Brief'), 700);
+await bd.click(tab(bd, 'Overview'), 700);
 check('the About card offers Edit', !!bd.$('[data-act="edcust"]'));
 await bd.click(bd.$('[data-act="edcust"]'), 500);
 check('the edit form reaches every printed fact', !!bd.$('#ed8') && !!bd.$('#ed9'),
@@ -506,7 +519,7 @@ check('and the headcount and customer-since corrections too',
   sun.people === 2300 && sun.since === 'Apr 2026', sun.people + ' people · since ' + sun.since);
 
 /* 9 · one fact, every place it belongs */
-await bd.click(tab(bd, 'Timeline'), 700);
+await bd.click(tab(bd, 'Activity'), 700);
 check('the meeting is on the customer timeline', /Retail platform workshop/.test(bd.text()));
 {
   const nMeet = (sun.timeline || []).filter(t => t.k === 'interaction').length;
@@ -567,7 +580,7 @@ console.log('\n— SCENARIO 2 · SA: the technical half of the same account —'
 /* A BD meets the customer; an SA works it. The owner puts the SA on the
    team first — that is the product's own rule, so the scenario follows it. */
 check('the BD can find the customer again after the reload', await openCustomer(bd, 'Sunrise Retail Group'));
-await bd.click(tab(bd, 'Brief'), 700);
+await bd.click(tab(bd, 'Overview'), 700);
 const teamSel = bd.$$('#page select[id^="teamAdd"]');
 check('the owner can put an SA on this customer', teamSel.length > 0);
 if (teamSel.length) {
@@ -583,15 +596,15 @@ if (teamSel.length) {
 const sa = await open('john.teh@global.tencent.com');
 check('SA signs in', /Today|Customers/.test(sa.text()), sa.text().slice(0, 50));
 check('the customer the BD built is visible to the SA now', await openCustomer(sa, 'Sunrise Retail Group'));
-await sa.click(tab(sa, 'Brief'), 700);
+await sa.click(tab(sa, 'Overview'), 700);
 check('the SA can read the commercial half — the pains and the open action',
   /Checkout downtime/.test(sa.text()) && /Send the proposal draft/.test(sa.text()));
 check('a fact a manager needs is on screen: the open action', /Send the proposal draft/.test(sa.text()));
 
 /* the SA's own half: what they run */
-await sa.click(tab(sa, 'What they run'), 700);
-check('the SA can add a system', !!sa.$('[data-act="addtoggle"][data-add="run"]'));
-await sa.click(sa.$('[data-act="addtoggle"][data-add="run"]'), 500);
+await sa.click(tab(sa, 'Systems & Products'), 700);
+check('the SA can add a system', !!sa.$('[data-act="addopen"][data-add="systems"]'));
+await sa.click(sa.$('[data-act="addopen"][data-add="systems"]'), 500);
 await sa.set(sa.$('#ad1'), 'Billing (BSCS)');
 await sa.set(sa.$('#ad2'), 'Oracle Database, on-premise, out of support');
 await sa.set(sa.$('#ad3'), 'Replace');
@@ -610,9 +623,9 @@ check('the SA is offered no commercial Edit on it',
 check('and no Remove on it either', !sa.$$('#page [data-act="rm"]').some(b => (b.dataset.rm || '').startsWith('opp|')));
 
 /* the SA's own action, on the same record */
-await sa.click(tab(sa, 'Brief'), 700);
-check('the SA can add an action too', !!sa.$('[data-act="addtoggle"][data-add="steps"]'));
-await sa.click(sa.$('[data-act="addtoggle"][data-add="steps"]'), 500);
+await sa.click(tab(sa, 'Overview'), 700);
+check('the SA can add an action too', !!sa.$('[data-act="addopen"][data-add="steps"]'));
+await sa.click(sa.$('[data-act="addopen"][data-add="steps"]'), 500);
 /* THE POINT OF THIS ROW IS WHO TRACKS IT, NOT WHO DOES IT.
    John Teh is a Solution Architect but he is NOT this account's Primary SA —
    Ahmad Faiz owns it. §5 is explicit that the TRACKER must be the customer's
@@ -640,7 +653,7 @@ await sa.click(sa.$('[data-act="addsave"]'), 1200);
 check('both actions are on the customer now', /Send the proposal draft/.test(sa.text()) && /Size the BSCS migration/.test(sa.text()));
 
 /* the timeline carries the technical facts too */
-await sa.click(tab(sa, 'Timeline'), 700);
+await sa.click(tab(sa, 'Activity'), 700);
 check('the timeline still shows the BD’s meeting', /Retail platform workshop/.test(sa.text()));
 await sa.reload();
 await wait(400);
@@ -654,7 +667,7 @@ const mg = await open('siti.nurhaliza@global.tencent.com', 'enter');
 check('Manager signs in', /Today|Customers/.test(mg.text()), mg.text().slice(0, 50));
 check('Manager sees every customer, including the one the BD built',
   await openCustomer(mg, 'Sunrise Retail Group'));
-await mg.click(tab(mg, 'Brief'), 700);
+await mg.click(tab(mg, 'Overview'), 700);
 check('Manager reads the pains', /Checkout downtime/.test(mg.text()));
 await mg.click(tab(mg, 'Opportunities'), 700);
 check('Manager reads the opportunity and its stage', /Retail platform migration/.test(mg.text()));
@@ -666,7 +679,7 @@ check('Manager reads the risks: the overdue count and the needs-you list are on 
 
 /* Not one control that writes — anywhere the Manager stands. */
 const writeControls = mg.$$('#page [data-act]').filter(b =>
-  ['addtoggle', 'addsave', 'ed', 'edsave', 'edcust', 'edpains', 'edbrief', 'rm', 'rmyes',
+  ['addopen', 'addsave', 'ed', 'edsave', 'edcust', 'edpains', 'edbrief', 'rm', 'rmyes',
    'delcust', 'capture', 'teamadd', 'teamrm', 'newcust', 'watchadd', 'wasave', 'export', 'stepdone']
     .includes(b.dataset.act));
 check('no write control is drawn for a Manager, anywhere on Today',
@@ -674,12 +687,12 @@ check('no write control is drawn for a Manager, anywhere on Today',
 check('no Capture button for a Manager', !mg.$('[data-act="capture"]'));
 await mg.click(mg.$('[data-go="customers"]'), 700);
 const writeCust = mg.$$('#page [data-act]').filter(b =>
-  ['addtoggle', 'addsave', 'ed', 'edsave', 'edcust', 'edpains', 'rm', 'newcust', 'teamadd', 'export']
+  ['addopen', 'addsave', 'ed', 'edsave', 'edcust', 'edpains', 'rm', 'newcust', 'teamadd', 'export']
     .includes(b.dataset.act));
 check('none on the Customers screen either', writeCust.length === 0, writeCust.map(b => b.dataset.act).join(','));
 await openCustomer(mg, 'Sunrise Retail Group');
 const writeInside = mg.$$('#page [data-act]').filter(b =>
-  ['addtoggle', 'addsave', 'ed', 'edsave', 'edcust', 'edpains', 'edbrief', 'rm', 'teamadd', 'teamrm', 'watchadd', 'export', 'stepdone']
+  ['addopen', 'addsave', 'ed', 'edsave', 'edcust', 'edpains', 'edbrief', 'rm', 'teamadd', 'teamrm', 'watchadd', 'export', 'stepdone']
     .includes(b.dataset.act));
 check('and none inside a customer', writeInside.length === 0, writeInside.map(b => b.dataset.act).join(','));
 check('no Export anywhere a Manager can reach', !mg.$('[data-act="export"]'));
@@ -693,13 +706,20 @@ check('the Files tab offers a Manager no upload control', !mg.$('[data-act="file
 await mg.click(mg.$('[data-go="interactions"]'), 700);
 check('and no Edit on a meeting card either', !mg.$$('#page button[data-ed]').length);
 
-/* The stance filter on People is a real filter now. */
+/* The stance filter on People is a real condition in the list engine now. */
 await mg.click(mg.$('[data-go="people"]'), 700);
-await mg.set(mg.$('#peopleStance'), 'With us');
-check('Stance: With us really filters the list', !/Mei Ling Tan/.test(mg.text()),
+await mg.click(mg.$('[data-lv="filterbtn"][data-obj="people"]'), 300);
+await mg.click(mg.$('[data-lv="cadd"][data-obj="people"]'), 300);
+await mg.set(mg.$('[data-lv="cf"][data-obj="people"]'), 'stance');
+await wait(300);
+await mg.set(mg.$('[data-lv="cv"][data-obj="people"]'), 'Supportive');
+await wait(500);
+check('Stance: Supportive really filters the list', !/Mei Ling Tan/.test(mg.text()),
   'she is Undecided, so she leaves the list');
-await mg.set(mg.$('#peopleStance'), 'Undecided');
+await mg.set(mg.$('[data-lv="cv"][data-obj="people"]'), 'Undecided');
+await wait(500);
 check('and Undecided brings her back', /Mei Ling Tan/.test(mg.text()));
+await mg.click(mg.$('[data-lv="conclear"][data-obj="people"]'), 400);
 
 /* The server, not the layout, is the rule. */
 const forged = await mg.api('/api/data', {
@@ -728,7 +748,7 @@ check('the Admin’s customer is on the server', await savedRow(() =>
   (disk().customers || []).find(c => c.name === 'Westport Logistics')));
 check('Admin opens it', await openCustomer(ad, 'Westport Logistics'));
 await ad.click(tab(ad, 'People'), 700);
-await ad.click(ad.$('[data-act="addtoggle"][data-add="people"]'), 500);
+await ad.click(ad.$('[data-act="addopen"][data-add="people"]'), 500);
 await ad.set(ad.$('#ad1'), 'Rajesh Kumar');
 await ad.set(ad.$('#ad2'), 'IT Director');
 await ad.set(ad.$('#ad3'), 'Decision maker');
@@ -737,15 +757,15 @@ check('Admin adds a person', await savedRow(() =>
   (disk().customers || []).find(c => c.name === 'Westport Logistics'
     && (c.contacts || []).some(p => p.n === 'Rajesh Kumar'))));
 await ad.click(tab(ad, 'Opportunities'), 700);
-await ad.click(ad.$('[data-act="addtoggle"][data-add="opportunities"]'), 500);
+await ad.click(ad.$('[data-act="addopen"][data-add="opportunities"]'), 500);
 await ad.set(ad.$('#ad1'), 'Warehouse modernisation');
 await ad.set(ad.$('#ad2'), '900000');
 await ad.set(ad.$('#ad3'), 'Interested');
 await ad.click(ad.$('[data-act="addsave"]'), 1300);
 check('Admin creates an opportunity', await savedRow(() =>
   Object.values(disk().opps || {}).find(o => o.t === 'Warehouse modernisation')));
-await ad.click(tab(ad, 'Brief'), 700);
-await ad.click(ad.$('[data-act="addtoggle"][data-add="steps"]'), 500);
+await ad.click(tab(ad, 'Overview'), 700);
+await ad.click(ad.$('[data-act="addopen"][data-add="steps"]'), 500);
 await ad.set(ad.$('#ad1'), 'Scope the warehouse POC');
 await ad.set(ad.$('#ad2'), 'Teh Bin Shun');
 await ad.set(ad.$('#ad3'), '2026-09-25');
@@ -796,7 +816,12 @@ check('Admin sees the Delete control on a customer', !!ad.$('[data-act="delcust"
 /* Deletion is the administrator's act, so the Admin proves it end to end:
    remove a meeting and BOTH copies of it go — the list and the timeline. */
 await ad.click(ad.$('[data-go="interactions"]'), 800);
-const adRm = ad.$$('#page button[data-act="rm"]').find(b => (b.dataset.rm || '').startsWith('interaction|'));
+/* Removal lives inside the record now — open one (the peek is the door),
+   and the administrator's Remove is there, two-step, in the drawer. */
+const peekBtn = ad.$('#page [data-lv="peek"][data-obj="interactions"]');
+check('the Admin can open a meeting record', !!peekBtn);
+await ad.click(peekBtn, 600);
+const adRm = ad.$$('#drwHost button[data-act="rm"]').find(b => (b.dataset.rm || '').startsWith('interaction|'));
 check('the Admin is offered Remove on a meeting', !!adRm, adRm ? adRm.dataset.rm : 'none');
 if (adRm) {
   const target = (adRm.dataset.rm || '').split('|')[2];

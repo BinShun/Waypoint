@@ -148,7 +148,8 @@ window.fetch = async (url, init = {}) => {
 };
 
 const act = (sel) => { const b = doc.querySelector(sel); if (!b) return 'MISSING'; b.click(); return 'ok'; };
-const label = (t) => [...doc.querySelectorAll('#page button')].find((b) => (b.textContent || '').trim() === t);
+/* Buttons live on the page or in the drawer that carries the forms now. */
+const label = (t) => [...doc.querySelectorAll('#page button, #drwHost button')].find((b) => (b.textContent || '').trim() === t);
 const seen = () => doc.body.textContent.replace(/\s+/g, ' ');
 const pill = () => (doc.getElementById('connState') || {}).textContent || '';
 /* The sentence behind the word is on the word itself: `paintConn` writes the

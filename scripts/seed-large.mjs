@@ -68,13 +68,18 @@ function seed(dir){
      into a stage the book does not have is a deal no column will show. */
   const STAGES = ['Interested', 'Evaluating', 'POC / Quoted', 'Submitted'];
 
-  const N = 160;
+  /* The defaults are the everyday smoke; the acceptance run asks for the
+     real target: SEED_N=500 SEED_PPL=4 SEED_MEET=17 gives ~500 customers,
+     ~6,600 people and ~10,000 interactions. */
+  const N = Number(process.env.SEED_N || 160);
+  const PPL_X = Number(process.env.SEED_PPL || 1);
+  const MEET_X = Number(process.env.SEED_MEET || 1);
   for (let i = 0; i < N; i++){
     const id = 'c_l' + i;
     const name = pick(GIVEN, i) + ' ' + pick(INDUSTRIES, i).split(' ')[0] + ' Group ' + (i + 1);
     /* Three customers carry the long tails: 40 contacts, a long audit trail,
        a long watch list — the screens that cap or chunk must be seen doing it. */
-    const nContacts = i < 3 ? 40 : 2 + (i % 3);
+    const nContacts = i < 3 ? 40 * PPL_X : (2 + (i % 3)) * PPL_X;
     const contacts = [];
     for (let j = 0; j < nContacts; j++) contacts.push(person(i, j, pick(TEAM, i)));
     const owner = pick(TEAM, i);
@@ -89,7 +94,7 @@ function seed(dir){
     });
 
     /* ~320 interactions spread over five months so the month groups open */
-    const nMeet = (i % 5 === 0) ? 4 : (i % 2);
+    const nMeet = ((i % 5 === 0) ? 4 : (i % 2)) * MEET_X;
     for (let k = 0; k < nMeet; k++){
       const d = gd(-(i * 3 + k * 19) % 150);
       interactions.push({

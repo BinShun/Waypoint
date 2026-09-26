@@ -24,10 +24,10 @@ npm start            # http://localhost:8787 —— 服务器零依赖，无需 
 
 ## AI 配置（可选）
 
-两种方式任选：
+两种方式任选（环境变量优先于界面保存的文件）：
 
-1. 环境变量：`.env` 文件设置 `AI_BASE_URL` / `AI_API_KEY` / `AI_MODEL`（参考字段见 `server/server.mjs` 头注）
-2. 界面配置：Admin 登录 → Admin 屏 → AI & model，在线填写并保存
+1. 环境变量：把 `.env.example` 复制为 `.env`，填 `AI_BASE_URL` / `AI_API_KEY` / `AI_MODEL`（OpenAI 兼容端点皆可；推理型模型如 `hy4-preview` 返回 `reasoning_content`，已适配，默认预算够用）
+2. 界面配置：Admin 登录 → Admin 屏 → AI & model，在线填写并保存（写入 `data/ai.json`，动作落审计）
 
 未配置时所有 AI 入口显示「No model connected.」并指路 Admin 屏，其余功能不受影响。
 
@@ -49,15 +49,17 @@ npm start            # http://localhost:8787 —— 服务器零依赖，无需 
 ├── server/               零依赖 Node 服务器（静态服务 + API + AI 代理 + 加密）
 ├── dist/index.html       部署产物（前端副本，服务器的静态目录）
 ├── scripts/              28 个回归套件 + 验收走查器 + 运维工具
+├── docs/                 设计文档（waypoint-design-synthesis：现行设计契约）
 ├── data/                 工作区数据（不进 git）
 ├── certs/                自签 https 证书（不进 git）
+├── .env.example          模型端点配置模板（复制为 .env 使用）
 └── .env                  模型端点凭据（可选，不进 git）
 ```
 
 ## 测试与维护
 
 ```bash
-npm run verify:all       # 28 套件 / 1420 checks，全绿才允许交付
+npm run verify:all       # 28 套件 / 1427 checks，全绿才允许交付
 ```
 
 维护要点：

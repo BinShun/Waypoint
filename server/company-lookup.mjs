@@ -920,29 +920,152 @@ export async function classifyIndustryPublic(ctx) {
   };
 }
 
-const BRIEF_SYSTEM = 'You write short, factual company briefs for a cloud sales team. '
-  + 'You never invent facts, names, contracts or vendor claims. Reply with JSON only - no markdown, no explanation.';
+const BRIEF_SYSTEM = 'You write short, factual company briefs and call plans for a cloud sales team. '
+  + 'You never invent facts, names, contracts, vendors or URLs. '
+  + 'You keep what an organisation publishes about itself separate from what our own record says. '
+  + 'Reply with JSON only - no markdown, no explanation.';
 
-/* A draft of who the company is and where Tencent Cloud could matter to it.
-   The material is real: whatever their site publishes, plus the record the
-   lookup already read. The draft is labelled a draft in the UI, and the prompt
-   forbids invented contracts and vendor names. */
+/* A draft of who the company is, what is happening, where Tencent Cloud could
+   matter, and what to ask on the next call.
+
+   Fed from two kinds of material, and the prompt names which is which: what
+   THEIR SITE publishes, and what OUR RECORD holds — the pains somebody wrote
+   down, the systems they run, the people we have met, how far our deals have
+   got. The second kind is the one that makes this worth reading: a brief fed
+   only a homepage is a paraphrase of marketing copy, which is what the old
+   two-paragraph version was. The draft is labelled a draft in the UI. */
+/* Where a company advertises for engineers. Not crawled exhaustively — two
+   guesses at most, and the first page that answers with real prose wins. */
+const CAREER_PATHS = ['/careers', '/careers/', '/jobs', '/join-us', '/career', '/en/careers'];
+
+/* Enough text to read, not enough to drown the prompt. Strips the parts of a
+   page that are chrome rather than content. */
+function readableText(html, max) {
+  let s = String(html || '');
+  s = s.replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
+    .replace(/<svg[\s\S]*?<\/svg>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ');
+  return decodeEntities(s).replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+/* What a company asks for in a job advert is the most honest thing it
+   publishes about what it actually runs — far more than its homepage, which
+   is written for customers. This is the one signal on this page that an SA
+   cannot get anywhere else in the app. */
+/* A URL that names its own failure — /404-error.page, /not-found — is not a
+   source. The body check below misses the ones that say it in the address
+   instead of the text, and a cited source that opens an error page is worse
+   than no source at all, because it looks checked. */
+const ERR_URL = /(404|not[-_]?found)/i;
+
+async function readCareers(domain) {
+  if (!domain || !looksLikeDomain(domain)) return null;
+  /* A single-page-app site answers 200 with a "Page Not Found" body for every
+     path it does not know — which would hand the model a page of nothing and
+     come back as a signal about nothing. Refuse the soft 404 and keep looking. */
+  const SOFT_404 = /(page not found|404\b|not found|no longer exists|we can'?t find|couldn'?t find)/i;
+  for (const p of CAREER_PATHS.slice(0, 3)) {
+    for (const base of ['https://' + domain, 'https://www.' + domain]) {
+      try {
+        const got = await fetchHtml(base + p);
+        if (ERR_URL.test(got.url)) continue;
+        const text = readableText(got.html, 6000);
+        if (text.length < 400) continue;
+        if (SOFT_404.test(text.slice(0, 600))) continue;
+        return { url: got.url, text: text.slice(0, 2500) };
+      } catch { /* no careers page there — try the next one */ }
+    }
+  }
+  return null;
+}
+
+/* Two more pages worth reading before asking a model about a company. The
+   homepage is written for the people who buy from them; the about page is the
+   closest thing to how they would describe themselves in a room, and their own
+   newsroom is the only place a dated fact about them lives. */
+const ABOUT_PATHS = ['/about', '/about-us', '/company', '/who-we-are', '/corporate', '/our-company'];
+
+async function readAbout(domain) {
+  if (!domain || !looksLikeDomain(domain)) return null;
+  const SOFT_404 = /(page not found|404\b|not found|no longer exists|we can'?t find|couldn'?t find)/i;
+  for (const p of ABOUT_PATHS.slice(0, 4)) {
+    for (const base of ['https://' + domain, 'https://www.' + domain]) {
+      try {
+        const got = await fetchHtml(base + p);
+        if (ERR_URL.test(got.url)) continue;
+        const text = readableText(got.html, 6000);
+        if (text.length < 400) continue;
+        if (SOFT_404.test(text.slice(0, 600))) continue;
+        return { url: got.url, text: text.slice(0, 1800) };
+      } catch { /* no about page there — try the next one */ }
+    }
+  }
+  return null;
+}
+
+/* Their newsroom, as fetched — a feed if they publish one, otherwise headlines
+   off the usual paths. No model touches this: the lines handed to the prompt
+   are the lines the page printed. */
+async function readNewsroom(domain, homeHtml, homeUrl) {
+  if (!domain || !looksLikeDomain(domain)) return null;
+  const base = homeUrl || ('https://' + domain);
+  if (homeHtml) {
+    for (const cand of [...discoverFeeds(homeHtml, base), ...FEED_PATHS.map((p) => 'https://' + domain + p)]
+      .slice(0, 5)) {
+      try {
+        const got = await fetchHtml(cand);
+        const items = ERR_URL.test(got.url) ? [] : parseFeed(got.html, got.url);
+        if (items.length) return { url: got.url, items: items.slice(0, 8) };
+      } catch { /* the next candidate */ }
+    }
+  }
+  for (const p of NEWS_PATHS.slice(0, 6)) {
+    for (const b of ['https://' + domain, 'https://www.' + domain]) {
+      try {
+        const got = await fetchHtml(b + p);
+        const items = ERR_URL.test(got.url) ? [] : extractHeadlines(got.html, got.url);
+        if (items.length) return { url: got.url, items: items.slice(0, 8) };
+      } catch { /* the next candidate */ }
+    }
+  }
+  return null;
+}
+
 export async function companyBrief(ctx) {
   const name = String(ctx.name || '').trim();
   if (!name) return fail('no-name', 'The customer has no name to ask about.');
   const domain = toDomain(String(ctx.domain || ctx.site || ''));
-  let title = '', intro = '', siteUrl = '';
+  let title = '', intro = '', siteUrl = '', homeHtml = '', homeUrl = '';
   if (domain && looksLikeDomain(domain)) {
     for (const c of ['https://' + domain, 'https://www.' + domain]) {
       try {
         const got = await fetchHtml(c);
         const s = parseSite(got.html, got.url);
         title = s.title; intro = s.intro; siteUrl = got.url;
+        homeHtml = got.html; homeUrl = got.url;
         break;
       } catch { /* brief without the site below */ }
     }
   }
-  const material = [
+  /* A public news search is the only source here that says what is happening
+     rather than what they want said — their own pages are written for the
+     people who buy from them. A plain fetch, no model call of its own. */
+  const marketP = (async () => {
+    try {
+      const got = await marketNews(name);
+      if (got.items && got.items.length) return { url: got.from, items: got.items.slice(0, 8) };
+    } catch { /* a blocked news search must not lose the rest of the brief */ }
+    return null;
+  })();
+
+  /* Four reads in parallel — hiring, self-description, their announcements,
+     and what the market says. Each is optional; none holds up the others. */
+  const [careers, about, newsroom, market] = await Promise.all([
+    readCareers(domain), readAbout(domain), readNewsroom(domain, homeHtml, homeUrl), marketP]);
+  const newsItems = (newsroom && newsroom.items) || [];
+  const published = [
     'Organisation: ' + name,
     ctx.description ? 'Public record: ' + ctx.description : '',
     ctx.industry ? 'Industry on the record: ' + ctx.industry : '',
@@ -950,21 +1073,75 @@ export async function companyBrief(ctx) {
     ctx.people ? 'Headcount on the record: ' + ctx.people : '',
     title ? 'Their website title: "' + title + '"' : '',
     intro ? 'Their website description: "' + intro + '"' : ''
-  ].filter(Boolean).join('\n');
-  if (!intro && !title && !ctx.description) {
-    return fail('no-material', 'Nothing could be read about them — their site did not answer and the public record has no entry.',
+  ].filter(Boolean);
+  /* Our own record, kept as its own block so the model can tell the two apart
+     and so it never dresses up something we never wrote down as a fact. */
+  const rec = [];
+  if (Array.isArray(ctx.pains) && ctx.pains.length) rec.push('Pain points: ' + ctx.pains.join('; '));
+  if (Array.isArray(ctx.systems) && ctx.systems.length) rec.push('Systems they run: ' + ctx.systems.join('; '));
+  if (Array.isArray(ctx.contacts) && ctx.contacts.length)
+    rec.push('People we know there: ' + ctx.contacts.map(x => [x && x.n, x && x.t].filter(Boolean).join(' - ')).join('; '));
+  if (Array.isArray(ctx.opps) && ctx.opps.length)
+    rec.push('Our open deals: ' + ctx.opps.map(o => [o && o.t, o && o.stage, o && o.v].filter(Boolean).join(' / ')).join('; '));
+  if (Array.isArray(ctx.timeline) && ctx.timeline.length)
+    rec.push('Recent entries on our timeline: ' + ctx.timeline.map(t => [t && t.d, t && t.t].filter(Boolean).join(' ')).join('; '));
+
+  const material = published.join('\n')
+    + (about ? '\n\nTHEIR ABOUT PAGE (how they describe themselves):\n' + about.text : '')
+    + (careers ? '\n\nTHEIR CAREERS PAGE (what they advertise to the engineers they hire):\n' + careers.text : '')
+    + (newsItems.length ? '\n\nTHEIR OWN NEWSROOM (headlines they published, newest first):\n'
+      + newsItems.map(n => [n && n.d, n && n.h].filter(Boolean).join(' ')).join('\n') : '')
+    + (market && market.items.length ? '\n\nPUBLIC NEWS (headlines about this name from a public news '
+      + 'search - written about them, not by them; use only the ones that are clearly this '
+      + 'organisation, and drop the rest):\n'
+      + market.items.map(n => [n && n.d, n && n.h].filter(Boolean).join(' ')).join('\n') : '')
+    + (rec.length ? '\n\nOUR OWN RECORD (what we have learned, not what they publish):\n' + rec.join('\n') : '');
+  if (!intro && !title && !ctx.description && !rec.length && !careers && !about && !newsItems.length) {
+    return fail('no-material', 'Nothing could be read about them — their site did not answer, the public record has no entry, and our own record is empty.',
       'Add a word or two in Edit first, or try again when their site is reachable.');
   }
   const prompt = material + '\n'
-    + 'Write two short paragraphs for a cloud account team.\n'
-    + '"who": what this organisation is - 2 or 3 sentences, from the material only.\n'
-    + '"fit": where Tencent Cloud could plausibly matter to them - 2 or 3 sentences written as '
-    + 'possibilities ("could", "may"), never as claims about existing contracts or named vendors. '
-    + 'If the material does not support a cloud angle, say what is missing instead of inventing one.\n'
-    + 'Answer with JSON only: {"who":"...","fit":"..."}';
-  /* Two short paragraphs, not an essay: a smaller budget caps the reasoning
-     and keeps the answer inside the timeout ceiling instead of against it. */
-  const { text } = await aiComplete(prompt, { system: BRIEF_SYSTEM, temperature: 0.3, maxTokens: 6000 });
+    + 'Write a research brief and a call plan for a cloud account team.\n'
+    + '"who": what this organisation is - at most 2 short sentences, from the published material only.\n'
+    + '"signals": an array of at most 4 objects, newest first, each {"t": the fact in one short line '
+    + 'under 25 words, dated where the material gives a date ("2026-05: network rollout announced"), '
+    + '"s": where it came from in two or three words - "public news", "their newsroom", "their '
+    + 'careers page", "our timeline", "our open deals", "their own site"}. One event per line, and '
+    + 'prefer a dated event from public news or our own record over anything their homepage claims '
+    + 'about itself - and only an event a cloud provider could act on: infrastructure, technology, '
+    + 'expansion, M&A, regulation, leadership. A sponsorship, a brand campaign or an award is not a '
+    + 'signal, however recent. Return an empty array '
+    + 'when nothing is supported - never an essay about nothing.\n'
+    + '"tech": an array of at most 5 short strings - engineering, platform, infrastructure or data '
+    + 'signals readable from their careers page or published material, each naming what was actually '
+    + 'said (for example "Hiring: Kubernetes engineer", "Job posts mention Kafka and Terraform"). '
+    + 'Never list a product they sell or a marketing name - a consumer plan is not a tech signal. '
+    + 'Return an empty array when nothing in the material supports one. Never infer a product or vendor '
+    + 'from the industry - only from words that are actually there.\n'
+    + '"hurt": an array of at most 3 hypotheses about where this account hurts, each an object '
+    + '{"h": one short sentence naming the likely pain, "why": a short clause naming what in the material '
+    + 'supports it - a recorded pain point, a system they run, a role we have met, a deal stage, something '
+    + 'their careers page says}. Every "why" must point at something actually in the material. Where the '
+    + 'material supports no hypothesis, return an empty array - never a pain generic to the industry.\n'
+    + '"fit": where Tencent Cloud could plausibly matter - at most 3 short sentences, grounded in the '
+    + 'systems they run and the pain points on OUR OWN RECORD where those exist; written as '
+    + 'possibilities ("could", "may"), never as claims about existing contracts or named vendors. If the '
+    + 'material does not support a cloud angle, say in one sentence what you would need to know.\n'
+    + '"opener": one sentence the seller could open the next meeting with, tied to one specific fact above.\n'
+    + '"questions": exactly 3 discovery questions, each aimed at a gap in what we know. If no systems are '
+    + 'on the record, ask what they run; if no pains are recorded, ask what hurts; if nobody has been met, '
+    + 'ask who owns the decision. Never a question a seller could ask anyone. '
+    + 'When our open deals name a stage, pitch them at that stage; with no open deal, pitch them at a '
+    + 'first meeting - a question about renewal pricing is useless before anyone has met.\n'
+    + '"objection": one objection they are likely to raise, and a one-line response to it. One string.\n'
+    + 'Never invent a URL, a person, a contract or a vendor. When OUR OWN RECORD is absent for something, '
+    + 'say it is not on the record rather than implying we know it.\n'
+    + 'Answer with JSON only: {"who":"...","signals":["..."],"tech":["..."],'
+    + '"hurt":[{"h":"...","why":"..."}],"fit":"...","opener":"...",'
+    + '"questions":["...","...","..."],"objection":"..."}';
+  /* A brief, not an essay: a bounded budget keeps the answer inside the
+     timeout ceiling. Raised from 6000 now that a call plan rides along. */
+  const { text } = await aiComplete(prompt, { system: BRIEF_SYSTEM, temperature: 0.3, maxTokens: 8000 });
   const m = String(text).match(/\{[\s\S]*\}/);
   if (!m) return fail('no-brief', 'The model did not answer with a draft.', 'Try again.');
   let j;
@@ -972,12 +1149,61 @@ export async function companyBrief(ctx) {
   const who = String(j.who || '').trim();
   const fit = String(j.fit || '').trim();
   if (who.length < 20 || fit.length < 20) return fail('no-brief', 'The draft came back too thin to use.', 'Try again.');
+  /* A model that answers a list field with a sentence still gets a list — one
+     long line is worth reading, a lost field is not. */
+  /* A signal is worth as much as its source. Accepts the object the prompt asks
+     for, the bare string an older draft stored, and anything a model might call
+     the text field — a lost source costs less than a lost signal. */
+  const sources = [siteUrl ? source('Their own site', siteUrl) : null,
+    about ? source('Their about page', about.url) : null,
+    newsroom ? source('Their newsroom', newsroom.url) : null,
+    market ? source('Public news', market.url) : null,
+    careers ? source('Their careers page', careers.url) : null,
+    rec.length ? source('Our own record', null) : null].filter(Boolean);
+  /* The "s" on a signal is a few words the model chose; the page behind it is
+     already in `sources`. Matching the two turns a claim of provenance into a
+     link the seller can open — "public news" is an assertion, the URL is the
+     thing they can check before repeating it in a meeting. Words common to
+     every label ("their", "page", "own") match nothing, so the pairing rests
+     on the word that actually distinguishes a source. */
+  const srcUrlFor = (label) => {
+    const words = String(label || '').toLowerCase().split(/[^a-z]+/)
+      .filter(w => w.length > 3 && !['their', 'page', 'from', 'posts'].includes(w));
+    let best = null, bestN = 0;
+    for (const s of sources){
+      const n = words.filter(w => s.label.toLowerCase().includes(w)).length;
+      if (n > bestN){ best = s; bestN = n; }
+    }
+    return bestN ? (best.url || null) : null;
+  };
+  const signals = (Array.isArray(j.signals) ? j.signals : [j.signals])
+    .map(s => (s && typeof s === 'object')
+      ? { t: String(s.t ?? s.text ?? s.line ?? s.h ?? '').trim().slice(0, 200),
+          s: String(s.s ?? s.src ?? s.source ?? '').trim().slice(0, 60) }
+      : { t: String(s || '').trim().slice(0, 200), s: '' })
+    .filter(x => x.t).slice(0, 4)
+    .map(x => ({ t: x.t, s: x.s, u: srcUrlFor(x.s) }));
+  /* A hypothesis with no reason attached is just an assertion wearing a
+     question mark — the "why" is what lets the seller judge it. */
+  const hurt = (Array.isArray(j.hurt) ? j.hurt : [])
+    .map(x => x && typeof x === 'object'
+      ? { h: String(x.h || '').trim().slice(0, 200), why: String(x.why || '').trim().slice(0, 200) }
+      : { h: String(x || '').trim().slice(0, 200), why: '' })
+    .filter(x => x.h).slice(0, 3);
   return {
     ok: true,
-    who: who.slice(0, 1200),
-    fit: fit.slice(0, 1200),
+    who: who.slice(0, 400),
+    signals,
+    hurt,
+    tech: (Array.isArray(j.tech) ? j.tech : [])
+      .map(t => String(t || '').trim()).filter(Boolean).slice(0, 5).map(t => t.slice(0, 200)),
+    fit: fit.slice(0, 500),
+    opener: String(j.opener || '').trim().slice(0, 300),
+    questions: (Array.isArray(j.questions) ? j.questions : [])
+      .map(q => String(q || '').trim()).filter(Boolean).slice(0, 3).map(q => q.slice(0, 200)),
+    objection: String(j.objection || '').trim().slice(0, 400),
     basedOn: siteUrl || null,
-    sources: siteUrl ? [source('Their own site', siteUrl)] : [],
+    sources,
     note: 'Drafted by the model — not verified. Confirm anything you present.'
   };
 }
@@ -1278,6 +1504,8 @@ export async function readMinutes(ctx) {
     + 'Extract, strictly from the text:\n'
     + '- summary: what the meeting was about, 1-2 sentences.\n'
     + '- outcome: what changed or was agreed, 1 sentence.\n'
+    + '- digest: the meeting in one line of at most 20 words for an activity timeline - '
+    + 'the subject and the headline; no attendee names, no dates, no preamble.\n'
     + '- concerns: the customer\'s concerns and pain points, each one short line.\n'
     + '- requirements: requirements the customer stated, each one short line.\n'
     + '- decisions: decisions that were taken, each one short line.\n'
@@ -1293,7 +1521,7 @@ export async function readMinutes(ctx) {
     + '- pains: up to 4 pain points the customer stated, in their own words, each one short line. '
     + 'Only troubles the text names - never one you inferred.\n'
     + 'Never invent a concern, a requirement, a decision, a date or a commitment the text does not contain.\n'
-    + 'Answer with JSON only: {"summary":"...","outcome":"...","concerns":["..."],"requirements":["..."],'
+    + 'Answer with JSON only: {"summary":"...","outcome":"...","digest":"...","concerns":["..."],"requirements":["..."],'
     + '"decisions":["..."],"commitments":["..."],"steps":[{"t":"...","from":"us","due":"","kind":"follow-up",'
     + '"exec":"","opp":""}],"opps":[{"t":"...","why":"..."}],"pains":["..."]}';
   const { text: out } = await aiComplete(prompt, { system: MOM_SYSTEM, temperature: 0, maxTokens: 6000,
@@ -1330,6 +1558,8 @@ export async function readMinutes(ctx) {
   return { ok: true,
     summary: String(j.summary || '').replace(/\s+/g, ' ').trim().slice(0, 600),
     outcome: String(j.outcome || '').replace(/\s+/g, ' ').trim().slice(0, 400),
+    /* The timeline's one line — shorter than a summary, never a name roll. */
+    digest: String(j.digest || '').replace(/\s+/g, ' ').trim().slice(0, 220),
     concerns: lines(j.concerns, 8),
     requirements: lines(j.requirements, 8),
     decisions: lines(j.decisions, 8),

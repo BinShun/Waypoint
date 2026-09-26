@@ -483,8 +483,8 @@ console.log('\n— source-level: one vocabulary, not two —');
 
 check('the router names every screen the app can render',
   /const ROUTE_SCREENS\s*=\s*\[[^\]]*'today'[^\]]*'admin'\]/.test(SOURCE));
-check('and every customer tab, so an unknown tab cannot become a sixth one',
-  /const ROUTE_TABS\s*=\s*\[[^\]]*'brief'[^\]]*'files'\]/.test(SOURCE));
+check('and every customer tab, so an unknown tab cannot become a seventh one',
+  /const ROUTE_TABS\s*=\s*\[[^\]]*'overview'[^\]]*'files'\]/.test(SOURCE));
 check('the customer tab list matches the one the renderer draws',
   (() => {
     const declared = (SOURCE.match(/const ROUTE_TABS\s*=\s*\[([^\]]*)\]/) || [])[1] || '';

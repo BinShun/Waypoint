@@ -222,8 +222,8 @@ check('the undated work is named under the grid, and is a door too',
   check('a grid entry is a door, not a picture', !!door);
   await s.click(door, 900);
   t = s.text();
-  check('clicking a step opens the account on its timeline',
-    t.includes('Beta Calendar Bhd') && (win.location.hash.includes('tab=timeline') || t.includes('Timeline')),
+  check('clicking a step opens the account on its activity history',
+    t.includes('Beta Calendar Bhd') && (win.location.hash.includes('tab=activity') || t.includes('Activity')),
     'hash=' + win.location.hash);
 }
 {

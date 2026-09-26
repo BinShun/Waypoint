@@ -255,8 +255,11 @@ check('the sheet opens on five kinds',
     'Nusantara Retail Group, Bad date, someday, Call, , ',
   ].join('\n'));
   check('interactions: one good row survives the read', /1 row to import/.test(t));
+  /* The kind list changes as the book grows — a workshop is a real kind now —
+     so this asserts the shape of the refusal and that the message names the
+     kinds it will accept, rather than pinning an exact list that goes stale. */
   check('interactions: a kind that is not a kind is refused',
-    t.includes('kind must be one of: Meeting, Call, Email, Video call'));
+    /kind must be one of: .*Meeting.*Workshop/.test(t));
   check('interactions: a date that is not a date is refused', t.includes('the date needs to look like'));
   await commit();
   const d = disk();
@@ -266,6 +269,33 @@ check('the sheet opens on five kinds',
     !!m && m.c === CA && m.d === day(-2) && m.k === 'Call');
   check('interactions: the customer\u2019s timeline carries its twin',
     (cA.timeline || []).some(x => x.k === 'interaction' && x.t === 'Kickoff call'));
+}
+
+/* --------------------------------- 3b. People who are an organisation, not a list
+   A person sits in a department and reports to somebody, and both ride on the
+   same paste. A reporting line that points at nobody is refused rather than
+   stored as a hole in the chart — even when the manager is in the same paste,
+   because a hierarchy that depends on the order of a spreadsheet is no
+   hierarchy. */
+{
+  const t = await paste('people', [
+    'Customer, Name, Title, Band, Email, Phone, Department, Reports to',
+    'Nusantara Retail Group, Farid Rahman, Head of IT, Decision maker, , , Technology,',
+    'Nusantara Retail Group, Priya Nair, Head of Network Rollout, Influencer, , , Network, Farid Rahman',
+    'Nusantara Retail Group, Adam Yeoh, Head of Sales, Influencer, , , Commercial, Nobody Here',
+  ].join('\n'));
+  check('people: a department and a reporting line survive the read', /2 rows to import/.test(t));
+  check('people: a boss who is not on the book is refused', /Nobody Here is not on/.test(t));
+  await commit();
+  const d = disk();
+  const cA = d.customers.find(c => c.id === CA);
+  const sarah = (cA.contacts || []).find(p => p.n === 'Farid Rahman');
+  const priya = (cA.contacts || []).find(p => p.n === 'Priya Nair');
+  check('people: the department landed', !!priya && priya.dept === 'Network');
+  check('people: the reporting line landed on the person it names',
+    !!priya && priya.boss === 'Farid Rahman');
+  check('people: the top of the chart is nobody, not a dash',
+    !!sarah && !sarah.boss && sarah.boss !== '\u2014');
 }
 
 /* ----------------------------------------------------- 4. Next steps */

@@ -142,8 +142,12 @@ window.fetch = async (url, init = {}) => {
 };
 
 const act = (sel) => { const b = doc.querySelector(sel); if (!b) return 'MISSING'; b.click(); return 'ok'; };
-const seen = () => (doc.getElementById('page') || doc.body).textContent.replace(/\s+/g, ' ');
-const label = (t) => [...doc.querySelectorAll('#page button')].find((b) => (b.textContent || '').trim() === t);
+/* Records now edit in the drawer (#drwHost), not inside the list's own DOM:
+   reading "the page" means both surfaces, or a saved drawer is invisible to
+   the suite that just saved it. */
+const seen = () => ((doc.getElementById('page') || {}).textContent || '')
+  .replace(/\s+/g, ' ') + ' ' + ((doc.getElementById('drwHost') || {}).textContent || '').replace(/\s+/g, ' ');
+const label = (t) => [...doc.querySelectorAll('#page button, #drwHost button')].find((b) => (b.textContent || '').trim() === t);
 const ROLE_LABEL = { manager: 'Manager', bd: 'BD', sa: 'SA' };
 /* Which screen is actually on screen, read off the nav highlight — not off what
    was clicked. Clicking a route you are not allowed in must not leave you there. */
@@ -163,9 +167,9 @@ act('[data-open="c1"]'); await wait(300);
 
 const ADD = {
   people: ['Add a person', 'Nadia Rahman', 'Head of Billing'],
-  run: ['Add a system', 'Fraud engine v2', 'AWS'],
+  systems: ['Add a system', 'Fraud engine v2', 'AWS'],
   opportunities: ['Add opportunity', 'Billing migration PoC', '1250000'],
-  timeline: ['Add a note', 'CFO re-opened the review', 'Budget frozen'],
+  activity: ['Add a note', 'CFO re-opened the review', 'Budget frozen'],
 };
 
 for (const [tab, [btn, a, b]] of Object.entries(ADD)) {
@@ -222,7 +226,7 @@ if (label('Add a person')) {
 
 act('[data-go="customers"]'); await wait(200);
 act('[data-open="c1"]'); await wait(250);
-act('[data-tab="timeline"]'); await wait(250);
+act('[data-tab="activity"]'); await wait(250);
 const rmBtn = [...doc.querySelectorAll('#page button')].find((b) => (b.textContent || '').trim() === 'Remove');
 check('timeline: a note can be removed', !!rmBtn);
 if (rmBtn) {
@@ -268,7 +272,7 @@ if (edBtn) {
   check('edit: the new title is on screen', seen().includes('Group Chief Technology Officer'));
 }
 
-act('[data-tab="run"]'); await wait(250);
+act('[data-tab="systems"]'); await wait(250);
 const sysEdit = doc.querySelector('#page button[data-ed]');
 check('run: a system can be edited', !!sysEdit);
 if (sysEdit) {
@@ -391,13 +395,14 @@ check('the board card carries an Edit behind the half-of-the-record rule',
   !!boardEdit, boardEdit ? 'the card is a door, not a wall' : 'no way into a card from the board');
 if (boardEdit){
   boardEdit.click(); await wait(200);
-  const edopen = doc.querySelector('#page .col-ed');
-  check('the edit form opens under the card it came from',
-    !!edopen && !!edopen.querySelector('[data-act="edsave"]'),
-    edopen ? 'form, save and cancel under the card' : 'the click did nothing');
-  const edno = edopen && edopen.querySelector('[data-act="edno"]');
+  /* The pen no longer breaks the board open — the record slides out in its
+     drawer and the form lives inside it. */
+  const edopen = doc.querySelector('#drwHost [data-act="edsave"]');
+  check('the edit form opens inside the record it came from',
+    !!edopen, edopen ? 'form, save and cancel in the record drawer' : 'the click did nothing');
+  const edno = doc.querySelector('#drwHost [data-act="edno"]');
   if (edno){ edno.click(); await wait(150); }
-  check('cancel closes it again', !doc.querySelector('#page .col-ed'));
+  check('cancel closes it again', !doc.querySelector('#drwHost [data-act="edsave"]'));
 }
 
 const railTour = doc.querySelector('#railFoot button[data-act="tourmenu"]');
@@ -475,7 +480,7 @@ try { server.p.kill(); } catch { /* already gone */ }
 await wait(400);
 act('[data-go="customers"]'); await wait(200);
 act('[data-open="c1"]'); await wait(250);
-act('[data-tab="timeline"]'); await wait(200);
+act('[data-tab="activity"]'); await wait(200);
 if (label('Add a note')) {
   label('Add a note').click(); await wait(200);
   const f = doc.getElementById('ad1');
@@ -554,7 +559,9 @@ check('the connection dot is painted by a class, not by an inline colour',
 window.eval('enterApp(true)');
 await wait(300);
 act('[data-go="customers"]'); await wait(250);
-const guestCards = doc.querySelectorAll('#page .card[data-open]');
+/* The engine table's rows are trs now, not cards — count the doors, not the
+   container shape. */
+const guestCards = doc.querySelectorAll('#page [data-open]');
 check('the guest sees all four DEMO companies',
   guestCards.length === 4,
   `${guestCards.length} cards: ${[...guestCards].map(c => (c.textContent || '').split('\n')[0]).join(' · ').slice(0, 80)}`);

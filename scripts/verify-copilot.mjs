@@ -177,7 +177,9 @@ const $ = (s) => doc.querySelector(s);
 const strip = (el) => { const c = el.cloneNode(true); c.querySelectorAll('script,style').forEach((n) => n.remove()); return c; };
 const pageText = () => strip(doc.getElementById('page') || doc.body).textContent;
 async function click(el, ms = 300) { if (!el) return false; el.dispatchEvent(new win.MouseEvent('click', { bubbles: true })); await wait(ms); return true; }
-async function setVal(el, v) { if (!el) return false; el.value = v; el.dispatchEvent(new win.Event('input', { bubbles: true })); el.dispatchEvent(new win.Event('change', { bubbles: true })); await wait(120); return true; }
+/* Rich fields are contenteditable surfaces — assigning `.value` there writes
+   an expando nothing reads, and the save then stores the pre-fill. */
+async function setVal(el, v) { if (!el) return false; if (el.classList && el.classList.contains('rte-ed')) el.textContent = v; else el.value = v; el.dispatchEvent(new win.Event('input', { bubbles: true })); el.dispatchEvent(new win.Event('change', { bubbles: true })); await wait(120); return true; }
 
 if (!PASS) {
   console.log('FAIL  no WP_PASS in the environment');
@@ -302,6 +304,9 @@ if (REAL) {
   }));
   const oppsTab = () => [...doc.querySelectorAll('[data-tab]')].find((b) => /opportunities/i.test(b.textContent));
   await click(oppsTab(), 400);
+  /* The per-deal AI boxes live in the tab's cards mode — the list mode is
+     for comparing deals, not for working one. */
+  await click(doc.querySelector('[data-act="oppv"][data-v="cards"]'), 400);
   await click(doc.querySelector('#analyzeOpp-o1 [data-tb]'), 300);
   const anBox = () => doc.getElementById('analyzeOpp-o1');
   const anText = () => (anBox() ? anBox().textContent : '');
@@ -352,6 +357,9 @@ if (REAL) {
     pains: ['Nightly billing batch overruns its window'],
   }));
   await click($('[data-go="interactions"]'), 400);
+  /* The minutes reader lives on the meeting's record now — the peek opens
+     the drawer, and the act is there, next to the record it reads. */
+  await click(doc.querySelector('[data-lv="peek"][data-obj="interactions"]'), 500);
   await click(doc.querySelector('[data-act="mom"][data-mid="m1"]'), 400);
   await setVal(doc.getElementById('momT'),
     'Attended: Dr Amir Rashid. The nightly billing batch keeps overrunning its window. The renewal timeline was walked through; '
@@ -476,6 +484,7 @@ if (REAL) {
   await click($('[data-open="c1"]'), 500);
   const oppsTab6 = () => [...doc.querySelectorAll('[data-tab]')].find((b) => /opportunities/i.test(b.textContent));
   await click(oppsTab6(), 400);
+  await click(doc.querySelector('[data-act="oppv"][data-v="cards"]'), 400);
   await click(doc.querySelector('#suggestProducts-o1 [data-tb]'), 300);
   const prBox = () => doc.getElementById('suggestProducts-o1');
   const prText = () => (prBox() ? prBox().textContent : '');
