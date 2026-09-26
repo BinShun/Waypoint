@@ -1494,6 +1494,28 @@ function deriveOppAges(state) {
     if (age !== o.age) changed = true;
     out[k] = { ...o, age };
   }
+  /* The customer's opps array is an index of the map, not a second source of
+     truth. Any path that wrote the map without the index (a concurrent save
+     race, an old build) used to leave the customer's Opportunities page
+     blind to deals the pipeline could still see. Reconcile both ways: ids
+     whose record points at this customer join the index, ids pointing
+     elsewhere or nowhere leave it. */
+  const customers = state.customers;
+  if (Array.isArray(customers)) {
+    let custChanged = false;
+    const next = customers.map(c => {
+      if (!c || typeof c !== 'object') return c;
+      const own = Object.keys(out).filter(id => out[id] && out[id].c === c.id);
+      const kept = (Array.isArray(c.opps) ? c.opps : []).filter(id => own.includes(id));
+      const want = [...kept, ...own.filter(id => !kept.includes(id))];
+      const same = Array.isArray(c.opps) && c.opps.length === want.length
+        && c.opps.every((id, i) => id === want[i]);
+      if (same) return c;
+      custChanged = true;
+      return { ...c, opps: want };
+    });
+    if (custChanged) { changed = true; return { ...state, opps: out, customers: next }; }
+  }
   return changed ? { ...state, opps: out } : state;
 }
 

@@ -794,9 +794,9 @@ check('the walkthroughs have a second door in the rail',
 
 check('the board card carries the pen behind the same rule as the List',
   (/opp-act/.test(src) && /data-act="ed" data-ed="\$\{k\}"/.test(src)
-    && /k\.startsWith\('opp\|'\)/.test(src) && /drawer = \{ kind:'opp', id:oid \}/.test(src)),
+    && /canEditKind\(k\)/.test(src) && /drawer = \{ kind:'edit', key:k/.test(src)),
   !/opp-act/.test(src) ? 'the board is a wall again — no way into a card'
-    : 'Edit on the card, the record drawer opens for it');
+    : 'Edit on the card, the edit drawer opens for it');
 
 /* The demo boundary, in three shapes: the book is built by one function,
    that function is loaded by exactly one posture, and the posture writes
@@ -847,7 +847,7 @@ check('the all-or-nothing show-all switches are gone for good',
    accidental-edit trap returning. */
 check('a person row is a door; the one Edit lives inside the record drawer',
   /data-drw="person\|/.test(src) && /drwPersonMarkup/.test(src)
-    && /drawer = \{ kind:'person', cid, pn \}/.test(src),
+    && /drawer = \{ kind:\s*'person', cid, pn/.test(src),
   'rows carry data-drw=person|, the drawer renders personCard, and ed opens it');
 
 /* The focus-reading theme was tried and retired. What stayed is the default

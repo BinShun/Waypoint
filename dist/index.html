@@ -1026,13 +1026,6 @@ body.open-drw .drw{transform:none;opacity:1;pointer-events:auto}
   text-overflow:ellipsis;white-space:nowrap}
 .crumb i{font-style:normal;color:var(--ink-0);padding:0 2px}
 .crumb b{color:var(--ink-1);font-weight:600}
-.drw-hint{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-0);
-  white-space:nowrap}
-.drw-pin{width:26px;height:26px;flex:0 0 26px;display:grid;place-items:center;
-  border:1px solid var(--line-2);border-radius:var(--r-xs);background:var(--surface);
-  color:var(--ink-3);cursor:pointer}
-.drw-pin:hover{color:var(--blue);border-color:var(--blue-200);background:var(--blue-50)}
-.drw-pin.on{color:#fff;background:var(--blue);border-color:var(--blue)}
 .drw-x{width:26px;height:26px;flex:0 0 26px;display:grid;place-items:center;
   border:1px solid var(--line-2);border-radius:var(--r-xs);background:var(--surface);
   color:var(--ink-3);cursor:pointer}
@@ -1044,30 +1037,12 @@ body.open-drw .drw{transform:none;opacity:1;pointer-events:auto}
 /* A people card is a door now: it should lift like one. */
 .pcard{transition:box-shadow .12s, border-color .12s}
 .pcard:hover{box-shadow:var(--e2);border-color:var(--line-2)}
-/* C — the split pin: the same drawer element becomes a fixed right column, the
-   page cedes 62% and the list lives in what is left. No veil — the two halves
-   are peers now. */
-body.split .drw-veil{display:none}
-body.split .drw{transform:none;opacity:1;pointer-events:auto;box-shadow:var(--e2)}
-body.split #page{margin-right:min(62vw,900px)}
 /* Opened out to the whole screen, when the reading asks for it — a meeting's
-   minutes, a person's whole story. Remembered per drawer kind. In split mode
-   the page stops ceding room it no longer has. */
+   minutes, a person's whole story. Remembered per drawer kind. */
 .drw.full{width:100vw;min-width:0}
-body.split:has(.drw.full) #page{margin-right:0}
-@media (max-width:1100px){
-  /* 窄屏回退 drawer 形态（提案 §03 C）: the pinned column widens over the page
-     and the veil comes back, so nothing is squeezed into 38%. */
-  body.split #page{margin-right:0}
-  body.split .drw{width:min(86vw,720px);min-width:0}
-  body.split .drw.full{width:100vw}
-  body.split .drw-veil{display:block;opacity:1;pointer-events:auto}
-}
 @media (max-width:760px){
-  /* a phone cannot give 62% to anything: the drawer takes the screen */
+  /* a phone cannot give the drawer a page to float over — it takes the screen */
   .drw{width:100vw;min-width:0}
-  body.split .drw{width:100vw}
-  body.split #page{margin-right:0}
 }
 /* A — the peek chevron on a list row: the summary opens under the row, the
    table never reflows away from under the reader's eye */
@@ -3126,7 +3101,7 @@ function wipeEphemeral(){
   aiTasks.clear();                        /* generated answers are somebody's data */
   aiTaskList = [];
   aiState = null;                         /* the model belongs to the session, not the tab */
-  drawer = null; splitPin = false; drwFresh = false;
+  drawer = null; drwFresh = false;
   palAnswerSeq++;                         /* an answer still in flight lands nowhere */
   closePal();
   const palAns = document.getElementById('palA');
@@ -7174,14 +7149,7 @@ function drwPersonMarkup(){
   return `
   <div class="drw-veil" data-drw-x title="Close the drawer"></div>
   <aside class="drw"${drwFresh ? ' data-fresh' : ''} role="dialog" aria-label="${esc(p.n)}">
-    <div class="drw-h">
-      <button class="drw-x" data-drw-x title="Close (esc)">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <span class="crumb">People <i>/</i> <a class="lk" data-open="${esc(c.id)}" title="Open ${esc(c.name)} — the full record">${esc(c.name)}</a> <i>/</i> <b>${esc(p.n)}</b></span>
-      <span class="drw-hint">esc · 📌 pin</span>
-      <button class="drw-pin${splitPin ? ' on' : ''}" data-drw-pin title="${splitPin ? 'Unpin — back to the drawer' : 'Pin as split — list and record side by side.'}"><span style="font-size:12px;line-height:1">📌</span></button>
-    </div>
+    ${drwHead(`People <i>/</i> <a class="lk" data-open="${esc(c.id)}" title="Open ${esc(c.name)} — the full record">${esc(c.name)}</a> <i>/</i> <b>${esc(p.n)}</b>`)}
     <div class="drw-b">${personCard(c, p)}</div>
   </aside>`;
 }
@@ -7337,13 +7305,7 @@ function drwMtgMarkup(){
   return `
   <div class="drw-veil" data-drw-x title="Close the drawer"></div>
   <aside class="drw"${drwFresh ? ' data-fresh' : ''} role="dialog" aria-label="${esc(m.t)}">
-    <div class="drw-h">
-      <button class="drw-x" data-drw-x title="Close (esc)">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <span class="crumb">Interactions <i>/</i> ${c ? `<a class="lk" data-open="${esc(c.id)}">${esc(c.name)}</a> <i>/</i>` : ''} <b>${esc(m.t)}</b></span>
-      <button class="drw-pin${splitPin ? ' on' : ''}" data-drw-pin title="Pin as split"><span style="font-size:12px;line-height:1">📌</span></button>
-    </div>
+    ${drwHead(`Interactions <i>/</i> ${c ? `<a class="lk" data-open="${esc(c.id)}">${esc(c.name)}</a> <i>/</i>` : ''} <b>${esc(m.t)}</b>`)}
     <div class="drw-b">
       <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:var(--s2)">
         <span class="tag t-grey">${esc(m.k || 'Meeting')}</span>
@@ -7356,12 +7318,7 @@ function drwMtgMarkup(){
       </div>
       <h1 style="font-size:18px;margin:0 0 var(--s1)">${esc(m.t)}</h1>
       ${dig ? `<p class="mtg-lede">${esc(dig)}</p>` : ''}
-      ${edFor === key ? edForm(key, { ed1:m.t, ed2:m.d, ed3:m.loc || '', ed4:m.att || '',
-          ed5:m.sum || '', ed6:m.out || '', ed7:m.k || 'Meeting', ed8:mtgOppIds(m),
-          ed9:m.tm || '', ed10:m.dur ? String(m.dur) : '',
-          ed11:(m.dec || []).join('\n'), ed12:(m.con || []).join('\n'),
-          ed4o:m.ours || '', ed4x:m.third || '' })
-        : `${prev ? `
+      ${prev ? `
           <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 var(--s3);padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm)">
             <span class="tiny muted" style="flex:0 0 auto">Before this</span>
             <a class="lk" data-drw="mtg|${esc(prev.id)}" style="flex:0 0 auto" title="Open that meeting">${esc(shortTxt(prev.t, 34))}</a>
@@ -7389,8 +7346,8 @@ function drwMtgMarkup(){
               </div>`).join('')}</div>` : ''}
           ${m.sum ? `<div class="k" style="margin:0 0 4px">Details / MOM</div>
             <div class="mom">${rich(m.sum)}</div>` : ''}
-          ${!m.out && !m.sum && can('log') && c && aiReady(c) ? `<p class="tiny muted" style="margin:var(--s2) 0 0">
-            Nothing written up yet — read the minutes and the outcome and the summary land here.</p>` : ''}`}
+      ${!m.out && !m.sum && can('log') && c && aiReady(c) ? `<p class="tiny muted" style="margin:var(--s2) 0 0">
+        Nothing written up yet — read the minutes and the outcome and the summary land here.</p>` : ''}
       ${(linkedOpps.length || bornOpps.length) ? `
         <div class="grp-h" style="margin-top:var(--s4)">Opportunities<span class="n">${linkedOpps.length + bornOpps.length}</span><span class="why">— "spoke for" is the link on the record; "from these minutes" is where the deal was born</span></div>
         ${[...bornOpps, ...linkedOpps.filter(o => !bornOpps.some(b => b.id === o.id))].map(o => `
@@ -7447,11 +7404,7 @@ function drwAddMarkup(){
   return `
   <div class="drw-veil" data-drw-x title="Close the drawer"></div>
   <aside class="drw"${drwFresh ? ' data-fresh' : ''} role="dialog" aria-label="${esc(spec.btn)}">
-    <div class="drw-h">
-      <button class="drw-x" data-drw-x title="Close (esc)"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-      <button class="drw-pin${splitPin ? ' on' : ''}" data-drw-pin title="${splitPin ? 'Stop pinning the drawer' : 'Pin the drawer open while you browse'}" aria-label="${splitPin ? 'Unpin drawer' : 'Pin drawer'}"><svg viewBox="0 0 24 24"><path d="M9 4h6l-1 7 3 3v2h-4v6l-1 1-1-1v-6H7v-2l3-3z"/></svg></button>
-      <span class="crumb">${crumb}</span>
-    </div>
+    ${drwHead(crumb)}
     <div class="drw-b">
       <h1 style="margin:0 0 var(--s4)">${esc(spec.btn)}</h1>
       ${drawer.ret === 'oplink' ? `<p class="tiny muted" style="margin:calc(-1 * var(--s2)) 0 var(--s4)">Opened from the interaction you were writing — Save links this deal to it and takes you back; Cancel just takes you back.</p>` : ''}
@@ -7460,21 +7413,30 @@ function drwAddMarkup(){
   </aside>`;
 }
 
-/* The edit drawer — one shell for every correction that used to displace a
-   piece of the page. A record's own drawer (opportunity, interaction, person)
-   keeps its form inside itself; everything else — the customer header, the
-   summary, the pain points, a system, a step — used to swap the read-only
-   body for fields right where it stood, which tore the page the reader was
-   oriented by. Now the pen opens here instead: the page stays put behind the
-   veil, and Cancel / X / Esc / a good save all drop `edFor` with the drawer. */
+/* The edit drawer — one shell for every correction, stacked over the record
+   it corrects so the page behind it never moves. The record drawers used to
+   swallow their own form at the bottom of the record, so editing a deal
+   meant scrolling past it to find the fields; the form is a page of its own
+   now, and Cancel / X / Esc / a good save walk back to what you were
+   reading. */
 const EDIT_DRW_TITLE = {
-  cust:   'Edit the customer',
-  brief:  'Edit where it stands',
-  pains:  'Edit the pain points',
-  system: 'Edit the system',
-  step:   'Edit the action'
+  cust:        'Edit the customer',
+  brief:       'Edit where it stands',
+  pains:       'Edit the pain points',
+  system:      'Edit the system',
+  step:        'Edit the action',
+  opp:         'Edit the deal',
+  interaction: 'Edit the interaction',
+  person:      'Edit the person'
 };
 
+/* A contact is found the way saveEdit finds it again: by name, inside its
+   customer. The key is `person|<customer id>|<name>`. */
+function personByKey(key){
+  const p = String(key).split('|');
+  const c = cust(p[1]);
+  return c ? (c.contacts || []).find(x => x.n === p[2]) || null : null;
+}
 /* The values the form opens with, read from the record at draw time — the
    same lists the old inline call sites passed, gathered in one place so the
    drawer needs nothing from the page it floats over. */
@@ -7497,6 +7459,24 @@ function edValsFor(key){
     const s = (D.steps || []).find(x => x.id === p[2]);
     return s ? { ed1: s.t, ed2: stepExec(s), ed5: stepTrack(s), ed3: s.due || '', ed4: s.from,
       ed6: s.o || '', ed7: s.note || '' } : null;
+  }
+  if (kind === 'opp'){
+    const o = (D.opps || {})[p[2]];
+    return o ? { kind, ...oppFormValues(o) } : null;
+  }
+  if (kind === 'interaction'){
+    const m = (D.interactions || []).find(x => x.id === p[2]);
+    return m ? { kind, ed1: m.t, ed2: m.d, ed3: m.loc || '', ed4: m.att || '',
+      ed5: m.sum || '', ed6: m.out || '', ed7: m.k || 'Meeting', ed8: mtgOppIds(m),
+      ed9: m.tm || '', ed10: m.dur ? String(m.dur) : '',
+      ed11: (m.dec || []).join('\n'), ed12: (m.con || []).join('\n'),
+      ed4o: m.ours || '', ed4x: m.third || '' } : null;
+  }
+  if (kind === 'person'){
+    const per = personByKey(key);
+    return per ? { kind, ed1: per.n, ed2: per.t || '', ed3: per.b || '', ed4: per.s || '',
+      ed5: per.em || '', ed6: per.ph || '', ed7: per.li || '',
+      ed8: per.dept || '', ed9: per.boss || '—', ed10: per.o || '' } : null;
   }
   return null;
 }
@@ -7535,11 +7515,7 @@ function drwEditMarkup(){
   return `
   <div class="drw-veil" data-drw-x title="Close the drawer"></div>
   <aside class="drw"${drwFresh ? ' data-fresh' : ''} role="dialog" aria-label="${esc(title)}">
-    <div class="drw-h">
-      <button class="drw-x" data-drw-x title="Close (esc)"><svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M1 1l8 8M9 1L1 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
-      <button class="drw-pin${splitPin ? ' on' : ''}" data-drw-pin title="${splitPin ? 'Stop pinning the drawer' : 'Pin the drawer open while you browse'}" aria-label="${splitPin ? 'Unpin drawer' : 'Pin drawer'}"><svg viewBox="0 0 24 24"><path d="M9 4h6l-1 7 3 3v2h-4v6l-1 1-1-1v-6H7v-2l3-3z"/></svg></button>
-      <span class="crumb"><b>Edit</b> <i>/</i> <a href="#" data-drw="cust" data-id="${esc(c.id)}">${esc(c.name)}</a> <i>/</i> <b>${esc(title)}</b></span>
-    </div>
+    ${drwHead(`<b>Edit</b> <i>/</i> <a href="#" data-drw="cust" data-id="${esc(c.id)}">${esc(c.name)}</a> <i>/</i> <b>${esc(title)}</b>`)}
     <div class="drw-b">
       <h1 style="margin:0 0 var(--s4)">${esc(title)}</h1>
       ${kind === 'step' ? stepStatusBand(String(key).split('|')[2]) : ''}
@@ -7599,18 +7575,11 @@ function drwMarkup(){
   return `
   <div class="drw-veil" data-drw-x title="Close the drawer"></div>
   <aside class="drw"${drwFresh ? ' data-fresh' : ''} role="dialog" aria-label="${esc(o.t)}">
-    <div class="drw-h">
-      <button class="drw-x" data-drw-x title="Close (esc)">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      </button>
-      <span class="crumb">Opportunities <i>/</i> <a class="lk" data-open="${esc(c.id)}" title="Open ${esc(c.name)} — the full record">${esc(c.name)}</a> <i>/</i> <b>${esc(o.t)}</b></span>
-      <span class="drw-hint">esc · 📌 pin</span>
-      <button class="drw-pin${splitPin ? ' on' : ''}" data-drw-pin title="${splitPin ? 'Unpin — back to the drawer' : 'Pin as split — list and record side by side. A ⌘-click on a row does the same.'}"><span style="font-size:12px;line-height:1">📌</span></button>
-    </div>
+    ${drwHead(`Opportunities <i>/</i> <a class="lk" data-open="${esc(c.id)}" title="Open ${esc(c.name)} — the full record">${esc(c.name)}</a> <i>/</i> <b>${esc(o.t)}</b>`)}
     <div class="drw-b">
       <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
         ${stageTag(o.stage)}
-        ${canEditKind(k) ? `<button class="btn sm" data-act="ed" data-ed="${esc(k)}" title="Edit this opportunity in place">Edit</button>` : ''}
+        ${canEditKind(k) ? `<button class="btn sm" data-act="ed" data-ed="${esc(k)}" title="Edit this deal — the form opens over this record">Edit</button>` : ''}
         <span class="tiny muted">${oppAge(o)}d in stage</span>
         <span class="tiny muted">${o.p}%</span>
         <span class="tiny muted">${o.close ? 'closes ' + esc(o.close) + (toClose != null && toClose < 0 ? ' · <span class="tag t-warn">overdue</span>' : '') : 'no close date'}</span>
@@ -7692,7 +7661,6 @@ function drwMarkup(){
         ${rmBar(k, o.t)}
         ${canEditKind(k) ? `<button class="btn sm" data-act="ed" data-ed="${k}">Edit</button>` : ''}
       </div>
-      ${edFor === k ? edForm(k, oppFormValues(o)) : ''}
     </div>
   </aside>`;
 }
@@ -11026,11 +10994,18 @@ const ADD_SPEC = {
      — the edit form could set them, the add form could not, so a pipeline
      built through this form read as N/A dates until somebody went back in. */
   opportunities: { btn:'Add opportunity', act:'opp',
+               /* The same facts the edit form keeps — a deal that starts with
+                  its whole face filled never needs reopening just to be made
+                  true. */
                f:[{k:'ad1', ph:'What is it - e.g. Billing migration', wide:true},
                   {k:'ad2', ph:'Value in RM - e.g. 1800000', w:1},
                   {k:'ad3', ph:'Stage', sel:'STAGES', w:1},
+                  {k:'ad6', ph:'Probability % - e.g. 30, or empty for the stage default', w:1},
                   {k:'ad4', ph:'Close date - e.g. 2027-03-31, or empty', w:1},
-                  {k:'ad5', ph:'What we would do - one line (optional)', ta:true}] },
+                  {k:'ad7', ph:'Competitor - e.g. Oracle, or empty', w:1},
+                  {k:'ad8', ph:'Their owner - who signs on their side, or empty', dl:'CUSTPEOPLE', w:1},
+                  {k:'ad5', ph:'The business need - why they want this', ta:true},
+                  {k:'ad9', ph:'Our answer - what we proposed, one line (optional)', ta:true}] },
   activity:  { btn:'Add a note',       act:'note',
                f:[{k:'ad1', ph:'What happened - e.g. CFO re-opened the review', ta:true},
                   {k:'ad2', ph:'Detail (optional)', ta:true}] },
@@ -11607,11 +11582,15 @@ function addFieldsHtml(tab, pickCustomer){
       : f.ta
         ? '<textarea id="' + f.k + '" rows="3" placeholder="' + f.ph + '"></textarea>'
         : '<input id="' + f.k + '" placeholder="' + f.ph + '"' + (f.dl ? ' list="' + f.k + 'dl"' : '') + ' />';
-    /* A datalist under an input is a suggestion list, not a cage: the team's
-       departments are one tap away, and a name outside the list still saves. */
+    /* A datalist under an input is a suggestion list, not a cage: CUSTPEOPLE
+       suggests the customer's own contacts, anything else the departments.
+       A name outside the list still saves. */
+    const dlOpts = f.dl === 'CUSTPEOPLE'
+      ? (function(){ const fc = addFormCustomer(); return fc ? fc.contacts.map(pp => pp.n).filter(Boolean) : []; })()
+      : deptSuggest();
     return '<' + tag + ' class="' + cls + '"><span>' + f.ph + '</span>' + ctrl
       + (f.dl ? '<datalist id="' + f.k + 'dl">'
-        + deptSuggest().map(x => '<option value="' + esc(x) + '">').join('') + '</datalist>' : '')
+        + dlOpts.map(x => '<option value="' + esc(x) + '">').join('') + '</datalist>' : '')
       + '</' + tag + '>';
   };
   return '<div class="row" style="gap:10px;flex-wrap:wrap;align-items:flex-end">'
@@ -11673,8 +11652,10 @@ function saveAdd(){
     const id = 'o' + Date.now();
     madeId = id;
     const val = Number(String(v('ad2')).replace(/[^0-9.]/g, '')) || 0;
-    (D.opps = D.opps || {})[id] = { id, c:c.id, t:one, stage:v('ad3') || 'Interested', v:val, p:10,
-      stageAt: todayISO(), owner:me, comp:'-', close, cust:'', desc:v('ad5') || '', soln:'' };
+    (D.opps = D.opps || {})[id] = { id, c:c.id, t:one, stage:v('ad3') || 'Interested', v:val,
+      p:Number(v('ad6')) || 10,
+      stageAt: todayISO(), owner:me, comp:v('ad7') || '-', close,
+      cust:v('ad8') || '', desc:v('ad5') || '', soln:v('ad9') || '' };
     (c.opps = c.opps || []).push(id);
     audit('data', 'Opportunity created', one + ' - ' + c.name, '-', v('ad3') || 'Interested');
   } else if (kind === 'step'){
@@ -11813,14 +11794,14 @@ function saveAdd(){
     }
     addFor = back.add;
     if (back.formDraft){ addDraftOverride = back.formDraft; delete back.formDraft; }
-    drawer = back; splitPin = false;
+    drawer = back;
     render();
     toast('Opportunity added — linked in the interaction below.');
     return;
   }
   /* A successful save also closes the drawer the form arrived in — the new
      record lands back on the page it was made from, in view. */
-  drawer = null; splitPin = false;
+  drawer = null;
   render(); toast(kind === 'dept' ? 'Department added - ' + one
     : kind === 'watch' ? 'Signal recorded — unverified until somebody opens the source.'
     : 'Added - ' + one);
@@ -11837,9 +11818,8 @@ let rmAsk = null;
 /* --- W2b §03 列表↔详情三级 -------------------------------------------------
    drawer    the open record panel: { kind:'opp', id } or null. B — the default
              form: click a row (or a board card) and the record slides in over
-             a dimmed list that never moves.
-   splitPin  C — the drawer pinned as a fixed right column (list 38% / record
-             62% on screen together). esc unpins first, then closes.
+             a dimmed list that never moves; opening a record from inside one
+             stacks it, and X/Esc walk back down.
    inlineExp A — keys of rows currently peeked: the row's own summary line
              under it, without leaving the list or moving the scroll.
    scrollMem where each list screen was scrolled when the reader left it, so
@@ -11847,7 +11827,6 @@ let rmAsk = null;
              were. Filters and expand state already survive renders as globals;
              scroll was the one thing a redraw could not remember. */
 let drawer = null;
-let splitPin = false;
 let drwFresh = false;             /* true only on the render that opened it — drives the slide-in */
 /* Close the top layer. A stacked drawer (one opened over another, its
    predecessor kept in `under`) gives the layer beneath back; anything else
@@ -11858,41 +11837,47 @@ function drwClose(){
   addFor = back && back.kind === 'add' ? back.add : null;
   if (back && back.formDraft){ addDraftOverride = back.formDraft; delete back.formDraft; }
   edFor = null;
-  splitPin = false;
   drawer = back;
 }
-/* What the X of a stacked drawer points back at. */
+/* What the back-arrow of a stacked drawer points back at. */
 function drwUnderLabel(u){
   if (u.kind === 'person') return u.pn || 'the card';
   if (u.kind === 'mtg') return 'the meeting';
   if (u.kind === 'opp') return 'the deal';
   return 'the form';
 }
+/* One head for every drawer, so the chrome never forks again: a back-arrow
+   when another drawer lies underneath, an X otherwise; on the reading
+   drawers the full-screen toggle sits right after it; the crumb carries the
+   name. drwChrome() keeps the toggle's state honest against the choice the
+   person made last time. */
+function drwHead(crumbHtml){
+  const under = drawer && drawer.under ? drawer.under : null;
+  const back = under ? ('Back to ' + drwUnderLabel(under) + ' (esc)') : 'Close (esc)';
+  const icon = under
+    ? '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M10 3.5 5.5 8l4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    : '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+  const k = drawer && drawer.kind;
+  const fullable = (k === 'person' || k === 'mtg' || k === 'opp');
+  return '<div class="drw-h">'
+    + '<button class="drw-x" data-drw-x title="' + esc(back) + '">' + icon + '</button>'
+    + (fullable ? '<button class="drw-x" data-drw-full style="margin-right:6px" title="Full or half screen">&#x2922;</button>' : '')
+    + '<span class="crumb">' + crumbHtml + '</span>'
+    + '</div>';
+}
 /* Every drawer redraw ends here: the remembered full/half choice goes back
-   on, the toggle joins the head of the reading drawers (forms stay at
-   writing width), and a drawer that has another waiting underneath names
-   its X for the road back, not for closing. */
+   on the reading drawers' toggle (forms carry no toggle — a form needs
+   focus, not acreage). */
 function drwChrome(){
   const host = document.getElementById('drwHost');
   const el = host && host.querySelector('.drw');
   if (!el || !drawer) return;
-  const k = drawer.kind;
-  if (k === 'person' || k === 'mtg' || k === 'opp'){
-    const full = localStorage.getItem('wpDrwFull.' + k) === '1';
-    el.classList.toggle('full', full);
-    const h = el.querySelector('.drw-h');
-    if (h && !h.querySelector('[data-drw-full]')){
-      const b = document.createElement('button');
-      b.className = 'drw-x';
-      b.setAttribute('data-drw-full', '');
-      b.style.marginRight = '6px';
-      b.textContent = full ? '\u2921' : '\u2922';
-      b.title = full ? 'Half screen' : 'Full screen';
-      h.insertBefore(b, h.querySelector('[data-drw-pin]') || null);
-    }
-  }
-  const x = el.querySelector('[data-drw-x]');
-  if (x && drawer.under) x.title = 'Back to ' + drwUnderLabel(drawer.under) + ' (esc)';
+  const b = el.querySelector('[data-drw-full]');
+  if (!b) return;
+  const full = localStorage.getItem('wpDrwFull.' + drawer.kind) === '1';
+  el.classList.toggle('full', full);
+  b.textContent = full ? '\u2921' : '\u2922';
+  b.title = full ? 'Half screen' : 'Full screen';
 }
 const inlineExp = new Set();
 const scrollMem = {};
@@ -12121,7 +12106,10 @@ const EDIT_SPEC = {
     /* The auto LinkedIn chip is a SEARCH, and a search is often wrong. The
        fix is the team's, not the machine's: paste the exact profile URL and
        every LinkedIn chip for this person uses it. Empty = back to search. */
-    { k:'ed7', ph:'LinkedIn profile URL — paste the exact one, or empty' }
+    { k:'ed7', ph:'LinkedIn profile URL — paste the exact one, or empty' },
+    { k:'ed8', ph:'Department - e.g. Commercial, or empty', dl:'DEPTS' },
+    { k:'ed9', ph:'Reports to - or —', sel:'BOSSES' },
+    { k:'ed10', ph:'Their owner on our side - or empty', sel:'TEAM' }
   ],
   system: [
     { k:'ed1', ph:'System', wide:true },
@@ -12600,7 +12588,7 @@ function saveEdit(key){
   /* A save from the edit drawer is the drawer's done: close it like a good
      add save does. Record drawers keep their door open — the form there is a
      state of the record, and the reader returns to the preview. */
-  if (drawer && drawer.kind === 'edit'){ drawer = null; splitPin = false; render(true); }
+  if (drawer && drawer.kind === 'edit'){ drwClose(); render(true); }
   else render();
   toast('Saved', wonNow ? 'proud' : undefined);
 }
@@ -12683,9 +12671,23 @@ function addFormDraft(key){
   /* `open` is the form that was open when this snapshot was taken — see above. */
   return { key, open: key, vals };
 }
+/* The name of the form on screen right now. Since edits and adds live in
+   drawers, `addFor`/`edFor` alone no longer answer this — an edit drawer
+   carries its record key and an add drawer its collection, and a draft
+   captured under the old rule (both null) keyed every open drawer form to
+   '', so the restore below refused to hand its values back and the next
+   background render (a merge adopting the server's state) silently cleared
+   whatever had been typed. */
+function formOpenKey(){
+  if (addFor) return addFor;
+  if (edFor) return edFor;
+  if (drawer && drawer.kind === 'add') return drawer.add;
+  if (drawer && drawer.kind === 'edit') return drawer.key;
+  return '';
+}
 function restoreAddFormDraft(draft){
   const focusId = document.activeElement ? document.activeElement.id : '';
-  const sameForm = draft.open && draft.open === (addFor || edFor);
+  const sameForm = draft.open && draft.open === formOpenKey();
   /* One-shot: the render this restore follows was the swap, so the mute
      spends itself here. */
   const muted = addDraftMute; addDraftMute = false;
@@ -12735,7 +12737,7 @@ function render(keepScroll){
      being written, exactly the way a drawer already cannot survive a move. */
   const here = view.s + '/' + (view.id || '') + '/' + view.tab;
   if (render.at && render.at !== here && view.s !== 'login'){
-    addFor = null; edFor = null; rmAsk = null; drawer = null; splitPin = false;
+    addFor = null; edFor = null; rmAsk = null; drawer = null;
   }
   render.at = here;
   /* The address bar follows the app. It is safe for this to run on every
@@ -12750,7 +12752,7 @@ function render(keepScroll){
   /* A hand-carried draft (see addDraftOverride) outranks a fresh capture —
      it is the departing form's own answers, stored at the moment it handed
      the drawer over, not whatever happens to be on screen now. */
-  const draft = addDraftOverride || addFormDraft(addFor || edFor || '');
+  const draft = addDraftOverride || addFormDraft(formOpenKey());
   addDraftOverride = null;
   /* login is a surface of its own — no rail, no top bar, nothing to distract */
   if (view.s === 'login'){
@@ -12850,8 +12852,7 @@ function render(keepScroll){
   /* W2b §03: the drawer and the split pin are body classes, so they are
      reconciled here — the single place every render passes through — and a
      drawer that survives a redraw (an edit saved inside it) keeps its pose. */
-  document.body.classList.toggle('open-drw', !!(drawer && !splitPin));
-  document.body.classList.toggle('split', !!(drawer && splitPin));
+  document.body.classList.toggle('open-drw', !!drawer);
   if (!keepScroll) window.scrollTo(0,0);
 }
 
@@ -15234,7 +15235,7 @@ document.addEventListener('click', async (e) => {
        behind it. */
     scrollMem[view.s + (view.id ? '/' + view.id : '')] = window.scrollY;
     const dest = go.dataset.go;
-    drawer = null; splitPin = false;
+    drawer = null;
     view = { s: dest, id: null, tab: 'overview', cview: 'board' }; render();
     if (scrollMem[dest] != null) window.scrollTo(0, scrollMem[dest]);
     return;
@@ -15280,7 +15281,7 @@ document.addEventListener('click', async (e) => {
        different customer's page would be a lie on legs.
        The peek chevron is the one click the row must not swallow: it means
        "show me the summary here", not "take me somewhere". */
-    drawer = null; splitPin = false;
+    drawer = null;
     view = { s: 'customer', id: op.dataset.open, tab: 'overview', cview: 'board' }; render(); return;
   }
 
@@ -15894,37 +15895,23 @@ document.addEventListener('click', async (e) => {
     if (a === 'rm'){ rmAsk = ac.dataset.rm; render(); return; }
     if (a === 'rmno'){ rmAsk = null; render(); return; }
     if (a === 'rmyes'){ doRemove(ac.dataset.rm); return; }
-    /* W2b: when the pen is asked for from inside the drawer, the form opens in
-       the drawer — the same screen with more on it, so the scroll must stay.
-       From a row or a card the old behaviour stands (the redraw brings the
-       form into view). */
+    /* The pen opens the edit drawer. Asked for from inside a record's drawer
+       it stacks on top of it — the record stays open underneath, and the
+       way back (X, Esc, Cancel, a good save) returns to what you were
+       reading. From a board, a list or a page it opens alone. */
     if (a === 'ed'){
-      edFor = ac.dataset.ed;
-      /* Editing needs the record's surface. An edit started from a list row
-         opens the record drawer first — the form lives inside the record,
-         never floating over a table that cannot host it. */
-      const k = String(edFor || '');
-      if (k.startsWith('opp|')){
-        const oid = k.split('|')[2];
-        if (!drawer || drawer.kind !== 'opp' || drawer.id !== oid){ drwFresh = true; drawer = { kind:'opp', id:oid }; }
-      } else if (k.startsWith('interaction|')){
-        const mid = k.split('|')[2];
-        if (!drawer || drawer.kind !== 'mtg' || drawer.id !== mid){ drwFresh = true; drawer = { kind:'mtg', id:mid }; }
-      } else if (k.startsWith('person|')){
-        const cid = k.split('|')[1], pn = k.split('|').slice(2).join('|');
-        if (!drawer || drawer.kind !== 'person' || drawer.cid !== cid || drawer.pn !== pn){
-          drwFresh = true; drawer = { kind:'person', cid, pn };
-        }
-      } else {
-        /* Every other key edits in the edit drawer — the page behind stays
-           whole instead of the form displacing the body it corrects. */
-        drwFresh = true; drawer = { kind:'edit', key:k };
-      }
-      render(!!drawer); return;
+      const k = String(ac.dataset.ed || '');
+      drwFresh = true;
+      edFor = null;
+      const under = drawer
+        ? (drawer.kind === 'edit' ? (drawer.under || null) : drawer)
+        : null;
+      drawer = { kind:'edit', key:k, under: under || undefined };
+      render(true); return;
     }
     if (a === 'edno'){
       edFor = null;
-      if (drawer && drawer.kind === 'edit'){ drawer = null; render(true); return; }
+      if (drawer && drawer.kind === 'edit'){ drwClose(); render(true); return; }
       render(!!drawer); return;
     }
     /* The customer record itself, not a row inside it. These carry their own
@@ -16022,7 +16009,7 @@ document.addEventListener('click', async (e) => {
     }
     return;
   }
-  /* --- W2b §03 列表↔详情三级 — the drawer, the split pin, the peek -------- */
+  /* --- W2b §03 列表↔详情三级 — the drawer, the peek ------------------------ */
   /* These sit after every record-level handler on purpose: a click on the Edit
      inside a row belongs to the Edit, not to the row. Reaching this far down
      means nothing actionable inside the row wanted the click, so the row
@@ -16031,8 +16018,6 @@ document.addEventListener('click', async (e) => {
   /* Closing an add drawer also drops the form's state: nothing was written,
      so nothing should linger — unless a form waits underneath. */
   if (dx){ drwClose(); render(true); drwFresh = false; return; }
-  const dp = e.target.closest('[data-drw-pin]');
-  if (dp){ splitPin = !splitPin; render(true); return; }
   const df = e.target.closest('[data-drw-full]');
   if (df){
     const el = df.closest('.drw');
@@ -16061,10 +16046,9 @@ document.addEventListener('click', async (e) => {
     if (raw.startsWith('person|')){
       const cid = raw.slice(7, raw.indexOf('|', 7));
       const pn = raw.slice(raw.indexOf('|', 7) + 1);
-      if (drawer && drawer.kind === 'person' && drawer.cid === cid && drawer.pn === pn && !splitPin){
+      if (drawer && drawer.kind === 'person' && drawer.cid === cid && drawer.pn === pn){
         drawer = null; render(true); return;
       }
-      if (e.metaKey || e.ctrlKey) splitPin = true;
       drwFresh = true;
       drawer = { kind: 'person', cid, pn };
       if (under) drawer.under = under;
@@ -16072,10 +16056,9 @@ document.addEventListener('click', async (e) => {
     }
     if (raw.startsWith('mtg|')){
       const id = raw.slice(4);
-      if (drawer && drawer.kind === 'mtg' && drawer.id === id && !splitPin){
+      if (drawer && drawer.kind === 'mtg' && drawer.id === id){
         drawer = null; render(true); return;
       }
-      if (e.metaKey || e.ctrlKey) splitPin = true;
       drwFresh = true;
       drawer = { kind: 'mtg', id };
       if (under) drawer.under = under;
@@ -16083,10 +16066,9 @@ document.addEventListener('click', async (e) => {
     }
     /* A second click on the row already open closes the drawer again — the
        same toggle the peek chevron answers to. */
-    if (drawer && drawer.kind === 'opp' && drawer.id === raw && !splitPin){
+    if (drawer && drawer.kind === 'opp' && drawer.id === raw){
       drawer = null; render(true); return;
     }
-    if (e.metaKey || e.ctrlKey) splitPin = true;   /* ⌘-click pins (§03 C) */
     drwFresh = true;
     drawer = { kind: 'opp', id: raw };
     if (under) drawer.under = under;
@@ -16154,11 +16136,9 @@ document.addEventListener('keydown', (e) => {
     return;
   }
   if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k'){ e.preventDefault(); openPal(); }
-  /* W2b §03: esc unwinds depth in order — unpin the split, then close the
-     drawer, then whatever the palette was doing. Two presses always land you
-     back on the plain list. */
+  /* W2b §03: esc unwinds depth — the drawer first (a stacked one gives its
+     layer back), then whatever the palette was doing. */
   if (e.key === 'Escape'){
-    if (splitPin){ splitPin = false; render(true); return; }
     if (drawer){ drwClose(); render(true); return; }
     closePal(); closeCapture();
   }
